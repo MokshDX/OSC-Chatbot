@@ -1,0 +1,59 @@
+[project]
+name = "osc-assistant"
+version = "0.1.0"
+description = "OSC internal knowledge assistant: a provider-agnostic RAG service."
+requires-python = ">=3.12"
+readme = "README.md"
+
+# Core runtime. Deliberately small: everything provider-specific is an extra so a
+# deployment only installs the SDKs for the providers it actually configures.
+dependencies = [
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "asyncpg>=0.29",
+    "httpx>=0.27",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+]
+
+[project.optional-dependencies]
+anthropic = ["anthropic>=0.40"]
+openai = ["openai>=1.40"]
+gemini = ["google-genai>=0.3"]
+local = ["sentence-transformers>=3.0"]
+dev = [
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    "mypy>=1.10",
+    "ruff>=0.5",
+]
+
+[project.scripts]
+osc-assistant = "osc_assistant.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/osc_assistant"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+# Provider SDKs are optional extras; missing stubs must not fail the whole check.
+ignore_missing_imports = true

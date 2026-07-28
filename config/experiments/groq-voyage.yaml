@@ -1,0 +1,20 @@
+# Latency-optimised: Groq for generation, Voyage for retrieval quality.
+# Demonstrates that the answer model and the embedding model are independent
+# choices — this profile shares no vendor with the default.
+
+llm:
+  provider: groq
+  model: llama-3.3-70b-versatile
+
+fast_llm:
+  provider: groq
+  model: llama-3.1-8b-instant
+
+embeddings:
+  provider: voyage
+  model: voyage-3-large
+
+retrieval:
+  strategy: hybrid
+  candidates: 60
+  top_k: 10

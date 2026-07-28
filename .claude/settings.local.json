@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat)",
+      "Bash(touch tests/__init__.py)",
+      "Bash(python3 -m venv .venv)",
+      "Bash(.venv/bin/pip install *)",
+      "Bash(.venv/bin/python -c \"import osc_assistant; print\\('ok', osc_assistant.__version__\\)\")",
+      "Bash(/Users/mokshdutt/miniconda3/envs/ofc/bin/python3.12 -m venv .venv)",
+      "Bash(.venv/bin/python -m pytest -q)",
+      "Bash(.venv/bin/ruff check *)",
+      "Bash(python3 *)",
+      "Bash(.venv/bin/mypy src *)",
+      "Bash(.venv/bin/osc-assistant --help)",
+      "Bash(.venv/bin/osc-assistant providers *)",
+      "Bash(bash \"/Users/mokshdutt/.claude/plugins/cache/ponytail/ponytail/4.8.4/hooks/ponytail-statusline.sh\")",
+      "Bash(.venv/bin/python *)"
+    ]
+  }
+}
