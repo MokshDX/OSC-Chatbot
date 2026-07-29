@@ -91,6 +91,16 @@ def test_health_reports_the_active_components(client: TestClient) -> None:
     assert body["retrieval_strategy"] == "hybrid"
 
 
+def test_ui_is_served_at_the_root(client: TestClient) -> None:
+    """The bundled client ships inside the package; a wheel that drops the static
+    file would otherwise fail only in a deployed environment."""
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+    assert "OSC Knowledge Assistant" in response.text
+
+
 def test_search_returns_ranked_chunks(client: TestClient) -> None:
     response = client.post("/api/search", json={"query": "how many vacation days"})
 

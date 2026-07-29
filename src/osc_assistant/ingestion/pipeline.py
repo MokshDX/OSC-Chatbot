@@ -11,12 +11,12 @@ production and into the in-memory store in tests, with any embedding provider.
 from __future__ import annotations
 
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass, field
 
 from ..logging import get_logger
 from ..protocols import Chunker, EmbeddingModel, VectorStore
-from ..types import Document, EmbeddedChunk
+from ..types import Document, EmbeddedChunk, LoadFailure
 
 log = get_logger(__name__)
 
@@ -30,6 +30,7 @@ class IngestionReport:
     skipped: int = 0
     deleted: int = 0
     chunks: int = 0
+    unreadable: int = 0
     failures: list[str] = field(default_factory=list)
     duration_seconds: float = 0.0
 
@@ -54,7 +55,11 @@ class IngestionPipeline:
         self._embed_batch_size = embed_batch_size
 
     async def ingest(
-        self, documents: AsyncIterator[Document], *, prune: bool = True
+        self,
+        documents: AsyncIterator[Document],
+        *,
+        prune: bool = True,
+        source_failures: Sequence[LoadFailure] | None = None,
     ) -> IngestionReport:
         """Sync `documents` into the store.
 
@@ -63,6 +68,12 @@ class IngestionPipeline:
             prune: Delete indexed documents absent from `documents`. Correct for a
                 full sync; must be False when ingesting a subset, or the rest of the
                 corpus is deleted.
+            source_failures: Files the connector found but could not read. These are
+                reported as failures and, critically, are exempt from pruning: an
+                unreadable file is still present at the source, and deleting its
+                indexed copy would turn a transient parse error into permanent data
+                loss. Read only once `documents` is exhausted, so a connector may
+                append to the sequence it passed while it is being iterated.
 
         Returns:
             A report of what changed.
@@ -95,8 +106,15 @@ class IngestionPipeline:
             report.indexed += 1
             report.chunks += chunk_count
 
+        # Recorded after the stream is exhausted: a connector discovers unreadable
+        # files as it walks the source, so the list is only complete by now.
+        unreadable = list(source_failures or [])
+        report.unreadable = len(unreadable)
+        report.failures.extend(f"{failure.source_uri}: {failure.error}" for failure in unreadable)
+
         if prune:
-            report.deleted = await self._prune(seen, set(known_hashes))
+            protected = seen | {failure.document_id for failure in unreadable}
+            report.deleted = await self._prune(protected, set(known_hashes))
 
         report.duration_seconds = time.perf_counter() - started
         log.info(
@@ -107,6 +125,7 @@ class IngestionPipeline:
                 "skipped": report.skipped,
                 "deleted": report.deleted,
                 "chunks": report.chunks,
+                "unreadable": report.unreadable,
                 "failures": len(report.failures),
                 "duration_seconds": round(report.duration_seconds, 3),
             },
@@ -138,8 +157,13 @@ class IngestionPipeline:
         await self._store.replace_document(document, embedded)
         return len(embedded)
 
-    async def _prune(self, seen: set[str], known: set[str]) -> int:
-        removed = known - seen
+    async def _prune(self, keep: set[str], known: set[str]) -> int:
+        """Delete indexed documents that the source no longer offers.
+
+        `keep` is every document the source still has: those loaded successfully
+        plus those that failed to load. Only what is genuinely gone is removed.
+        """
+        removed = known - keep
         for document_id in removed:
             await self._store.delete_document(document_id)
             log.info("ingestion.document_removed", extra={"document_id": document_id})

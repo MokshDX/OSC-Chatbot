@@ -49,6 +49,22 @@ class Document:
 
 
 @dataclass(frozen=True, slots=True)
+class LoadFailure:
+    """A source file a connector found but could not turn into a `Document`.
+
+    Carries the `document_id` the file *would* have had, which is what lets the
+    ingestion pipeline distinguish "this document was deleted from the source"
+    from "this document is still there but unreadable today". Without that
+    distinction a transient parse failure would prune a healthy document out of
+    the index.
+    """
+
+    document_id: str
+    source_uri: str
+    error: str
+
+
+@dataclass(frozen=True, slots=True)
 class Chunk:
     """A retrievable span of a document.
 

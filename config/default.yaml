@@ -1,4 +1,5 @@
-# Default profile.
+# Default profile: fully local. Nothing in this configuration sends corpus text or
+# questions off the host, and no API credential is required.
 #
 # Every value here can be overridden by an environment variable using the OSC_
 # prefix and a double underscore for nesting, e.g.:
@@ -14,55 +15,83 @@ environment: development
 log_level: INFO
 log_format: json
 
-# Answer model. Anthropic is the default because it is the only provider that
-# resolves citations against the source text rather than having the model assert
-# them, which is the main defence against ungrounded answers.
+# Answer model: Qwen3 served by the local Ollama daemon, reached through the
+# OpenAI-compatible adapter.
 llm:
-  provider: anthropic
-  model: claude-opus-5
+  provider: ollama
+  model: qwen3:8b
   options:
-    # Thinking is on by default on this model; a low effort level keeps latency and
-    # cost down while retaining it. Remove this key for models that reject it.
-    effort: low
-    cache_system_prompt: true
+    # Ollama reports token usage on the final stream chunk. Without this the
+    # streaming path — which is what the API and the UI use — records zero tokens
+    # for every request, making cost and context-budget analysis impossible.
+    include_usage_in_stream: true
+    extra_body:
+      # Qwen3 is a hybrid reasoning model and thinks before answering by default,
+      # spending completion tokens that never reach the user. Measured on this
+      # deployment: 138 completion tokens with thinking versus 3 without, for the
+      # same reply. Two reasons it is off here:
+      #   1. Ollama loads this model with a 4096-token context. Thinking competes
+      #      with the answer for that budget, and an exhausted budget returns
+      #      empty content rather than a short answer.
+      #   2. Grounded question answering over retrieved passages is mostly
+      #      extractive, so the latency is not repaid.
+      # Set this to "low" or "medium" to re-enable it, and raise generation.max_tokens
+      # to match: the answerer reports a truncated answer rather than hiding it.
+      reasoning_effort: none
 
-# Cheap model for query rewriting, which sits on the critical path before retrieval.
+# Used only when retrieval.rewrite_queries is enabled. Same model, because an 8B
+# local model is already the cheap option and a second one would be a second load.
 fast_llm:
-  provider: anthropic
-  model: claude-haiku-4-5
+  provider: ollama
+  model: qwen3:8b
+  options:
+    extra_body:
+      reasoning_effort: none
 
-# Chosen independently of the answer model. Changing this requires a full re-index.
+# Chosen independently of the answer model. Changing this changes the vector width
+# and therefore requires a full re-index against a fresh chunks table.
+# nomic-embed-text is a purpose-built retrieval embedder at 768 dimensions, which
+# is comfortably inside pgvector's 2000-dimension HNSW index limit.
 embeddings:
-  provider: openai_compatible
-  model: text-embedding-3-large
+  provider: ollama
+  model: nomic-embed-text
 
 vector_store:
   provider: pgvector
 
 # Reranking is off until the evaluation harness can show the gain on OSC's own
-# golden set. Switch to `cross_encoder` to measure it.
+# golden set. Switch to `cross_encoder` to measure it — `min_score` is applied to
+# first-stage scores, so enabling a reranker no longer risks discarding everything.
 reranker:
   provider: noop
 
+# Sized against the answer model's 4096-token context: roughly 225 tokens per
+# chunk, five chunks of sources, leaving room for the system prompt and the answer.
+# Raise both if you serve this model with a larger context.
 chunking:
   strategy: recursive
-  chunk_size: 1200
-  chunk_overlap: 150
+  chunk_size: 900
+  chunk_overlap: 120
 
 retrieval:
   strategy: hybrid
-  candidates: 40
-  top_k: 8
+  candidates: 30
+  top_k: 5
   rrf_k: 60
   min_score: 0.0
-  rewrite_queries: true
+  # Off by default. It resolves follow-up references ("what about the second one?")
+  # but costs a second model call on the critical path, and its benefit has never
+  # been measured against a golden set. Enable it together with an evaluation run.
+  rewrite_queries: false
 
 generation:
-  max_tokens: 4096
+  # Must cover the answer plus any thinking the model does. 1500 keeps the whole
+  # request inside a 4096-token context alongside five chunks of sources.
+  max_tokens: 1500
   require_citations: true
 
 database:
-  dsn: postgresql://postgres:postgres@localhost:5432/osc_assistant
+  dsn: postgresql://mokshdutt@localhost:5432/osc
   min_pool_size: 1
   max_pool_size: 10
 

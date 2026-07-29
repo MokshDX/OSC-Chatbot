@@ -1,4 +1,4 @@
-"""Corpus ingestion: connectors and the chunk/embed/store pipeline."""
+"""Corpus ingestion: connectors, text extraction, and the chunk/embed/store pipeline."""
 
 from __future__ import annotations
 
@@ -8,13 +8,18 @@ from .loaders import (
     InMemoryLoader,
     stable_document_id,
 )
+from .parsers import PARSERS, SUPPORTED_EXTENSIONS, ParsedContent, parse
 from .pipeline import IngestionPipeline, IngestionReport
 
 __all__ = [
     "DEFAULT_EXTENSIONS",
+    "PARSERS",
+    "SUPPORTED_EXTENSIONS",
     "FilesystemLoader",
     "InMemoryLoader",
     "IngestionPipeline",
     "IngestionReport",
+    "ParsedContent",
+    "parse",
     "stable_document_id",
 ]

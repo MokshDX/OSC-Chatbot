@@ -86,12 +86,15 @@ def ingest(
     async def run() -> None:
         async with Container(settings) as container:
             loader = FilesystemLoader(path)
-            report = await container.ingestion.ingest(loader.load(), prune=prune)
+            report = await container.ingestion.ingest(
+                loader.load(), prune=prune, source_failures=loader.failures
+            )
 
             typer.echo(
                 f"processed={report.processed} indexed={report.indexed} "
                 f"skipped={report.skipped} deleted={report.deleted} "
-                f"chunks={report.chunks} in {report.duration_seconds:.1f}s"
+                f"chunks={report.chunks} unreadable={report.unreadable} "
+                f"in {report.duration_seconds:.1f}s"
             )
             for failure in report.failures:
                 typer.secho(f"  failed: {failure}", fg=typer.colors.RED)

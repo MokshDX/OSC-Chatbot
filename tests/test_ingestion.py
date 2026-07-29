@@ -14,7 +14,7 @@ import pytest
 from osc_assistant.chunking import ChunkerOptions, RecursiveChunker
 from osc_assistant.ingestion import FilesystemLoader, IngestionPipeline, InMemoryLoader
 from osc_assistant.providers.vectorstores.memory import MemoryVectorStore
-from osc_assistant.types import Document
+from osc_assistant.types import Document, LoadFailure
 
 from .conftest import StubEmbeddingModel
 
@@ -104,6 +104,51 @@ async def test_prune_disabled_leaves_other_documents_alone(
 
     assert report.deleted == 0
     assert len(await store.document_ids()) == 3
+
+
+async def test_unreadable_documents_are_not_pruned(
+    pipeline: IngestionPipeline, store: MemoryVectorStore, documents: list[Document]
+) -> None:
+    """Regression: a file that fails to parse is still present at the source.
+
+    Pruning treats "absent from this sync" as "deleted upstream". A document the
+    connector could not read is absent from the stream but not deleted, so without
+    this exemption a transient parse failure — a corrupt byte, an optional parsing
+    library missing after a redeploy — would silently destroy the indexed copy of
+    a document that is still sitting in the corpus.
+    """
+    await pipeline.ingest(InMemoryLoader(documents).load())
+    unreadable = LoadFailure(
+        document_id="doc-onboarding",
+        source_uri="file:///handbook/onboarding.pdf",
+        error="Could not read PDF onboarding.pdf",
+    )
+
+    report = await pipeline.ingest(
+        InMemoryLoader(documents[:2]).load(), prune=True, source_failures=[unreadable]
+    )
+
+    assert report.deleted == 0
+    assert report.unreadable == 1
+    assert not report.succeeded, "an unreadable file must be reported as a failure"
+    assert "doc-onboarding" in await store.document_ids()
+
+
+async def test_genuinely_removed_documents_are_still_pruned_alongside_failures(
+    pipeline: IngestionPipeline, store: MemoryVectorStore, documents: list[Document]
+) -> None:
+    """The exemption must be narrow: only the unreadable document survives."""
+    await pipeline.ingest(InMemoryLoader(documents).load())
+    unreadable = LoadFailure(
+        document_id="doc-expenses", source_uri="file:///x.pdf", error="broken"
+    )
+
+    report = await pipeline.ingest(
+        InMemoryLoader(documents[:1]).load(), prune=True, source_failures=[unreadable]
+    )
+
+    assert report.deleted == 1
+    assert await store.document_ids() == {"doc-vacation", "doc-expenses"}
 
 
 async def test_one_bad_document_does_not_abort_the_sync(

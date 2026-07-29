@@ -45,6 +45,14 @@ class MissingDependencyError(ConfigurationError):
         )
 
 
+class ParseError(AssistantError):
+    """A source file could not be turned into text.
+
+    Raised per file and caught by the ingestion pipeline, which records it and
+    continues: one unreadable document must never abort a corpus-wide sync.
+    """
+
+
 class ProviderError(AssistantError):
     """An upstream provider (LLM, embeddings, reranker) failed."""
 

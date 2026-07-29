@@ -1,0 +1,47 @@
+# The opposite of the default: every component hosted, and the only configuration
+# in which citations are verified against the source text rather than asserted by
+# the model. Useful as a quality ceiling to measure the local stack against.
+#
+#   ANTHROPIC_API_KEY=... OPENAI_API_KEY=... \
+#     OSC_PROFILE=config/experiments/hosted-anthropic.yaml osc-assistant ask "..."
+#
+# NOTE: text-embedding-3-large is 3072-dimensional. That exceeds pgvector's
+# 2000-dimension HNSW limit, so the migration leaves the column unindexed and
+# vector search falls back to an exact scan. It also needs its own database, since
+# vector width is fixed when the chunks table is created.
+
+llm:
+  provider: anthropic
+  model: claude-opus-5
+  options:
+    effort: low
+    cache_system_prompt: true
+
+fast_llm:
+  provider: anthropic
+  model: claude-haiku-4-5
+
+embeddings:
+  provider: openai
+  model: text-embedding-3-large
+
+vector_store:
+  provider: pgvector
+
+# Hosted models are served with a large context, so the prompt budget that the
+# local 4096-token deployment is constrained to no longer applies.
+chunking:
+  strategy: recursive
+  chunk_size: 1200
+  chunk_overlap: 150
+
+retrieval:
+  strategy: hybrid
+  candidates: 40
+  top_k: 8
+
+generation:
+  max_tokens: 4096
+
+database:
+  dsn: postgresql://mokshdutt@localhost:5432/osc_hosted3072

@@ -1,0 +1,56 @@
+OSC INCIDENT RESPONSE STANDARD
+==============================
+
+Scope: all production services owned by OSC engineering.
+
+SEVERITY LEVELS
+---------------
+
+SEV1 - Complete loss of a customer-facing service, or confirmed data loss, or a
+confirmed security breach. Response required within 15 minutes, 24 hours a day.
+An incident commander must be appointed. Executive notification is mandatory.
+
+SEV2 - Major functionality degraded for a significant number of customers, with
+no workaround available. Response required within 30 minutes during business
+hours, 1 hour outside them.
+
+SEV3 - Minor functionality degraded, or a workaround exists. Response required
+by the next business day.
+
+SEV4 - Cosmetic issue or a single-customer report with no service impact.
+Handled through the normal backlog.
+
+ROLES
+-----
+
+Incident Commander owns the response and is the single decision maker. The IC
+does not debug; the IC coordinates. For SEV1 the IC must not also be the primary
+responder.
+
+Communications Lead owns all internal and customer updates. Required for SEV1 and
+SEV2.
+
+Scribe records a timestamped log of actions taken and decisions made. Required
+for SEV1.
+
+COMMUNICATION CADENCE
+---------------------
+
+SEV1 - status update every 30 minutes until resolved, posted to the incident
+channel and the customer status page.
+
+SEV2 - status update every 2 hours during business hours.
+
+SEV3 and SEV4 - update on resolution only.
+
+POSTMORTEM
+----------
+
+A written postmortem is mandatory for every SEV1 and SEV2 incident and must be
+published within 5 business days of resolution.
+
+Postmortems are blameless. They describe what the system did and what conditions
+allowed it, not who made a mistake. Every action item has a named owner and a due
+date, and is tracked to completion in the normal engineering backlog.
+
+A SEV1 postmortem is reviewed in the weekly engineering leadership meeting.

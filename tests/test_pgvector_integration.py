@@ -31,9 +31,23 @@ from .conftest import EMBEDDING_DIMENSIONS, StubEmbeddingModel
 
 DSN = os.environ.get("OSC_TEST_DSN")
 
+# The `chunks` table fixes its vector width at migration time, so this suite has to
+# use whatever width the target database was created with. Against a dedicated test
+# database that is the narrow stub width, which keeps the tests fast. Against a
+# database an application already migrated — the common case when Postgres is a
+# shared local instance — set OSC_TEST_DIMENSIONS to the deployed embedding model's
+# width, or the store will correctly refuse to start on a dimension mismatch.
+DIMENSIONS = int(os.environ.get("OSC_TEST_DIMENSIONS", EMBEDDING_DIMENSIONS))
+
 pytestmark = pytest.mark.skipif(
     not DSN, reason="Set OSC_TEST_DSN to run the PostgreSQL integration tests."
 )
+
+
+@pytest.fixture
+def embeddings() -> StubEmbeddingModel:
+    """Overrides the shared fixture so vectors match the target table's width."""
+    return StubEmbeddingModel(DIMENSIONS)
 
 CORPUS: list[tuple[str, str]] = [
     ("vacation", "OSC employees accrue twenty five vacation days each calendar year."),
@@ -54,7 +68,7 @@ async def store() -> AsyncIterator[PgVectorStore]:
         PgVectorOptions(
             dsn=DSN or "",
             workspace_id=workspace,
-            dimensions=EMBEDDING_DIMENSIONS,
+            dimensions=DIMENSIONS,
             embedding_model="stub-embedding",
         )
     )
@@ -96,7 +110,7 @@ async def populated(store: PgVectorStore, embeddings: StubEmbeddingModel) -> PgV
 async def test_migrations_are_applied_and_idempotent(store: PgVectorStore) -> None:
     """setup() ran the migrations; running them again must be a no-op."""
     await store.setup()
-    assert store.dimensions == EMBEDDING_DIMENSIONS
+    assert store.dimensions == DIMENSIONS
 
 
 async def test_vector_search_finds_the_nearest_chunk(
@@ -228,7 +242,7 @@ async def test_workspace_isolates_queries(
         PgVectorOptions(
             dsn=DSN or "",
             workspace_id=f"test-{uuid.uuid4().hex[:8]}",
-            dimensions=EMBEDDING_DIMENSIONS,
+            dimensions=DIMENSIONS,
             embedding_model="stub-embedding",
         )
     )
@@ -248,7 +262,7 @@ async def test_search_ignores_other_embedding_models(
         PgVectorOptions(
             dsn=DSN or "",
             workspace_id=populated.workspace_id,
-            dimensions=EMBEDDING_DIMENSIONS,
+            dimensions=DIMENSIONS,
             embedding_model="some-other-model",
         )
     )

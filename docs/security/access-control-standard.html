@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Access Control Standard</title>
+  <style>
+    body { font-family: sans-serif; }
+    .note { color: #666; }
+  </style>
+  <script>
+    // Navigation helper. This must never appear in extracted text.
+    document.addEventListener('DOMContentLoaded', function () { console.log('loaded'); });
+  </script>
+</head>
+<body>
+  <h1>Access Control Standard</h1>
+  <p class="note">Owner: Information Security. Review cycle: annual.</p>
+
+  <h2>Principle of least privilege</h2>
+  <p>
+    Every account is granted the minimum access required to perform its role.
+    Access is granted to groups, never to individual accounts, so that
+    entitlements can be reasoned about and revoked as a unit.
+  </p>
+
+  <h2>Access reviews</h2>
+  <p>
+    Access to systems classified <strong>Confidential</strong> or higher is
+    reviewed <strong>quarterly</strong>. Access to systems classified Internal is
+    reviewed <strong>annually</strong>. Reviews are performed by the system owner,
+    not by the security team, because the system owner is the only party who knows
+    whether an entitlement is still justified.
+  </p>
+  <p>
+    An entitlement that a reviewer cannot justify is revoked by default. Reviews
+    must complete within 15 working days of being raised.
+  </p>
+
+  <h2>Joiners, movers and leavers</h2>
+  <ul>
+    <li>Access for a new joiner is provisioned no earlier than their start date.</li>
+    <li>
+      When an employee changes role, their previous entitlements are revoked
+      within <strong>5 working days</strong>. Additive-only role changes are the
+      most common source of excessive privilege at OSC.
+    </li>
+    <li>
+      All access is revoked within <strong>4 hours</strong> of an employee's
+      departure being confirmed, and immediately for an involuntary departure.
+    </li>
+  </ul>
+
+  <h2>Privileged access</h2>
+  <p>
+    Production administrative access requires hardware multi-factor
+    authentication and is granted just-in-time for a maximum of
+    <strong>8 hours</strong>. Standing production administrative access is not
+    permitted for any role.
+  </p>
+
+  <h2>Service accounts</h2>
+  <p>
+    Every service account has a named human owner. Credentials rotate every
+    <strong>90 days</strong>. Service accounts must not be used interactively, and
+    interactive use is alerted on.
+  </p>
+</body>
+</html>

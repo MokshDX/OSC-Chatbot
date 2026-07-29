@@ -13,10 +13,11 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import APIRouter, FastAPI, Request
+from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
 from ..container import Container
 from ..errors import AssistantError, ConfigurationError
@@ -40,6 +41,11 @@ from .sse import SSE_HEADERS, SSE_MEDIA_TYPE, encode_event
 log = get_logger(__name__)
 
 router = APIRouter(prefix="/api")
+
+# A single static page, served from one route. The client is expected to be
+# replaced by a richer one; keeping it to a file plus this route means that
+# replacement touches nothing else in the service.
+_INDEX = Path(__file__).parent / "static" / "index.html"
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -79,8 +85,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
 
     app.include_router(router)
+    _register_ui(app)
     _register_error_handlers(app)
     return app
+
+
+def _register_ui(app: FastAPI) -> None:
+    """Serve the bundled chat client at the site root.
+
+    Registered outside the `/api` router so the wire API and the page that happens
+    to consume it stay independently versionable.
+    """
+
+    @app.get("/", include_in_schema=False)
+    async def index() -> FileResponse:
+        if not _INDEX.is_file():  # pragma: no cover - only if the package is broken
+            raise HTTPException(status_code=404, detail="UI is not installed.")
+        return FileResponse(_INDEX, media_type="text/html")
 
 
 def _container(request: Request) -> Container:

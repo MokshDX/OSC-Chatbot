@@ -42,7 +42,12 @@ class RetrievalSettings(BaseModel):
     rrf_k: int = Field(default=60, ge=1, description="Reciprocal Rank Fusion constant.")
     min_score: float = Field(
         default=0.0,
-        description="Hits below this score are discarded. Scale is strategy-dependent.",
+        description=(
+            "Discards first-stage hits scoring below this, before reranking. The "
+            "scale follows `strategy`: cosine similarity in [-1, 1] for `vector`, "
+            "an RRF score around 0.016 for `hybrid`. Deliberately not applied to "
+            "reranker output, whose scale is provider-defined and often negative."
+        ),
     )
     rewrite_queries: bool = Field(
         default=True,

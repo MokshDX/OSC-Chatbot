@@ -16,12 +16,15 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from ..chunking import normalize_whitespace
+from ..errors import AssistantError
 from ..logging import get_logger
-from ..types import Document
+from ..types import Document, LoadFailure
+from .parsers import SUPPORTED_EXTENSIONS, parse
 
 log = get_logger(__name__)
 
-DEFAULT_EXTENSIONS: tuple[str, ...] = (".md", ".markdown", ".txt", ".rst")
+DEFAULT_EXTENSIONS: tuple[str, ...] = SUPPORTED_EXTENSIONS
+"""Every extension with a registered parser. Narrow this to ingest a subset."""
 
 
 def stable_document_id(source_uri: str) -> str:
@@ -35,10 +38,16 @@ def stable_document_id(source_uri: str) -> str:
 
 
 class FilesystemLoader:
-    """Loads text documents from a directory tree.
+    """Loads documents from a directory tree, one parser per format.
 
     The Phase 1 connector: it needs no credentials, which makes it the fastest way
     to get real content in front of the retrieval and evaluation stack.
+
+    Extraction is delegated to `parsers`, so which formats are supported is a
+    property of that module and not of this one. A file this loader cannot read is
+    recorded in `failures` and skipped; the sync continues, and the ingestion
+    pipeline uses those records to avoid pruning a document that is still present
+    at the source but temporarily unreadable.
     """
 
     def __init__(
@@ -50,11 +59,16 @@ class FilesystemLoader:
         self._root = root
         self._extensions = {extension.lower() for extension in extensions}
         self._encoding = encoding
+        self.failures: list[LoadFailure] = []
 
     async def load(self) -> AsyncIterator[Document]:
         if not self._root.exists():
             raise FileNotFoundError(f"Corpus directory not found: {self._root}")
 
+        # Cleared in place, never rebound: callers pass this list to the ingestion
+        # pipeline before iteration begins and read it once iteration ends, so the
+        # object identity has to survive a re-run.
+        self.failures.clear()
         for path in sorted(self._root.rglob("*")):
             if not path.is_file() or path.suffix.lower() not in self._extensions:
                 continue
@@ -63,25 +77,48 @@ class FilesystemLoader:
                 yield document
 
     def _read(self, path: Path) -> Document | None:
-        try:
-            raw = path.read_text(encoding=self._encoding)
-        except (OSError, UnicodeDecodeError) as exc:
-            # One unreadable file must not abort a corpus-wide sync.
-            log.warning("loader.unreadable", extra={"path": str(path), "error": str(exc)})
-            return None
-
-        text = normalize_whitespace(raw).strip()
-        if not text:
-            return None
-
         source_uri = path.resolve().as_uri()
+        try:
+            parsed = parse(path, self._encoding)
+        # Broad by intent: one unreadable file must not abort a corpus-wide sync.
+        # `AssistantError` covers the parsers' own failures, `OSError` covers the
+        # filesystem, and the rest guards against a parsing library raising
+        # something undocumented on a malformed file.
+        except (AssistantError, OSError, ValueError) as exc:
+            log.error(
+                "loader.parse_failed",
+                extra={"path": str(path), "error": str(exc)},
+            )
+            self.failures.append(
+                LoadFailure(
+                    document_id=stable_document_id(source_uri),
+                    source_uri=source_uri,
+                    error=str(exc),
+                )
+            )
+            return None
+
+        text = normalize_whitespace(parsed.text).strip()
+        if not text:
+            log.warning("loader.empty_document", extra={"path": str(path)})
+            return None
+
+        stat = path.stat()
         return Document(
             id=stable_document_id(source_uri),
             source_uri=source_uri,
-            title=_derive_title(text, path),
+            title=parsed.title or _derive_title(text, path),
             text=text,
-            metadata={"relative_path": str(path.relative_to(self._root))},
-            updated_at=datetime.fromtimestamp(path.stat().st_mtime, tz=UTC),
+            # Provenance travels with every chunk and is denormalised into the
+            # store, so it is available for filtering and for display next to a
+            # citation without a second lookup.
+            metadata={
+                "relative_path": str(path.relative_to(self._root)),
+                "extension": path.suffix.lower(),
+                "size_bytes": stat.st_size,
+                **parsed.metadata,
+            },
+            updated_at=datetime.fromtimestamp(stat.st_mtime, tz=UTC),
         )
 
 

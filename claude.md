@@ -239,3 +239,14 @@ A successful contribution:
 * Can be confidently maintained in the future.
 
 Always leave the project in a better state than you found it.
+
+
+## Session Startup
+
+Before implementing any feature:
+
+1. Read PROJECT_STATUS.md
+2. Read README.md
+3. Read graphify-out/wiki/
+4. Understand the current milestone.
+5. Confirm the implementation plan before modifying code.

@@ -45,8 +45,26 @@ CREATE TABLE IF NOT EXISTS chunks (
 );
 
 -- Cosine distance, matching the similarity used by every embedding provider here.
-CREATE INDEX IF NOT EXISTS chunks_embedding_idx
-    ON chunks USING hnsw (embedding vector_cosine_ops);
+--
+-- pgvector cannot build an HNSW index on a column wider than 2000 dimensions, and
+-- several supported models exceed that (OpenAI text-embedding-3-large is 3072).
+-- Creating it unconditionally would abort the migration for those models, so above
+-- the limit the column is left unindexed: search falls back to an exact scan, which
+-- is correct but O(n) and will need revisiting as the corpus grows.
+DO $$
+BEGIN
+    IF {{EMBEDDING_DIMENSIONS}} <= 2000 THEN
+        CREATE INDEX IF NOT EXISTS chunks_embedding_idx
+            ON chunks USING hnsw (embedding vector_cosine_ops);
+    ELSE
+        RAISE WARNING
+            'Embedding width % exceeds pgvector''s 2000-dimension HNSW limit; '
+            'vector search will use an exact scan. Choose a narrower embedding '
+            'model, or halfvec, before the corpus grows large.',
+            {{EMBEDDING_DIMENSIONS}};
+    END IF;
+END
+$$;
 
 CREATE INDEX IF NOT EXISTS chunks_tsv_idx
     ON chunks USING gin (tsv);

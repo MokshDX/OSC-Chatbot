@@ -71,8 +71,15 @@ class RetrievalPipeline:
         query = await self._resolve_query(question, history or [])
 
         candidates = await self._search(query)
-        reranked = await self._reranker.rerank(query, candidates, self._settings.top_k)
-        selected = [hit for hit in reranked if hit.score >= self._settings.min_score]
+        # The threshold is applied to first-stage scores, before reranking, because
+        # only those are on a known scale (cosine similarity, or an RRF score). A
+        # cross-encoder returns an unbounded logit that is routinely negative for a
+        # genuinely relevant passage, so thresholding its output at the same
+        # configured value would discard the entire result set the moment a
+        # reranker was enabled — presenting as "the reranker is bad" rather than as
+        # a misapplied threshold.
+        kept = [hit for hit in candidates if hit.score >= self._settings.min_score]
+        selected = await self._reranker.rerank(query, kept, self._settings.top_k)
 
         result = RetrievalResult(
             query=query,
@@ -87,6 +94,7 @@ class RetrievalPipeline:
                 "query": query,
                 "strategy": self._settings.strategy,
                 "candidates": len(candidates),
+                "above_threshold": len(kept),
                 "selected": len(selected),
                 "chunk_ids": [hit.chunk.id for hit in selected],
                 "duration_seconds": round(result.duration_seconds, 3),

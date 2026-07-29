@@ -1,18 +1,27 @@
-# Local Postgres with pgvector, for development and for running the integration
-# tests. The application creates its own schema on first use.
+# An optional PostgreSQL with pgvector, for machines that do not already have one.
+# The reference development environment uses a natively installed PostgreSQL (see
+# README), so this file is a convenience and not a requirement. The application
+# creates its own schema on first use.
+#
+# If you use this instead of a local install, point the app at it:
+#   OSC_DATABASE__DSN=postgresql://postgres:postgres@localhost:5432/osc
 services:
   postgres:
+    # NOT pinned by digest. `pg16` is a moving tag, so an unannounced pgvector or
+    # server upgrade can land underneath a populated volume — not something to
+    # discover during an incident. Pin it to a digest before this file is used for
+    # anything beyond local development (PROJECT_STATUS.md §8).
     image: pgvector/pgvector:pg16
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: osc_assistant
+      POSTGRES_DB: osc
     ports:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d osc_assistant"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d osc"]
       interval: 5s
       timeout: 3s
       retries: 10

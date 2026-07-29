@@ -197,7 +197,12 @@ class PgVectorStore:
                 embedded.chunk.text,
                 embedded.chunk.title,
                 embedded.chunk.source_uri,
-                json.dumps(dict(embedded.chunk.metadata)),
+                # Passed as a dict, not a JSON string: the connection registers a
+                # jsonb codec (`_register_codecs`) that serialises it. Encoding it
+                # here as well stored a JSON *string containing JSON*, so metadata
+                # read back as `str` rather than `dict` and every consumer of
+                # `Chunk.metadata` silently received the wrong type.
+                dict(embedded.chunk.metadata),
                 embedded.embedding_model,
                 _encode_vector(embedded.vector),
             )
@@ -218,7 +223,7 @@ class PgVectorStore:
                 document.source_uri,
                 document.title,
                 document.hash,
-                json.dumps(dict(document.metadata)),
+                dict(document.metadata),
                 document.updated_at,
             )
             if rows:

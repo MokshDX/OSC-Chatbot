@@ -7,6 +7,8 @@ the same behaviour.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import pytest
 
 from osc_assistant.chunking import ChunkerOptions, RecursiveChunker
@@ -23,6 +25,7 @@ from osc_assistant.types import (
     MatchSource,
     Message,
     Role,
+    ScoredChunk,
 )
 
 from .conftest import EMBEDDING_DIMENSIONS, FailingChatModel, StubChatModel, StubEmbeddingModel
@@ -132,6 +135,44 @@ async def test_min_score_filters_weak_hits(
     ).retrieve("laptop")
 
     assert len(strict.chunks) < len(permissive.chunks)
+
+
+async def test_min_score_is_applied_before_reranking(
+    indexed: MemoryVectorStore, embeddings: StubEmbeddingModel
+) -> None:
+    """Regression: the threshold must not be measured against reranker output.
+
+    A cross-encoder returns an unbounded logit that is routinely negative for a
+    genuinely relevant passage. When the threshold was applied after reranking,
+    the default `min_score: 0.0` silently discarded every result the moment a
+    reranker was enabled — and the symptom looked like a bad reranker rather than
+    a misapplied threshold.
+    """
+
+    class NegativeScoringReranker:
+        """Stands in for a cross-encoder: relevance-ordered, negative scores."""
+
+        model_id = "negative-stub"
+
+        async def rerank(
+            self, query: str, candidates: Sequence[ScoredChunk], top_k: int
+        ) -> list[ScoredChunk]:
+            return [
+                ScoredChunk(chunk=hit.chunk, score=-1.5 - index, source=MatchSource.RERANK)
+                for index, hit in enumerate(candidates[:top_k])
+            ]
+
+    pipeline = RetrievalPipeline(
+        store=indexed,
+        embeddings=embeddings,
+        reranker=NegativeScoringReranker(),
+        settings=RetrievalSettings(rewrite_queries=False, strategy="vector", min_score=0.0),
+    )
+
+    result = await pipeline.retrieve("How many vacation days do employees accrue?")
+
+    assert result.chunks, "negative reranker scores must not be filtered out"
+    assert all(hit.score < 0 for hit in result.chunks)
 
 
 async def test_empty_corpus_returns_no_hits(embeddings: StubEmbeddingModel) -> None:
