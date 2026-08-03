@@ -9,3 +9,6 @@ venv/
 dist/
 build/
 *.egg-info/
+
+# Persisted execution traces (observability.trace_dir).
+.osc/

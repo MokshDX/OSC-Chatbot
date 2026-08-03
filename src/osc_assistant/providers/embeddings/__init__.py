@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
-from . import gemini, local, openai_compatible, voyage
+from . import gemini, langchain_bridge, local, openai_compatible, voyage
 
-__all__ = ["gemini", "local", "openai_compatible", "voyage"]
+__all__ = ["gemini", "langchain_bridge", "local", "openai_compatible", "voyage"]

@@ -29,7 +29,9 @@ from ...registry import ComponentConfig
 from ...types import (
     Chunk,
     Document,
+    DocumentSummary,
     EmbeddedChunk,
+    IndexStatistics,
     MatchSource,
     ScoredChunk,
     Vector,
@@ -118,6 +120,77 @@ ON CONFLICT (workspace_id, id) DO UPDATE SET
 """
 
 
+# ------------------------------------------------------------------- inspection
+#
+# Aggregates are computed in SQL rather than by streaming rows into Python. The
+# corpus is expected to reach millions of chunks, and `osc-assistant status` must
+# stay a sub-second command at that size — pulling every chunk length across the
+# wire to compute a percentile would make the diagnostic tool the slowest thing in
+# the system.
+
+_STATISTICS_SQL = """
+SELECT
+    (SELECT count(*) FROM documents WHERE workspace_id = $1)          AS documents,
+    (SELECT count(*) FROM chunks    WHERE workspace_id = $1)          AS chunks,
+    (SELECT max(indexed_at) FROM documents WHERE workspace_id = $1)   AS last_indexed_at,
+    (SELECT array_agg(DISTINCT embedding_model)
+       FROM chunks WHERE workspace_id = $1)                           AS embedding_models,
+    (SELECT min(length(content)) FROM chunks WHERE workspace_id = $1) AS min_chars,
+    (SELECT avg(length(content)) FROM chunks WHERE workspace_id = $1) AS mean_chars,
+    (SELECT max(length(content)) FROM chunks WHERE workspace_id = $1) AS max_chars,
+    (SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY length(content))
+       FROM chunks WHERE workspace_id = $1)                           AS p50_chars,
+    (SELECT percentile_cont(0.95) WITHIN GROUP (ORDER BY length(content))
+       FROM chunks WHERE workspace_id = $1)                           AS p95_chars
+"""
+
+_EXTENSIONS_SQL = """
+SELECT COALESCE(metadata->>'extension', 'unknown') AS extension, count(*) AS total
+FROM documents
+WHERE workspace_id = $1
+GROUP BY 1
+ORDER BY 2 DESC
+"""
+
+# The chunk count is a correlated subquery rather than a GROUP BY join so that a
+# document which indexed to zero chunks still appears, with 0. That document is
+# invisible to retrieval and is precisely the one an operator is hunting for.
+_LIST_DOCUMENTS_SQL = """
+SELECT d.id, d.source_uri, d.title, d.content_hash, d.metadata,
+       d.updated_at, d.indexed_at,
+       (SELECT count(*) FROM chunks c
+         WHERE c.workspace_id = d.workspace_id AND c.document_id = d.id) AS chunk_count
+FROM documents d
+WHERE d.workspace_id = $1
+  AND ($2::text IS NULL OR d.title ILIKE '%' || $2 || '%'
+                        OR d.source_uri ILIKE '%' || $2 || '%')
+ORDER BY d.indexed_at DESC, d.id
+LIMIT $3 OFFSET $4
+"""
+
+_GET_DOCUMENT_SQL = """
+SELECT d.id, d.source_uri, d.title, d.content_hash, d.metadata,
+       d.updated_at, d.indexed_at,
+       (SELECT count(*) FROM chunks c
+         WHERE c.workspace_id = d.workspace_id AND c.document_id = d.id) AS chunk_count
+FROM documents d
+WHERE d.workspace_id = $1 AND d.id = $2
+"""
+
+_DOCUMENT_CHUNKS_SQL = """
+SELECT id, document_id, ordinal, content, title, source_uri, metadata
+FROM chunks
+WHERE workspace_id = $1 AND document_id = $2
+ORDER BY ordinal
+"""
+
+_GET_CHUNK_SQL = """
+SELECT id, document_id, ordinal, content, title, source_uri, metadata
+FROM chunks
+WHERE workspace_id = $1 AND id = $2
+"""
+
+
 class PgVectorOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -164,12 +237,25 @@ class PgVectorStore:
         except ImportError as exc:  # pragma: no cover - asyncpg is a core dependency
             raise VectorStoreError("asyncpg is required for the pgvector store.") from exc
 
-        self._pool = await asyncpg.create_pool(
-            dsn=self._options.dsn,
-            min_size=self._options.min_pool_size,
-            max_size=self._options.max_pool_size,
-            init=_register_codecs,
-        )
+        try:
+            self._pool = await asyncpg.create_pool(
+                dsn=self._options.dsn,
+                min_size=self._options.min_pool_size,
+                max_size=self._options.max_pool_size,
+                init=_register_codecs,
+            )
+        # Broad by intent. asyncpg raises `OSError` for an unreachable host and its
+        # own exception types for authentication and missing databases, and letting
+        # either escape breaks the rule this architecture rests on: no caller
+        # imports a vendor exception. Untranslated, a stopped database surfaced as a
+        # bare OSError traceback in the CLI and bypassed the API's error handler
+        # entirely — the most common operational failure was also the worst reported.
+        except Exception as exc:
+            raise VectorStoreError(
+                f"Could not connect to PostgreSQL at {_redact_dsn(self._options.dsn)}: "
+                f"{exc}. Check the database is running and `database.dsn` is correct."
+            ) from exc
+
         if self._options.auto_migrate:
             await self._migrate()
 
@@ -287,6 +373,61 @@ class PgVectorStore:
             )
         return [_to_scored_chunk(row, MatchSource.HYBRID) for row in rows]
 
+    # ----------------------------------------------------- StoreInspector
+
+    async def statistics(self) -> IndexStatistics:
+        async with self._acquire() as connection:
+            row = await connection.fetchrow(_STATISTICS_SQL, self._options.workspace_id)
+            extensions = await connection.fetch(
+                _EXTENSIONS_SQL, self._options.workspace_id
+            )
+        return IndexStatistics(
+            workspace_id=self._options.workspace_id,
+            documents=row["documents"] or 0,
+            chunks=row["chunks"] or 0,
+            embedding_models=sorted(row["embedding_models"] or []),
+            dimensions=self._options.dimensions,
+            chunk_chars_min=int(row["min_chars"] or 0),
+            chunk_chars_mean=round(float(row["mean_chars"] or 0.0), 1),
+            chunk_chars_p50=int(row["p50_chars"] or 0),
+            chunk_chars_p95=int(row["p95_chars"] or 0),
+            chunk_chars_max=int(row["max_chars"] or 0),
+            documents_by_extension={
+                entry["extension"]: entry["total"] for entry in extensions
+            },
+            last_indexed_at=row["last_indexed_at"],
+        )
+
+    async def list_documents(
+        self, limit: int = 50, offset: int = 0, search: str | None = None
+    ) -> list[DocumentSummary]:
+        async with self._acquire() as connection:
+            rows = await connection.fetch(
+                _LIST_DOCUMENTS_SQL, self._options.workspace_id, search, limit, offset
+            )
+        return [_to_document_summary(row) for row in rows]
+
+    async def get_document(self, document_id: str) -> DocumentSummary | None:
+        async with self._acquire() as connection:
+            row = await connection.fetchrow(
+                _GET_DOCUMENT_SQL, self._options.workspace_id, document_id
+            )
+        return _to_document_summary(row) if row else None
+
+    async def document_chunks(self, document_id: str) -> list[Chunk]:
+        async with self._acquire() as connection:
+            rows = await connection.fetch(
+                _DOCUMENT_CHUNKS_SQL, self._options.workspace_id, document_id
+            )
+        return [_to_chunk(row) for row in rows]
+
+    async def get_chunk(self, chunk_id: str) -> Chunk | None:
+        async with self._acquire() as connection:
+            row = await connection.fetchrow(
+                _GET_CHUNK_SQL, self._options.workspace_id, chunk_id
+            )
+        return _to_chunk(row) if row else None
+
     def _acquire(self) -> Any:
         if self._pool is None:
             raise VectorStoreError("Vector store used before setup() was called.")
@@ -357,24 +498,51 @@ async def _register_codecs(connection: Any) -> None:
     )
 
 
+def _redact_dsn(dsn: str) -> str:
+    """Strip the password from a DSN before it reaches a terminal or a log.
+
+    Connection errors are among the most-pasted output this system produces, and a
+    DSN carries a credential in the middle of it.
+    """
+    scheme, separator, remainder = dsn.partition("://")
+    if not separator or "@" not in remainder:
+        return dsn
+    credentials, _, host = remainder.partition("@")
+    user, has_password, _ = credentials.partition(":")
+    return f"{scheme}://{user}{':***' if has_password else ''}@{host}"
+
+
 def _encode_vector(vector: Vector) -> str:
     """Render a vector in pgvector's literal form for the `::vector` cast."""
     return "[" + ",".join(format(value, ".8g") for value in vector) + "]"
 
 
+def _to_chunk(row: Any) -> Chunk:
+    return Chunk(
+        id=row["id"],
+        document_id=row["document_id"],
+        ordinal=row["ordinal"],
+        text=row["content"],
+        title=row["title"],
+        source_uri=row["source_uri"],
+        metadata=row["metadata"] or {},
+    )
+
+
 def _to_scored_chunk(row: Any, source: MatchSource) -> ScoredChunk:
-    return ScoredChunk(
-        chunk=Chunk(
-            id=row["id"],
-            document_id=row["document_id"],
-            ordinal=row["ordinal"],
-            text=row["content"],
-            title=row["title"],
-            source_uri=row["source_uri"],
-            metadata=row["metadata"] or {},
-        ),
-        score=float(row["score"]),
-        source=source,
+    return ScoredChunk(chunk=_to_chunk(row), score=float(row["score"]), source=source)
+
+
+def _to_document_summary(row: Any) -> DocumentSummary:
+    return DocumentSummary(
+        id=row["id"],
+        title=row["title"],
+        source_uri=row["source_uri"],
+        content_hash=row["content_hash"],
+        chunk_count=row["chunk_count"],
+        metadata=row["metadata"] or {},
+        updated_at=row["updated_at"],
+        indexed_at=row["indexed_at"],
     )
 
 

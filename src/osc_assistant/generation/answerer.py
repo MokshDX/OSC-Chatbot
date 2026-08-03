@@ -16,10 +16,12 @@ modes; a policy that only worked when not streaming would be worse than none.
 
 from __future__ import annotations
 
+import time
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
 from ..logging import get_logger
+from ..observability import annotate, current_trace_id, span, trace
 from ..protocols import ChatModel
 from ..retrieval import RetrievalPipeline, RetrievalResult
 from ..settings import GenerationSettings
@@ -56,6 +58,26 @@ class AnswerComplete:
 type AnswerEvent = RetrievalReady | TextDelta | CitationDelta | AnswerComplete
 
 
+def _annotate_generation(usage: Usage, stop_reason: str | None, citations: int) -> None:
+    """Record what the model call cost and how it ended.
+
+    `stop_reason` is here because a truncated answer and a complete one are
+    indistinguishable from the text alone, and truncation is the most common cause
+    of a good retrieval producing a bad answer on a small-context local model.
+    """
+    annotate(
+        input_tokens=usage.input_tokens,
+        output_tokens=usage.output_tokens,
+        cached_input_tokens=usage.cached_input_tokens,
+        stop_reason=stop_reason,
+        citations=citations,
+    )
+
+
+def _annotate_abstention(reason: str) -> None:
+    annotate(abstained=True, abstention_reason=reason)
+
+
 class Answerer:
     """Answers a question against the indexed corpus."""
 
@@ -72,59 +94,90 @@ class Answerer:
     async def answer(self, question: str, history: list[Message] | None = None) -> Answer:
         """Answer `question`, returning the complete result."""
         history = history or []
-        retrieval = await self._retrieval.retrieve(question, history)
 
-        if not retrieval.chunks:
-            return self._abstention(retrieval)
+        with trace("answer", mode="buffered", model=self._model.model_id, turns=len(history)):
+            retrieval = await self._retrieval.retrieve(question, history)
 
-        response = await self._model.complete(
-            self._build_request(question, history, retrieval)
-        )
-        return self._finalise(
-            text=response.text,
-            citations=response.citations,
-            retrieval=retrieval,
-            usage=response.usage,
-            model=response.model or self._model.model_id,
-        )
+            if not retrieval.chunks:
+                return self._abstention(retrieval)
+
+            with span("generate", model=self._model.model_id, sources=len(retrieval.chunks)):
+                response = await self._model.complete(
+                    self._build_request(question, history, retrieval)
+                )
+                _annotate_generation(response.usage, response.stop_reason, len(response.citations))
+
+            return self._finalise(
+                text=response.text,
+                citations=response.citations,
+                retrieval=retrieval,
+                usage=response.usage,
+                model=response.model or self._model.model_id,
+            )
 
     async def stream(
         self, question: str, history: list[Message] | None = None
     ) -> AsyncIterator[AnswerEvent]:
         """Answer `question`, emitting events as they become available."""
         history = history or []
-        retrieval = await self._retrieval.retrieve(question, history)
-        yield RetrievalReady(result=retrieval)
 
-        if not retrieval.chunks:
-            yield AnswerComplete(answer=self._abstention(retrieval))
-            return
+        with trace("answer", mode="stream", model=self._model.model_id, turns=len(history)):
+            retrieval = await self._retrieval.retrieve(question, history)
+            yield RetrievalReady(result=retrieval)
 
-        request = self._build_request(question, history, retrieval)
-        parts: list[str] = []
-        citations: list[Citation] = []
-        usage = Usage()
+            if not retrieval.chunks:
+                yield AnswerComplete(answer=self._abstention(retrieval))
+                return
 
-        async for event in self._model.stream(request):
-            match event:
-                case TextDelta():
-                    parts.append(event.text)
-                    yield event
-                case CitationDelta():
-                    citations.append(event.citation)
-                    yield event
-                case StreamEnd():
-                    usage = event.usage
+            request = self._build_request(question, history, retrieval)
+            parts: list[str] = []
+            citations: list[Citation] = []
+            usage = Usage()
 
-        yield AnswerComplete(
-            answer=self._finalise(
-                text="".join(parts),
-                citations=citations,
-                retrieval=retrieval,
-                usage=usage,
-                model=self._model.model_id,
+            # The generate span opens before the first delta and closes after the
+            # last, so its duration is the whole streamed generation. Time to first
+            # token is recorded separately, because for a streaming client that is
+            # the number that describes the experience and total duration is not.
+            with span(
+                "generate", model=self._model.model_id, sources=len(retrieval.chunks)
+            ) as stage:
+                started = time.perf_counter()
+                first_delta_at: float | None = None
+                stop_reason: str | None = None
+
+                async for event in self._model.stream(request):
+                    match event:
+                        case TextDelta():
+                            if first_delta_at is None:
+                                first_delta_at = time.perf_counter()
+                            parts.append(event.text)
+                            yield event
+                        case CitationDelta():
+                            citations.append(event.citation)
+                            yield event
+                        case StreamEnd():
+                            usage = event.usage
+                            stop_reason = event.stop_reason
+
+                stage.set(
+                    deltas=len(parts),
+                    time_to_first_token_ms=(
+                        round((first_delta_at - started) * 1000, 2)
+                        if first_delta_at is not None
+                        else None
+                    ),
+                )
+                _annotate_generation(usage, stop_reason, len(citations))
+
+            yield AnswerComplete(
+                answer=self._finalise(
+                    text="".join(parts),
+                    citations=citations,
+                    retrieval=retrieval,
+                    usage=usage,
+                    model=self._model.model_id,
+                )
             )
-        )
 
     def _build_request(
         self, question: str, history: list[Message], retrieval: RetrievalResult
@@ -138,6 +191,10 @@ class Answerer:
         )
 
     def _abstention(self, retrieval: RetrievalResult) -> Answer:
+        # No `generate` span is opened, and that absence is the point: a trace with
+        # a `retrieve` and no `generate` is the visible signature of an abstention,
+        # distinguishable at a glance from a model that answered badly.
+        _annotate_abstention("no_sources")
         log.info("generation.abstained", extra={"reason": "no_sources", "query": retrieval.query})
         return Answer(
             text=self._settings.abstention_message,
@@ -146,6 +203,7 @@ class Answerer:
             usage=Usage(),
             model=self._model.model_id,
             abstained=True,
+            trace_id=retrieval.trace_id or current_trace_id(),
         )
 
     def _finalise(
@@ -160,12 +218,26 @@ class Answerer:
         """Apply the citation policy and assemble the final answer."""
         ungrounded = self._settings.require_citations and not citations
         if ungrounded:
+            _annotate_abstention("uncited_answer")
             log.warning(
                 "generation.uncited_answer",
                 extra={
                     "query": retrieval.query,
                     "chunk_ids": [hit.chunk.id for hit in retrieval.chunks],
                 },
+            )
+
+        with span("finalise", require_citations=self._settings.require_citations) as stage:
+            stage.set(
+                citations=len(citations),
+                cited_chunk_ids=[citation.chunk_id for citation in citations],
+                # Which retrieved passages the model actually used. A high
+                # retrieval count with one cited source is the signature of an
+                # over-wide top_k, and it is invisible without this.
+                sources_used=len({citation.chunk_id for citation in citations}),
+                sources_offered=len(retrieval.chunks),
+                abstained=ungrounded,
+                answer_chars=len(text),
             )
 
         log.info(
@@ -177,6 +249,7 @@ class Answerer:
                 "input_tokens": usage.input_tokens,
                 "output_tokens": usage.output_tokens,
                 "cached_input_tokens": usage.cached_input_tokens,
+                "trace_id": retrieval.trace_id,
             },
         )
 
@@ -187,4 +260,5 @@ class Answerer:
             usage=usage,
             model=model,
             abstained=ungrounded,
+            trace_id=retrieval.trace_id or current_trace_id(),
         )

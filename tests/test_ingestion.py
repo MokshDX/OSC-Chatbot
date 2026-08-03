@@ -199,3 +199,43 @@ async def test_filesystem_loader_ids_are_stable(tmp_path: Path) -> None:
 async def test_missing_corpus_directory_is_an_error(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         [document async for document in FilesystemLoader(tmp_path / "nope").load()]
+
+
+async def test_reindex_forces_work_the_content_hash_says_is_unnecessary(
+    pipeline: IngestionPipeline, embeddings: StubEmbeddingModel, documents: list[Document]
+) -> None:
+    """Changing the chunker invalidates every stored chunk but no content hash.
+
+    Without this flag an ordinary sync reports `skipped` for the whole corpus and
+    silently leaves chunks produced by the old strategy in place — an index that
+    disagrees with its own configuration, with nothing to reveal it.
+    """
+    await pipeline.ingest(InMemoryLoader(documents).load())
+    calls_after_first = embeddings.embed_calls
+
+    report = await pipeline.ingest(InMemoryLoader(documents).load(), reindex=True)
+
+    assert report.indexed == 3
+    assert report.skipped == 0
+    assert embeddings.embed_calls > calls_after_first
+
+
+async def test_a_sync_reports_the_trace_that_produced_it(
+    pipeline: IngestionPipeline, documents: list[Document]
+) -> None:
+    """A slow or partial sync is diagnosed from its trace, not from the counters."""
+    from osc_assistant.observability import RECORDER, configure_tracing
+
+    configure_tracing(enabled=True, capacity=5, log_traces=False)
+    RECORDER.clear()
+
+    report = await pipeline.ingest(InMemoryLoader(documents).load())
+
+    assert report.trace_id
+    recorded = RECORDER.get(report.trace_id)
+    assert recorded is not None
+    names = {span.name for span in recorded.spans}
+    # Chunking, embedding and storing are timed separately: they are three
+    # different problems with three different fixes.
+    assert {"ingest", "load_hashes", "document", "chunk", "embed", "store"} <= names
+    assert recorded.spans[0].attributes["indexed"] == 3

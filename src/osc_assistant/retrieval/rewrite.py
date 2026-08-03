@@ -14,6 +14,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from ..logging import get_logger
+from ..observability import annotate
 from ..protocols import ChatModel
 from ..types import ChatRequest, Message, Role
 
@@ -38,6 +39,11 @@ class QueryRewriter:
         self._model = model
         self._max_tokens = max_tokens
 
+    @property
+    def model_id(self) -> str:
+        """The model doing the rewriting, for traces and logs."""
+        return self._model.model_id
+
     async def rewrite(self, question: str, history: Sequence[Message]) -> str:
         """Return a standalone form of `question`.
 
@@ -45,6 +51,7 @@ class QueryRewriter:
         returned untouched and no request is made.
         """
         if not history:
+            annotate(skipped="no_history")
             return question
 
         transcript = _format_history(history[-MAX_HISTORY_TURNS:])
@@ -61,11 +68,17 @@ class QueryRewriter:
         # Broad by intent: rewriting is an optimisation. Any failure degrades to
         # the original question rather than failing the user's request.
         except Exception as exc:
+            # Visible in the trace as an attribute rather than an error: the stage
+            # succeeded at its contract (it produced a usable query), it just did
+            # so by falling back. A trace that showed this as a failure would send
+            # someone debugging the wrong thing.
+            annotate(fallback="provider_error", error=str(exc))
             log.warning("rewrite.failed", extra={"error": str(exc)})
             return question
 
         rewritten = response.text.strip()
         if not rewritten:
+            annotate(fallback="empty_response")
             return question
 
         log.info(

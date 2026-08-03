@@ -11,9 +11,11 @@ from __future__ import annotations
 import hashlib
 import re
 from collections.abc import AsyncIterator, Sequence
+from pathlib import Path
 
 import pytest
 
+from osc_assistant.observability import configure_observability
 from osc_assistant.providers.vectorstores.memory import MemoryVectorStore
 from osc_assistant.types import (
     ChatRequest,
@@ -29,6 +31,25 @@ from osc_assistant.types import (
 
 EMBEDDING_DIMENSIONS = 32
 _TOKEN_PATTERN = re.compile(r"\w+")
+
+
+@pytest.fixture(autouse=True)
+def _isolate_observability(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Keep persisted traces out of the working directory, and out of each other.
+
+    Trace persistence defaults to on and writes to `.osc/` relative to the process
+    working directory, which during a test run is the repository. Redirecting it
+    per test also stops one test's traces from being visible to the next, which
+    would make the CLI trace assertions order-dependent.
+
+    Applied in `conftest` rather than in each suite because it is a property of
+    running the tests at all, not of any one of them.
+    """
+    monkeypatch.setenv("OSC_OBSERVABILITY__TRACE_DIR", str(tmp_path / "traces"))
+    yield
+    # Every test leaves the module-level tracer as it found it: the sink is global
+    # state, and a leaked one writes a later test's traces into a deleted tmp_path.
+    configure_observability(enabled=True, log_traces=False, persist=False)
 
 
 class StubEmbeddingModel:

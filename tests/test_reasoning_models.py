@@ -17,7 +17,7 @@ from __future__ import annotations
 import pytest
 
 from osc_assistant.errors import ProviderError
-from osc_assistant.providers.llm.openai_compatible import _require_answer, _strip_reasoning
+from osc_assistant.grounding import require_answer, strip_reasoning
 
 
 def test_leading_think_block_is_removed() -> None:
@@ -26,22 +26,22 @@ def test_leading_think_block_is_removed() -> None:
         "Employees get 26 days [1]."
     )
 
-    assert _strip_reasoning(raw) == "Employees get 26 days [1]."
+    assert strip_reasoning(raw) == "Employees get 26 days [1]."
 
 
 def test_think_block_with_surrounding_whitespace_is_removed() -> None:
-    assert _strip_reasoning("\n  <think>\nhmm\n</think>\n\nAnswer text.") == "Answer text."
+    assert strip_reasoning("\n  <think>\nhmm\n</think>\n\nAnswer text.") == "Answer text."
 
 
 def test_unclosed_think_block_collapses_to_empty() -> None:
     """A block that never closes means the budget ran out mid-thought."""
-    assert _strip_reasoning("<think>I should check the leave policy and then") == ""
+    assert strip_reasoning("<think>I should check the leave policy and then") == ""
 
 
 def test_answer_without_reasoning_is_untouched() -> None:
     answer = "Employees accrue 26 days of annual leave [1]."
 
-    assert _strip_reasoning(answer) == answer
+    assert strip_reasoning(answer) == answer
 
 
 def test_think_tag_later_in_the_answer_is_preserved() -> None:
@@ -50,21 +50,21 @@ def test_think_tag_later_in_the_answer_is_preserved() -> None:
     rest of the answer would corrupt content the model is citing."""
     answer = "The template uses <think> to open a reasoning block [1]."
 
-    assert _strip_reasoning(answer) == answer
+    assert strip_reasoning(answer) == answer
 
 
 def test_exhausted_budget_raises_an_actionable_error() -> None:
     with pytest.raises(ProviderError, match="completion budget was exhausted"):
-        _require_answer("", "length", "ollama")
+        require_answer("", "length", "ollama")
 
 
 def test_empty_completion_for_another_reason_still_raises() -> None:
     with pytest.raises(ProviderError, match="empty completion"):
-        _require_answer("", "stop", "ollama")
+        require_answer("", "stop", "ollama")
 
 
 def test_non_empty_answer_passes_through() -> None:
-    assert _require_answer("An answer [1].", "stop", "ollama") == "An answer [1]."
+    assert require_answer("An answer [1].", "stop", "ollama") == "An answer [1]."
 
 
 def test_reasoning_markers_never_become_citations() -> None:
@@ -80,6 +80,6 @@ def test_reasoning_markers_never_become_citations() -> None:
     ]
     raw = "<think>Maybe [2] or [3] is relevant.</think>The limit is 180 EUR [1]."
 
-    citations = parse_marker_citations(_strip_reasoning(raw), sources)
+    citations = parse_marker_citations(strip_reasoning(raw), sources)
 
     assert [citation.index for citation in citations] == [1]

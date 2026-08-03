@@ -13,6 +13,7 @@ removing a single line of the wiring it would replace.
 
 from __future__ import annotations
 
+import inspect
 from functools import cached_property
 from typing import Self
 
@@ -161,7 +162,25 @@ class Container:
         await self.vector_store.setup()
 
     async def shutdown(self) -> None:
-        await self.vector_store.close()
+        """Release everything that was actually built.
+
+        Only components whose `cached_property` was touched are torn down —
+        `cached_property` stores into the instance `__dict__`, so its presence there
+        is exactly the record of what was constructed. That matters because
+        `ingest` never builds a chat model, and shutting one down would construct
+        the very thing the lazy graph exists to avoid, then fail for want of a
+        credential.
+
+        Previously this closed the vector store and nothing else, so the HTTP
+        clients inside the Voyage, OpenAI and Gemini adapters were left open:
+        harmless at process exit, a leak in tests and in any future in-process
+        reload.
+        """
+        for name in ("vector_store", "llm", "fast_llm", "embeddings", "reranker"):
+            component = self.__dict__.get(name)
+            if component is not None:
+                await _release(component)
+
 
     async def __aenter__(self) -> Self:
         await self.startup()
@@ -169,3 +188,28 @@ class Container:
 
     async def __aexit__(self, *_: object) -> None:
         await self.shutdown()
+
+
+async def _release(component: object) -> None:
+    """Close a component if it offers a way to be closed.
+
+    Probed rather than required by the protocols: most providers hold no resource,
+    and adding a mandatory `close()` to all five seams to serve the three that do
+    would make every adapter and every test double carry an empty method.
+    """
+    for method_name in ("aclose", "close"):
+        method = getattr(component, method_name, None)
+        if method is None:
+            continue
+        try:
+            result = method()
+            if inspect.isawaitable(result):
+                await result
+        # Broad by intent: shutdown runs on the failure path too, and a provider
+        # that cannot close cleanly must not mask the error that caused shutdown.
+        except Exception as exc:
+            log.warning(
+                "component.close_failed",
+                extra={"component": type(component).__name__, "error": str(exc)},
+            )
+        return

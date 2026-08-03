@@ -272,3 +272,91 @@ async def test_search_ignores_other_embedding_models(
         assert await mismatched.search_vector(query, limit=5) == []
     finally:
         await mismatched.close()
+
+
+# --------------------------------------------------------- StoreInspector in SQL
+#
+# The memory store's inspection is covered by `test_inspection.py`. These exist
+# because the pgvector implementation is a different one — aggregates and
+# percentiles computed in SQL so `osc-assistant status` stays sub-second on a
+# corpus of millions — and a query that is merely plausible is not verified.
+
+
+async def test_statistics_are_computed_in_sql(populated: PgVectorStore) -> None:
+    stats = await populated.statistics()
+
+    assert stats.documents == len(CORPUS)
+    assert stats.chunks == len(CORPUS)
+    assert stats.embedding_models == ["stub-embedding"]
+    assert stats.dimensions == DIMENSIONS
+    assert stats.chunk_chars_min <= stats.chunk_chars_p50 <= stats.chunk_chars_max
+    assert stats.last_indexed_at is not None
+
+
+async def test_statistics_are_scoped_to_the_workspace(populated: PgVectorStore) -> None:
+    """Every aggregate carries the partition key, or a shared database lies."""
+    other = PgVectorStore(
+        PgVectorOptions(
+            dsn=DSN or "",
+            workspace_id=f"empty-{uuid.uuid4().hex[:8]}",
+            dimensions=DIMENSIONS,
+            embedding_model="stub-embedding",
+        )
+    )
+    await other.setup()
+    try:
+        assert (await other.statistics()).documents == 0
+    finally:
+        await other.close()
+
+
+async def test_documents_are_listed_with_their_chunk_counts(
+    populated: PgVectorStore,
+) -> None:
+    listed = await populated.list_documents()
+
+    assert {summary.id for summary in listed} >= {document_id for document_id, _ in CORPUS}
+    assert all(summary.chunk_count == 1 for summary in listed)
+    assert all(summary.indexed_at is not None for summary in listed)
+
+
+async def test_document_search_matches_title_or_uri(populated: PgVectorStore) -> None:
+    assert [summary.id for summary in await populated.list_documents(search="vacation")] == [
+        "vacation"
+    ]
+    assert await populated.list_documents(search="no-such-thing") == []
+
+
+async def test_a_document_with_no_chunks_is_still_listed(
+    store: PgVectorStore,
+) -> None:
+    """A correlated subquery, not a join: this document is the one worth finding.
+
+    It is indexed, it reports a current content hash, and it is invisible to
+    retrieval. A GROUP BY join would drop it from the listing entirely.
+    """
+    document = Document(
+        id="vacation", source_uri="file:///empty.md", title="Empty", text="body"
+    )
+    await store.replace_document(document, [])
+
+    listed = await store.list_documents(search="Empty")
+    assert [(summary.id, summary.chunk_count) for summary in listed] == [("vacation", 0)]
+
+
+async def test_a_chunk_round_trips_with_its_metadata(populated: PgVectorStore) -> None:
+    chunks = await populated.document_chunks("expenses")
+
+    assert [chunk.ordinal for chunk in chunks] == [0]
+    fetched = await populated.get_chunk(chunks[0].id)
+    assert fetched is not None
+    assert fetched.text == chunks[0].text
+    # Metadata must read back as a mapping, not a JSON string: the double-encoding
+    # defect this suite originally found lived exactly here.
+    assert fetched.metadata["section"] == "handbook"
+
+
+async def test_missing_records_return_none(populated: PgVectorStore) -> None:
+    assert await populated.get_document("nope") is None
+    assert await populated.get_chunk("nope") is None
+    assert await populated.document_chunks("nope") == []

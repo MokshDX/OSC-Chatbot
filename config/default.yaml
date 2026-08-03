@@ -99,3 +99,34 @@ server:
   host: 127.0.0.1
   port: 8000
   cors_origins: []
+
+# Execution tracing. Every significant stage of ingestion and question answering is
+# timed and recorded as a span, viewable with `--explain` on any command, or over
+# HTTP at /api/traces from a running service.
+observability:
+  enabled: true
+  # Recent traces held in memory for `osc-assistant trace` and /api/traces. Lost on
+  # restart by design: this answers "what did that request just do?", not "what
+  # happened last Tuesday". Durable traces belong in a collector.
+  trace_buffer_size: 50
+  # Upper bound on one trace, so a corpus-wide ingestion — several spans per
+  # document — cannot grow without limit. Totals stay accurate past the cap.
+  max_spans_per_trace: 500
+  log_traces: true
+  # Appends completed traces to a bounded JSONL file so they outlive the process.
+  # Without this a one-shot CLI command's trace is gone the moment it exits, and
+  # re-running to recreate it does not reproduce a non-deterministic generation.
+  # `./osc traces` and `./osc trace <id>` read from it.
+  persist_traces: true
+  trace_dir: .osc
+  # Rotation threshold. Two files are kept — the one being written and the one
+  # before it — so the ceiling on disk is roughly twice this.
+  max_trace_file_bytes: 5000000
+  # Records questions, rewritten queries and answers in traces. Set false for a
+  # corpus where a trace must not contain content: every timing, count and stage is
+  # retained and only the text becomes a character count.
+  capture_text: true
+  # Serving traces over HTTP additionally requires environment == development, and
+  # that check is not overridable here: traces carry question text and chunk ids,
+  # and no endpoint on this service is authenticated yet.
+  expose_traces: true

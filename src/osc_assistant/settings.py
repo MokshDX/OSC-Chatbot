@@ -97,6 +97,78 @@ class ServerSettings(BaseModel):
     cors_origins: list[str] = Field(default_factory=list)
 
 
+class ObservabilitySettings(BaseModel):
+    """How much the system records about its own execution.
+
+    Defaults are chosen for a development machine: everything on, because the cost
+    is a few hundred microseconds per request and the benefit is being able to
+    answer "why did it do that?" without reproducing the request.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = Field(
+        default=True, description="Collect execution traces. Off makes every span a no-op."
+    )
+    trace_buffer_size: int = Field(
+        default=50,
+        ge=1,
+        description=(
+            "Recent traces kept in memory for `osc-assistant trace` and /api/traces. "
+            "In-process and lost on restart; durable traces belong in a collector."
+        ),
+    )
+    max_spans_per_trace: int = Field(
+        default=500,
+        ge=1,
+        description=(
+            "Upper bound on one trace, so a corpus-wide ingestion cannot grow "
+            "without limit. Totals stay accurate past the cap; only detail is lost."
+        ),
+    )
+    log_traces: bool = Field(
+        default=True,
+        description="Emit each completed trace as one structured log record.",
+    )
+    persist_traces: bool = Field(
+        default=True,
+        description=(
+            "Append completed traces to a bounded JSONL file, so they outlive the "
+            "process. Without this a one-shot CLI command's trace is gone the "
+            "moment it exits, and re-running to recreate it does not reproduce a "
+            "non-deterministic generation."
+        ),
+    )
+    trace_dir: Path = Field(
+        default=Path(".osc"),
+        description="Directory holding the persisted trace log. Add it to .gitignore.",
+    )
+    max_trace_file_bytes: int = Field(
+        default=5_000_000,
+        ge=1024,
+        description=(
+            "Rotation threshold. Two files are kept — the one being written and the "
+            "one before it — so the ceiling is roughly twice this."
+        ),
+    )
+    capture_text: bool = Field(
+        default=True,
+        description=(
+            "Record questions, rewritten queries and answers in traces. Set false "
+            "for corpora where a trace must not contain content — the shape and "
+            "timings of every trace are retained, only the text becomes a length."
+        ),
+    )
+    expose_traces: bool = Field(
+        default=True,
+        description=(
+            "Serve /api/traces. These contain question text and retrieved chunk "
+            "ids, and the API has no authentication yet, so this is refused "
+            "outright when environment is not 'development'."
+        ),
+    )
+
+
 class Settings(BaseSettings):
     """Root configuration object.
 
@@ -138,6 +210,20 @@ class Settings(BaseSettings):
     generation: GenerationSettings = GenerationSettings()
     database: DatabaseSettings = DatabaseSettings()
     server: ServerSettings = ServerSettings()
+    observability: ObservabilitySettings = ObservabilitySettings()
+
+    @property
+    def traces_are_exposed(self) -> bool:
+        """Whether the HTTP trace endpoints should be registered.
+
+        Two conditions, not one. Traces carry question text and retrieved chunk
+        ids, and no endpoint on this service is authenticated yet, so exposing them
+        outside development would publish corpus content to anyone who can reach
+        the port. The environment check is deliberately not overridable by the
+        setting: a profile copied from a developer's machine into production must
+        not be able to turn this on by accident.
+        """
+        return self.observability.expose_traces and self.environment == "development"
 
     @classmethod
     def settings_customise_sources(

@@ -19,7 +19,9 @@ from .types import (
     ChatResponse,
     Chunk,
     Document,
+    DocumentSummary,
     EmbeddedChunk,
+    IndexStatistics,
     ScoredChunk,
     StreamEvent,
     Vector,
@@ -119,6 +121,40 @@ class VectorStore(Protocol):
 
     async def search_hybrid(self, vector: Vector, query: str, limit: int) -> list[ScoredChunk]:
         """Combined lexical and vector search, fused into a single ranking."""
+
+
+@runtime_checkable
+class StoreInspector(Protocol):
+    """Read-only introspection of what a store currently holds.
+
+    Kept **separate from `VectorStore`** on purpose. `VectorStore` is the seam the
+    pipelines depend on, and every method on it is one a new store must implement
+    to be usable at all; the last change to it removed a method rather than adding
+    one. Inspection is for operators and tooling, not for answering a question, and
+    a store that cannot support it (a hosted vector database exposing no aggregate
+    API) should still be a perfectly good `VectorStore`.
+
+    Tooling therefore probes for it — `isinstance(store, StoreInspector)` — and
+    reports that the configured store offers no inspection rather than failing.
+    Both built-in stores implement it.
+    """
+
+    async def statistics(self) -> IndexStatistics:
+        """Corpus-wide counts and chunk-size distribution."""
+
+    async def list_documents(
+        self, limit: int = 50, offset: int = 0, search: str | None = None
+    ) -> list[DocumentSummary]:
+        """Indexed documents, newest first. `search` matches title or source URI."""
+
+    async def get_document(self, document_id: str) -> DocumentSummary | None:
+        """One document's index record, or None if it is not indexed."""
+
+    async def document_chunks(self, document_id: str) -> list[Chunk]:
+        """Every chunk of a document, in ordinal order."""
+
+    async def get_chunk(self, chunk_id: str) -> Chunk | None:
+        """One chunk with its full text — what the model was actually shown."""
 
 
 @runtime_checkable

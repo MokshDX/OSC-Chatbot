@@ -23,8 +23,11 @@ from ..container import Container
 from ..errors import AssistantError, ConfigurationError
 from ..generation import AnswerComplete, RetrievalReady
 from ..logging import configure_logging, get_logger
+from ..observability import RECORDER, configure_observability
+from ..protocols import StoreInspector
 from ..settings import Settings, load_settings
 from ..types import CitationDelta, TextDelta
+from .banner import describe_shutdown, describe_startup, startup_notes
 from .schemas import (
     AnswerBody,
     ChatRequestBody,
@@ -32,9 +35,11 @@ from .schemas import (
     ComponentBody,
     ErrorBody,
     HealthBody,
+    IndexStatusBody,
     RetrievedChunkBody,
     SearchRequestBody,
     SearchResponseBody,
+    TraceListBody,
 )
 from .sse import SSE_HEADERS, SSE_MEDIA_TYPE, encode_event
 
@@ -42,31 +47,68 @@ log = get_logger(__name__)
 
 router = APIRouter(prefix="/api")
 
+# Separate router because it is mounted conditionally: traces contain question text
+# and retrieved chunk ids, and nothing on this service is authenticated yet.
+trace_router = APIRouter(prefix="/api/traces", tags=["observability"])
+
 # A single static page, served from one route. The client is expected to be
 # replaced by a richer one; keeping it to a file plus this route means that
 # replacement touches nothing else in the service.
 _INDEX = Path(__file__).parent / "static" / "index.html"
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, *, banner: bool = False) -> FastAPI:
     """Build the ASGI application.
 
     Accepting settings makes the app constructible in tests against an in-memory
     store with stub providers, with no environment manipulation.
+
+    `banner` prints a human-readable summary to stderr on startup. Off by default
+    because the common non-CLI caller is a test or an ASGI server embedding this
+    app, and neither wants decoration on a stream; `osc-assistant serve` turns it
+    on, which is the case where a person is watching.
     """
     settings = settings or load_settings()
     configure_logging(settings.log_level, settings.log_format)
+    configure_observability(
+        enabled=settings.observability.enabled,
+        capacity=settings.observability.trace_buffer_size,
+        max_spans=settings.observability.max_spans_per_trace,
+        log_traces=settings.observability.log_traces,
+        capture_text=settings.observability.capture_text,
+        persist=settings.observability.persist_traces,
+        trace_dir=settings.observability.trace_dir,
+        max_trace_bytes=settings.observability.max_trace_file_bytes,
+    )
     container = Container(settings)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await container.startup()
-        log.info("service.started", extra={"environment": settings.environment})
+        notes = await startup_notes(container, settings)
+        # Logged as well as printed: a condition worth interrupting a developer
+        # for is worth appearing in the log a collector keeps.
+        log.info(
+            "service.started",
+            extra={
+                "environment": settings.environment,
+                "workspace_id": settings.workspace_id,
+                "llm": f"{settings.llm.provider}/{settings.llm.model}",
+                "embeddings": f"{settings.embeddings.provider}/{settings.embeddings.model}",
+                "vector_store": settings.vector_store.provider,
+                "traces_exposed": settings.traces_are_exposed,
+                "notes": notes,
+            },
+        )
+        if banner:
+            await describe_startup(container, settings)
         try:
             yield
         finally:
             await container.shutdown()
             log.info("service.stopped")
+            if banner:
+                describe_shutdown()
 
     app = FastAPI(
         title="OSC Knowledge Assistant",
@@ -85,6 +127,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
 
     app.include_router(router)
+    if settings.traces_are_exposed:
+        # Registered conditionally rather than gated inside the handler, so a
+        # non-development deployment does not merely refuse the request — the route
+        # is absent from the app and from its OpenAPI schema entirely.
+        app.include_router(trace_router)
     _register_ui(app)
     _register_error_handlers(app)
     return app
@@ -136,6 +183,23 @@ async def health(request: Request) -> HealthBody:
     )
 
 
+@router.get("/status", response_model=IndexStatusBody)
+async def status(request: Request) -> IndexStatusBody:
+    """What is currently indexed.
+
+    Separate from `/health` because it queries the store: health must stay a cheap
+    liveness probe that a load balancer can call every second, and counting several
+    million chunks is not that.
+    """
+    store = _container(request).vector_store
+    if not isinstance(store, StoreInspector):
+        raise HTTPException(
+            status_code=501,
+            detail="The configured vector store offers no inspection interface.",
+        )
+    return IndexStatusBody.from_domain(await store.statistics())
+
+
 @router.post("/search", response_model=SearchResponseBody)
 async def search(request: Request, body: SearchRequestBody) -> SearchResponseBody:
     """Run retrieval only.
@@ -151,7 +215,37 @@ async def search(request: Request, body: SearchRequestBody) -> SearchResponseBod
         results=[RetrievedChunkBody.from_domain(hit) for hit in result.chunks],
         candidates_considered=result.candidates_considered,
         duration_seconds=result.duration_seconds,
+        trace_id=result.trace_id,
+        trace=_trace_payload(result.trace_id) if body.explain else None,
     )
+
+
+@trace_router.get("", response_model=TraceListBody)
+async def list_traces(limit: int = 20) -> TraceListBody:
+    """Recent execution traces, most recent first."""
+    return TraceListBody(
+        traces=[recorded.to_dict() for recorded in RECORDER.recent(limit=limit)]
+    )
+
+
+@trace_router.get("/{trace_id}")
+async def get_trace(trace_id: str) -> dict[str, object]:
+    """One execution trace in full, by id or unique prefix."""
+    recorded = RECORDER.get(trace_id)
+    if recorded is None:
+        raise HTTPException(status_code=404, detail=f"No trace {trace_id!r} in the buffer.")
+    return recorded.to_dict()
+
+
+def _trace_payload(trace_id: str) -> dict[str, object] | None:
+    """The trace for `trace_id`, if it is still in the buffer.
+
+    Returned inline on request rather than requiring a second call, because the
+    caller wanting an explanation is usually a developer at a terminal and a second
+    round trip is a second chance to lose the id.
+    """
+    recorded = RECORDER.get(trace_id) if trace_id else None
+    return recorded.to_dict() if recorded else None
 
 
 # response_model is disabled because this endpoint returns either an SSE stream or
@@ -165,7 +259,9 @@ async def chat(request: Request, body: ChatRequestBody) -> StreamingResponse | A
 
     if not body.stream:
         answer = await answerer.answer(body.question, history)
-        return AnswerBody.from_domain(answer)
+        return AnswerBody.from_domain(
+            answer, trace=_trace_payload(answer.trace_id) if body.explain else None
+        )
 
     async def events() -> AsyncIterator[str]:
         try:
@@ -189,11 +285,23 @@ async def chat(request: Request, body: ChatRequestBody) -> StreamingResponse | A
                         yield encode_event(
                             "complete", AnswerBody.from_domain(event.answer).model_dump()
                         )
-        except AssistantError as exc:
-            # The response has already begun, so the status code is fixed at 200.
-            # Failures are therefore reported in-band as a terminal error event.
+        # Broad by intent. The response has already begun, so the status code is
+        # fixed at 200 and a failure can only be reported in band. Catching only
+        # `AssistantError` meant an unexpected exception — a bug, a provider SDK
+        # raising something undocumented — closed the stream with no terminal
+        # event, and a client that is told nothing waits forever. Every exit from
+        # this generator now emits a terminal event.
+        except Exception as exc:
             log.exception("chat.stream_failed")
-            yield encode_event("error", {"error": type(exc).__name__, "detail": str(exc)})
+            detail = (
+                str(exc)
+                if isinstance(exc, AssistantError)
+                # An unexpected exception's message is not part of the API and may
+                # carry internals, so clients get a stable message and the detail
+                # goes to the log with its traceback.
+                else "The assistant failed to complete this answer."
+            )
+            yield encode_event("error", {"error": type(exc).__name__, "detail": detail})
 
     return StreamingResponse(events(), media_type=SSE_MEDIA_TYPE, headers=SSE_HEADERS)
 

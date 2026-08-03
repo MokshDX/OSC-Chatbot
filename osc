@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+# Run the assistant CLI without activating the virtualenv or typing a path into it.
+#
+#   ./osc doctor
+#   ./osc ask "How many days of annual leave do employees get?" --explain
+#
+# Resolves relative to this script, not the caller's working directory, so it works
+# from anywhere in the tree. Falls back to whatever `osc-assistant` is on PATH,
+# which is what a container image or an activated environment will have.
+set -e
+
+root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+
+if [ -x "$root/.venv/bin/osc-assistant" ]; then
+    exec "$root/.venv/bin/osc-assistant" "$@"
+fi
+
+if command -v osc-assistant >/dev/null 2>&1; then
+    exec osc-assistant "$@"
+fi
+
+echo "osc-assistant is not installed. Run: make install" >&2
+exit 1

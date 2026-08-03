@@ -118,6 +118,53 @@ class ScoredChunk:
     source: MatchSource
 
 
+# ---------------------------------------------------------------------- inspection
+
+
+@dataclass(frozen=True, slots=True)
+class DocumentSummary:
+    """What the store knows about one indexed document.
+
+    Distinct from `Document`: it carries no text (a corpus document can be
+    megabytes) but does carry what only the store knows — how many chunks the
+    document produced and when it was last indexed. Those two facts answer most
+    "why is this document not being retrieved?" questions on their own.
+    """
+
+    id: str
+    title: str
+    source_uri: str
+    content_hash: str
+    chunk_count: int
+    metadata: Metadata = field(default_factory=dict)
+    updated_at: datetime | None = None
+    indexed_at: datetime | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class IndexStatistics:
+    """Aggregate state of the index.
+
+    Chunk length percentiles are here because chunk size is the highest-leverage
+    retrieval knob in the system and the only honest way to check the configured
+    target is being met is to measure what was actually stored — a `chunk_size` of
+    900 with a p95 of 180 means the separators are firing far too early.
+    """
+
+    workspace_id: str
+    documents: int
+    chunks: int
+    embedding_models: list[str]
+    dimensions: int
+    chunk_chars_min: int = 0
+    chunk_chars_mean: float = 0.0
+    chunk_chars_p50: int = 0
+    chunk_chars_p95: int = 0
+    chunk_chars_max: int = 0
+    documents_by_extension: Mapping[str, int] = field(default_factory=dict)
+    last_indexed_at: datetime | None = None
+
+
 # ------------------------------------------------------------------------ inference
 
 
@@ -230,7 +277,14 @@ type StreamEvent = TextDelta | CitationDelta | StreamEnd
 
 @dataclass(frozen=True, slots=True)
 class Answer:
-    """The result of one question, with everything needed to audit it."""
+    """The result of one question, with everything needed to audit it.
+
+    `trace_id` identifies the execution trace that produced this answer. It is
+    returned to clients and printed by the CLI so that "this answer is wrong" can
+    be turned into "here is every stage that produced it" without reproducing the
+    request — the single most useful thing to have when a user reports a bad answer
+    hours later.
+    """
 
     text: str
     citations: list[Citation]
@@ -238,3 +292,4 @@ class Answer:
     usage: Usage
     model: str
     abstained: bool = False
+    trace_id: str = ""

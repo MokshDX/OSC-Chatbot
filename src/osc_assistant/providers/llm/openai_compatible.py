@@ -19,7 +19,6 @@ sources into the prompt and parsing `[n]` markers out of the answer.
 from __future__ import annotations
 
 import os
-import re
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Any, Literal
@@ -27,7 +26,12 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from ...errors import ConfigurationError, MissingDependencyError, ProviderError
-from ...grounding import compose_grounded_system, parse_marker_citations
+from ...grounding import (
+    compose_grounded_system,
+    parse_marker_citations,
+    require_answer,
+    strip_reasoning,
+)
 from ...protocols import ChatModel
 from ...registries import llm_registry
 from ...registry import ComponentConfig
@@ -78,6 +82,13 @@ _PRESETS: dict[str, _Preset] = {
     "lmstudio": _Preset(
         base_url="http://localhost:1234/v1", api_key_env=None, requires_key=False
     ),
+    "openai_local": _Preset(
+        base_url="http://localhost:8000/v1", api_key_env=None, requires_key=False
+    ),
+    # Deprecated alias for `openai_local`. `local` also names the
+    # sentence-transformers embedding provider, so the same token in the same
+    # profile meant two unrelated things depending on which block it appeared in.
+    # Kept registered so existing profiles keep working; prefer `openai_local`.
     "local": _Preset(base_url="http://localhost:8000/v1", api_key_env=None, requires_key=False),
 }
 
@@ -160,8 +171,8 @@ class OpenAICompatibleChatModel:
             raise ProviderError(f"{self._provider} request failed: {exc}") from exc
 
         choice = response.choices[0]
-        text = _require_answer(
-            _strip_reasoning(choice.message.content or ""),
+        text = require_answer(
+            strip_reasoning(choice.message.content or ""),
             choice.finish_reason,
             self._provider,
         )
@@ -206,8 +217,8 @@ class OpenAICompatibleChatModel:
 
         # Citations are parsed from the stripped answer, never from the raw stream:
         # a marker the model emitted while reasoning aloud is not a citation.
-        answer = _require_answer(
-            _strip_reasoning("".join(buffer)), finish_reason, self._provider
+        answer = require_answer(
+            strip_reasoning("".join(buffer)), finish_reason, self._provider
         )
         for citation in parse_marker_citations(answer, request.sources):
             yield CitationDelta(citation=citation)
@@ -232,50 +243,6 @@ class OpenAICompatibleChatModel:
             payload["temperature"] = request.temperature
         payload.update(self._options.extra_body)
         return payload
-
-
-# Matches a reasoning block only at the very start of the answer, which is where a
-# hybrid reasoning model emits one. Anchoring it means a source document that
-# happens to discuss "<think>" cannot have its quoted content silently deleted.
-_LEADING_THINK = re.compile(r"\A\s*<think>.*?(?:</think>|\Z)", re.DOTALL)
-
-
-def _strip_reasoning(text: str) -> str:
-    """Remove a leading `<think>` block from a reasoning model's answer.
-
-    Ollama already separates reasoning from content, but vLLM, LM Studio and
-    llama.cpp serving the same Qwen3 weights emit the block inline. Stripping it
-    matters for more than tidiness: citation markers are parsed out of this text,
-    and a `[2]` the model wrote while thinking aloud would otherwise become a
-    citation on a claim the answer never made.
-
-    An unclosed block means the token budget ran out mid-thought. That collapses to
-    an empty string, which `_require_answer` then reports as the budget problem it is.
-    """
-    return _LEADING_THINK.sub("", text, count=1).strip()
-
-
-def _require_answer(text: str, finish_reason: str | None, provider: str) -> str:
-    """Fail loudly when the model produced no answer text.
-
-    An empty completion reaching the answerer is indistinguishable from a model
-    that had nothing to say, and is finalised as an uncited — therefore abstained —
-    answer. The user is then told the corpus lacks the information when the real
-    cause is a token budget consumed entirely by reasoning. Diagnosing that from an
-    abstention message is close to impossible, so it is raised instead.
-    """
-    if text:
-        return text
-    if finish_reason == "length":
-        raise ProviderError(
-            f"{provider} returned no answer: the completion budget was exhausted "
-            f"before any answer text was produced. Raise generation.max_tokens, or "
-            f"lower the model's reasoning effort "
-            f"(llm.options.extra_body.reasoning_effort)."
-        )
-    raise ProviderError(
-        f"{provider} returned an empty completion (finish_reason={finish_reason!r})."
-    )
 
 
 def _parse_usage(usage: Any) -> Usage:

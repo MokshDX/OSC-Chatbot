@@ -1,13 +1,13 @@
 # PROJECT_STATUS.md
 
 **Project:** OSC Internal Knowledge Assistant
-**Status:** Phase 2 — the knowledge engine runs end to end on a verified local stack; not yet production-ready
-**Last updated:** 2026-07-29
+**Status:** Phase 3 — a verified, observable, operable knowledge engine; not yet production-ready
+**Last updated:** 2026-08-04
 **Audience:** a senior engineer, or a future Claude session, joining with zero context
 
 Read this file first, then `README.md` for how to run it, then `claude.md` for the
-engineering standards this repository is held to. `graphify-out/wiki/index.md` is a
-generated, agent-crawlable map of the codebase (812 nodes, 36 communities).
+engineering standards this repository is held to. `graphify-out/` holds a generated,
+agent-crawlable map of the codebase.
 
 ---
 
@@ -16,45 +16,48 @@ generated, agent-crawlable map of the codebase (812 nodes, 36 communities).
 A provider-agnostic retrieval-augmented question answering service over OSC's
 internal documents. Employees ask a question; the system retrieves supporting
 passages from an indexed corpus, generates an answer grounded in them, attaches
-citations back to the sources, and declines to answer rather than guessing when
-the corpus does not support one.
+citations back to the sources, and declines to answer rather than guessing when the
+corpus does not support one.
 
-The distinguishing constraint is **vendor agnosticism**: the chat model, embedding
-model, reranker, vector store and chunking strategy are each selected by
-configuration and swappable independently. Business logic depends on five
-`Protocol` definitions and never imports a provider module. 13 chat providers,
-11 embedding providers, 3 rerankers, 3 vector stores and 2 chunkers are registered
-today; adding another is a new file plus one import line.
+Two constraints distinguish it.
 
-**Where it stands.** The full path has now been executed against real
-infrastructure, not stubs: drop PDFs, Word documents, HTML, Markdown and text files
-into `./docs`, ingest them, and they are parsed, chunked, embedded, and stored in
-PostgreSQL with pgvector. Questions retrieve by hybrid search and are answered by
-Qwen3 running locally through Ollama, with citations back to the source file. A
-re-run over an unchanged corpus makes zero embedding calls. 119 tests, **0 skipped**;
-`ruff` and `mypy --strict` clean across 45 source files.
+**Vendor agnosticism.** The chat model, embedding model, reranker, vector store and
+chunking strategy are each selected by configuration and swappable independently.
+Business logic depends on five `Protocol` definitions and never imports a provider
+module. 37 providers are registered today; adding one is a new file plus one import
+line — and via the LangChain bridge, most of the remaining ecosystem is reachable
+with no new file at all.
 
-The default configuration is now fully local and needs no credential: Ollama
-(`qwen3:8b`) for generation, Ollama (`nomic-embed-text`, 768-d) for embeddings,
-PostgreSQL 18 with pgvector 0.8.2 for storage.
+**Observability.** Every significant stage of ingestion and question answering is a
+timed span, one request produces one trace, and that trace survives the process that
+made it. A developer can ask what happened during any recent request — where the
+time went, how the data changed between stages, which stage failed — without adding
+a log line, attaching a debugger, or reproducing the request.
 
-**What changed this session.** The previously unverified PostgreSQL layer was run
-for the first time and immediately produced a real defect: chunk and document
-metadata was being **double-encoded**, so it read back as a `str` rather than a
-`dict` for every consumer of `Chunk.metadata` (§12). That is exactly the class of
-bug the untested-storage warning existed to flag. Ingestion also gained real
-document parsing — it previously read only plain text — and a data-loss guard
-around pruning.
+**Where it stands.** The full path runs against real infrastructure: drop PDFs, Word
+documents, HTML, Markdown and text into `./docs`, ingest them, and they are parsed,
+chunked, embedded and stored in PostgreSQL with pgvector. Questions retrieve by
+hybrid search and are answered by Qwen3 through Ollama, with citations back to the
+source file. **266 tests**: 239 run with no network, database or credential; 18 more
+against real PostgreSQL; 9 more end to end against live Ollama *and* PostgreSQL.
+`ruff` and `mypy --strict` clean across 57 source files.
+
+**What changed in the last two iterations.** Iteration 2 added the observability
+layer, the operational CLI, `StoreInspector`, and a deliberately scoped LangChain
+integration (§4). Iteration 3 — this one — completed the observability story for
+one-shot commands, made the CLI coherent, gave the server a human face without
+sacrificing machine-readable logs, and closed four architectural gaps that had been
+carried as debt (§5).
 
 **Where it does not stand.** There is still no authentication, no per-document
 access control, no rate limiting, no conversation persistence, and **no evaluation
-harness** — so no quality claim in this document is measured. Answer quality is
-also bounded by an 8B local model: it is grounded and it cites correctly, but it
-misreads figures (§9).
+harness** — so no quality claim in this document is measured. Answer quality is also
+bounded by an 8B local model: it is grounded and cites correctly, but it misreads
+figures (§10).
 
-**The honest one-line summary:** a working, verified knowledge engine on a local
-stack, one authentication story and one evaluation harness away from being
-defensible in production.
+**The honest one-line summary:** a working, verified, thoroughly observable
+knowledge engine on a local stack, one authentication story and one evaluation
+harness away from being defensible in production.
 
 ---
 
@@ -70,32 +73,25 @@ knowledge platform supporting multiple knowledge sources and document formats.
 **Stated priorities**, in the handbook's own order: accuracy, minimal
 hallucinations, maintainability, scalability, modular architecture, developer
 experience. Engineering decisions optimise for correctness → reliability →
-maintainability → readability → scalability → performance → development speed, in
-that order.
+maintainability → readability → scalability → performance → development speed.
 
-**Architectural requirements** added after the initial design was approved:
+**Architectural requirements:**
 
-1. Vendor-agnostic wherever practical; the chat model must support multiple
-   providers through a common interface (Anthropic, OpenAI, Gemini, Hugging Face,
-   Ollama, Groq, local models, future providers). Switching providers must require
+1. Vendor-agnostic wherever practical; switching providers must require
    configuration changes only.
 2. Embeddings provider-agnostic and independently swappable from the chat model.
 3. The vector store must be replaceable. PostgreSQL + pgvector is the preferred
-   default; migrating to Pinecone/Qdrant/Weaviate/Milvus must not require rewriting
-   business logic.
-4. Design for experimentation — LLMs, embedding models, rerankers, chunking
-   strategies and vector stores will be swapped frequently, and that must be cheap.
-5. Avoid unnecessary abstractions. Every abstraction must solve a real engineering
-   problem.
-6. New providers are plug-in additions: adding one creates a new implementation
-   rather than modifying existing business logic.
+   default; migrating elsewhere must not require rewriting business logic.
+4. Design for experimentation — models, rerankers, chunkers and stores will be
+   swapped frequently, and that must be cheap.
+5. Avoid unnecessary abstractions. Every abstraction must solve a real problem.
+6. New providers are plug-in additions rather than edits to business logic.
 7. Evaluate frameworks pragmatically — adopt LangChain/LlamaIndex if they genuinely
    improve the architecture, reject them if not, on evidence rather than ideology.
 
-**Non-functional targets set during design** (none yet measured — see §10):
-time-to-first-token < 2s p95, full answer < 10s p95, answer faithfulness ≥ 95% of
-claims supported by their cited source, retrieval recall@10 ≥ 90%, full index
-rebuildable unattended in < 4h.
+**Non-functional targets set during design** (none yet measured — see §11):
+time-to-first-token < 2s p95, full answer < 10s p95, faithfulness ≥ 95%, retrieval
+recall@10 ≥ 90%, full index rebuildable unattended in < 4h.
 
 ---
 
@@ -105,6 +101,8 @@ rebuildable unattended in < 4h.
 connectors ──▶ parse ──▶ chunk ──▶ embed ──▶ vector store
                                                   │
 question ──▶ rewrite ──▶ search ──▶ rerank ──▶ generate ──▶ answer + citations
+
+            every stage above is a timed span in one trace
 ```
 
 ### The five seams
@@ -120,76 +118,226 @@ Implementations satisfy them **structurally** — no base class, no inheritance:
 | `Reranker` | `rerank(query, candidates, top_k)` |
 | `Chunker` | `split(document) -> list[Chunk]` |
 
-`types.py` holds the only vocabulary shared across modules (`Document`, `Chunk`,
-`EmbeddedChunk`, `ScoredChunk`, `ChatRequest`, `Citation`, `Answer`, …), all frozen
-dataclasses. **Business logic imports `protocols` and `types` only. It never
-imports a provider.** That single rule is what makes the vendor-agnosticism
-requirement real rather than aspirational.
+Plus one **optional** protocol, `StoreInspector`, added in iteration 2. It carries
+read-only introspection — statistics, document listing, chunk lookup — and is
+deliberately *not* part of `VectorStore`: every method on `VectorStore` is one a new
+store must implement to be usable at all, whereas a hosted vector database exposing
+no aggregate API should still be a perfectly good `VectorStore`. Tooling probes for
+it with `isinstance` and reports its absence rather than failing. Both built-in
+stores implement it.
+
+`types.py` holds the only vocabulary shared across modules, all frozen dataclasses.
+**Business logic imports `protocols` and `types` only. It never imports a
+provider.** That single rule is what makes vendor-agnosticism real rather than
+aspirational, and it is checkable with a grep.
 
 ### Wiring
 
 `registries.py` holds five `Registry` instances mapping a provider name to a
 factory. A provider module registers itself on import; `providers/__init__.py`
-imports the sub-packages; `container.py` (the composition root) imports that
-package once. Nothing in the call path imports every possible implementation.
+imports the sub-packages; `container.py` (the composition root) imports that package
+once. Nothing in the call path imports every possible implementation.
 
-`Container` builds components lazily via `cached_property`, so `osc-assistant
-ingest` never constructs a chat model and therefore never needs an LLM credential.
-It injects into the vector store the values the store cannot know itself — vector
-width and the active embedding model id, both derived from the embedding model.
+`Container` builds components lazily via `cached_property`, so `ingest` never
+constructs a chat model and therefore never needs an LLM credential. It injects into
+the vector store the values the store cannot know itself — vector width and the
+active embedding model id, both derived from the embedding model.
+
+Shutdown releases every component that was *actually built*: `cached_property`
+stores into the instance `__dict__`, so its presence there is exactly the record of
+what was constructed. Components are probed for `aclose()` or `close()` rather than
+being required to have one, because most providers hold no resource (§5).
 
 ### Request path
 
-1. **Authenticate** — *not implemented.* See §7.
+1. **Authenticate** — *not implemented.* See §8.
 2. **Rewrite** (`retrieval/rewrite.py`) — resolves conversational references into a
    standalone query using the configured *fast* model. Best-effort: any failure
-   falls back to the original question.
+   falls back to the original question and records why on the span.
 3. **Retrieve** (`retrieval/pipeline.py`) — vector, keyword, or hybrid. Hybrid runs
-   both and fuses with Reciprocal Rank Fusion (`fusion.py`); the pgvector store
-   implements the same formula in SQL so both stores rank identically.
+   both and fuses with Reciprocal Rank Fusion; the pgvector store implements the
+   same formula in SQL so both stores rank identically.
 4. **Rerank** — `noop` by default; `cross_encoder` available.
 5. **Generate** (`generation/answerer.py`) — builds a `ChatRequest` with the frozen
    system prompt and the retrieved chunks as `sources`.
-6. **Cite** — Anthropic passes sources as structured documents and receives
-   verified per-span citations. Every other provider renders sources into the
-   prompt and parses `[n]` markers back out (`grounding.py`). Both paths produce
-   the same `Citation` shape.
+6. **Cite** — Anthropic passes sources as structured documents and receives verified
+   per-span citations. Every other provider renders sources into the prompt and
+   parses `[n]` markers back out. Both paths produce the same `Citation` shape.
 7. **Abstain** — no retrieval hits means the model is never called. No citations
    means the answer is treated as ungrounded.
+
+### Observability layer
+
+`observability/` is three modules with one dependency direction: `trace` collects,
+`store` persists, `render` presents; the package `__init__` is the only place that
+composes them.
+
+- **`trace.py`** — a context-var span tree. `span()` outside a trace returns a
+  detached span that records nothing, so instrumented code carries no `if tracing`
+  branches. `trace()` nested inside another trace *extends* it rather than forking,
+  which is what lets `retrieve` be both a whole operation (`./osc search`) and a
+  stage of a larger one (`./osc ask`). Bounded by `max_spans_per_trace`, with the
+  dropped count recorded so totals stay accurate past the cap.
+- **`store.py`** — a bounded, append-only JSONL log so a trace outlives the process
+  that made it. Rotation, not rewriting: appending is O(1). Writing never raises —
+  instrumentation that can break the thing it observes is a liability.
+- **`render.py`** — the waterfall and one-line summary. Bars are positioned by
+  offset and sized by duration, so "these ran back to back" and "this one dominated"
+  are distinguishable at a glance.
+
+Instrumentation lives in the pipelines, not the adapters. Every provider call is
+made from a pipeline, so wrapping the call sites covers all 37 providers without a
+single adapter importing the tracer — and a new provider is traced the day it is
+written.
 
 ### Ingestion path
 
 `ingestion/parsers.py` maps a file extension to an extraction function:
-Markdown/text read directly, HTML through the standard library's `html.parser`
-(dropping `<script>` and `<style>`, preferring the document's own `<title>`), PDF
-through `pypdf` (per page, retaining `page_count`), and `.docx` through
-`python-docx` (including table cells, where policy documents keep the facts people
-actually ask about). Parsers extract and never rewrite: chunk text is quoted back as
-citation evidence, so invented text would make that evidence a forgery.
+Markdown/text read directly, HTML through the standard library's `html.parser`, PDF
+through `pypdf` (per page, retaining `page_count`), `.docx` through `python-docx`
+(including table cells). Parsers extract and never rewrite: chunk text is quoted
+back as citation evidence, so invented text would make that evidence a forgery.
 
-`FilesystemLoader` delegates to that registry and records any file it cannot read
-in `failures`, which the pipeline treats as **present but unreadable** rather than
-deleted (§12). Metadata — relative path, extension, size, page count, mtime — is
-attached to the `Document` and denormalised onto every chunk.
+`FilesystemLoader` records any file it cannot read in `failures`, which the pipeline
+treats as **present but unreadable** rather than deleted (§13).
 
 ### Storage
 
-One PostgreSQL database holds chunk text, embeddings (`pgvector`), the lexical
-index (a generated `tsvector` column) and document metadata. `migrations/001_init.sql`
-is applied by a hand-rolled forward-only runner in `pgvector.py`; the embedding
-dimension is substituted into the DDL at migration time. The HNSW index is created
-only when that dimension is ≤ 2000, which is pgvector's hard limit; above it the
-column is left unindexed and search degrades to an exact scan rather than the
-migration failing outright. Every table carries a `workspace_id` partition key —
-one workspace exists today.
+One PostgreSQL database holds chunk text, embeddings (`pgvector`), the lexical index
+(a generated `tsvector` column) and document metadata. `migrations/001_init.sql` is
+applied by a forward-only runner in `pgvector.py`; the embedding dimension is
+substituted into the DDL at migration time. The HNSW index is created only when that
+dimension is ≤ 2000. Every table carries a `workspace_id` partition key.
 
 ---
 
-## 4. Repository structure
+## 4. LangChain integration — what was adopted and what was not
+
+Requirement 7 asked for a pragmatic evaluation. Iteration 1 rejected LangChain
+outright; iteration 2 revised that on a narrower reading of the evidence, and the
+revision is worth recording honestly.
+
+**The original rejection was right about the framework and wrong about the
+libraries.** "A framework would impose its own document and retriever abstractions
+on top of ours, add a large transitive dependency tree, and place an uncontrolled
+layer on the exact code path that most needs tracing and tuning" — all still true,
+and all still the reason LangChain does not own the retrieval pipeline, the vector
+store, the prompts or the answer loop. What the original assessment treated as one
+decision was actually several, and two of the smaller ones deserved a different
+answer.
+
+The rule applied: **adopt LangChain for undifferentiated work, keep OSC's own code
+where OSC's design is better.**
+
+### Adopted
+
+**Text splitting** (`chunking/langchain_splitters.py`). `langchain-text-splitters`
+supplies `langchain_recursive` and `markdown`. Splitting text on the coarsest
+boundary that fits is a genuinely generic problem; OSC's own implementation carried
+known rough edges (a chunk can exceed its budget by up to the overlap, and the
+overlap slice can cut mid-word); and heading-aware splitting would otherwise have to
+be written and maintained here. The `markdown` strategy splits on structure first and
+packs to size second, recording the heading path on each chunk's metadata.
+
+Chunk ids come from the same shared helper the built-in chunkers use, so idempotent
+ingestion behaves identically whichever strategy is configured.
+
+**Provider reach** (`providers/{llm,embeddings}/langchain_bridge.py`). One adapter
+wraps any LangChain `BaseChatModel` or `Embeddings` behind OSC's protocols, making
+Bedrock, Vertex, Azure, Cohere, Mistral, Fireworks and the rest reachable by
+configuration rather than by writing an adapter each time. This creates a deliberate
+two-tier provider strategy: native adapters are the default path and keep
+provider-specific capabilities (Anthropic's verified citations, the reasoning
+controls on the OpenAI-compatible family); the bridge covers the long tail at the
+cost of marker-parsed citations and one more layer.
+
+The class is named by import path rather than resolved by `init_chat_model`, which
+lives in the `langchain` meta-package and would pull LangGraph in to save one line
+of configuration.
+
+**Outbound interoperability** (`integrations/langchain.py`). OSC's retrieval pipeline
+presented as a LangChain `BaseRetriever`. OSC's value is the indexed corpus and how
+it is retrieved, not the answer loop, and teams inside the company will build agents
+on frameworks OSC does not control — making the retriever consumable means they use
+the same index and tuning rather than standing up a parallel one that drifts.
+
+### Not adopted, with reasons
+
+| Component | Why OSC's own is better |
+|---|---|
+| Vector store | The pgvector store fuses lexical and vector search with RRF **in SQL**, in one round trip. LangChain's PGVector does not. |
+| Retrieval pipeline | Six explicit stages, each instrumented and independently testable. LCEL would obscure the path most in need of reading. |
+| Answer loop | Abstention, the citation policy and the streaming contract are the parts most specific to OSC's requirements. |
+| Prompts | Frozen module constants, precisely so the prefix stays byte-identical. A template engine has nothing to add to a constant. |
+| Tracing | LangChain callbacks observe LangChain runs; most of this pipeline is not one. A tracer built on them would be blind to chunking, SQL fusion and the abstention decision. |
+| Document type | `langchain_core.Document` at the boundary only. Domain types stay frozen dataclasses with no framework in them. |
+
+### Dependency posture
+
+`langchain-core` and `langchain-text-splitters` are **core** dependencies: both are
+pure Python with no vendor SDK behind them, and both must be importable for the
+registries to be complete. Every LangChain *integration* package
+(`langchain-anthropic`, `langchain-aws`, …) remains an install-time choice named by
+the operator in `options.class_path`. This preserves the existing principle — the
+core runtime is small, vendor SDKs are extras.
+
+**Default chunker is still `recursive`.** Switching it changes every chunk boundary
+and therefore every chunk id in a live index, and the project's own rule is that a
+retrieval change ships with a measured improvement. There is no golden set yet. The
+LangChain strategies are registered, tested and one profile line away.
+
+---
+
+## 5. What changed in this iteration
+
+The brief was maturity, not features: complete the observability story, make the
+tooling coherent, close architectural gaps.
+
+### The observability gap that was actually there
+
+The in-memory ring buffer works for the server — the process is long-lived, so
+`/api/traces` answers "what did that request just do?" with no storage. It does not
+work for the CLI, where the process exits the moment the answer is printed. A
+developer who did not think to pass `--explain` had no way back to the trace, and
+`./osc trace` could only read from a running server.
+
+**Alternatives evaluated**, before choosing:
+
+| Option | Rejected because |
+|---|---|
+| Re-run with `--explain` | A generation is not deterministic. Re-running produces *a* trace, not *the* trace — and the answer under investigation is usually the odd one. It also costs a full model call and cannot explain a failure that already happened in CI. |
+| A `traces` table in PostgreSQL | Puts write load on the primary datastore for a debugging feature, and makes tracing unavailable in exactly the situation where it is most wanted: when the database is what is broken. |
+| OpenTelemetry + collector | Right destination once traces leave the host, wrong answer for reading a trace in a terminal. `Span` stays OTel-shaped so that remains an exporter, not a rewrite. |
+| A daemon or socket | A background process to read a trace is worse than the problem. |
+
+**Chosen: a bounded, append-only JSONL log** (`observability/store.py`), plus
+**auto-explain on failure**, which needs no persistence at all. The file is the
+smallest thing that outlives a process; it needs no service, schema or migration; it
+works identically for the CLI, the server and CI; and it uses exactly the payload
+the HTTP endpoint already serves, so one parser and one renderer cover both sources.
+
+### Everything else
+
+| Area | Change |
+|---|---|
+| **Traces** | `./osc traces` lists from the persisted log with `--name`, `--failed` and `--slower-than` filters; `./osc trace [id]` expands one, defaulting to the most recent. `--url` still reads from a running service. |
+| **Failure reporting** | A failed command prints its trace before the error. `AssistantError` — the project's vocabulary for operator problems — is reported as a message, not a traceback; anything else keeps its traceback, because for a bug the frames are the point. |
+| **Error translation** | `PgVectorStore.setup()` now wraps connection failures in `VectorStoreError` with the DSN (password redacted). Untranslated, a stopped database surfaced as a bare `OSError` traceback in the CLI and **bypassed the API's error handler entirely** — the most common operational failure was also the worst reported. |
+| **CLI coherence** | Commands grouped into three `--help` panels by purpose. `traces`/`trace` now mirrors `documents`/`document`. `version` added. |
+| **Server experience** | A human summary on **stderr** — URLs, active components, warnings — while structured JSON continues to stdout untouched, so `serve > run.log` still yields a clean parseable log. Startup notes (empty index, mixed embedding models, non-development environment without auth) are both printed and logged. |
+| **SSE robustness** | The stream handler caught only `AssistantError`, so an unexpected exception closed the connection with **no terminal event** and left the UI spinning forever. Every exit now emits one; unexpected exceptions get a stable client message with the detail in the log. |
+| **Lifecycle** | `Container.shutdown()` released only the vector store; provider HTTP clients leaked. It now releases every component that was built, probing for `aclose`/`close`, and never constructs one that was not. |
+| **Naming** | `provider: local` meant an OpenAI-compatible server in `llm` and sentence-transformers in `embeddings`. Renamed to `openai_local`, with `local` kept as a working alias. |
+| **Packaging** | `py.typed` added and shipped, so consumers see the annotations. |
+| **Test hygiene** | Trace persistence is isolated per test in `conftest`, so the suite no longer writes into the repository. |
+
+---
+
+## 6. Repository structure
 
 ```
 src/osc_assistant/
-├── protocols.py            the five seams
+├── protocols.py            the five seams + optional StoreInspector
 ├── types.py                domain vocabulary — the largest shared surface
 ├── registries.py           five Registry instances
 ├── registry.py             generic Registry[T] + ComponentConfig
@@ -197,708 +345,499 @@ src/osc_assistant/
 ├── errors.py               AssistantError hierarchy
 ├── logging.py              JSON formatter on stdlib logging
 ├── fusion.py               Reciprocal Rank Fusion (reference implementation)
-├── grounding.py            nonce-delimited source rendering + marker citation parsing
-├── container.py            composition root
-├── cli.py                  serve / ingest / ask / search / providers
+├── grounding.py            source rendering, citation parsing, reasoning-model hygiene
+├── container.py            composition root + lifecycle
+├── observability/          trace.py · store.py · render.py
+├── cli/                    __init__ · _shared · core · diagnose
 ├── providers/
-│   ├── llm/                anthropic (254) · openai_compatible (255) · gemini (185)
-│   ├── embeddings/         openai_compatible · voyage · gemini · local
+│   ├── llm/                anthropic · openai_compatible · gemini · langchain_bridge
+│   ├── embeddings/         openai_compatible · voyage · gemini · local · langchain_bridge
 │   ├── reranking/          noop · cross_encoder
-│   └── vectorstores/       pgvector (379 — largest file) · memory
-├── chunking/recursive.py   RecursiveChunker + FixedSizeChunker
+│   └── vectorstores/       pgvector · memory
+├── chunking/               recursive.py · langchain_splitters.py
 ├── ingestion/              parsers.py · loaders.py · pipeline.py
 ├── retrieval/              pipeline.py · rewrite.py
 ├── generation/             answerer.py · prompts.py
-└── api/                    app.py · schemas.py · sse.py · static/index.html
+├── integrations/           langchain.py — OSC exposed outward
+└── api/                    app.py · schemas.py · sse.py · banner.py · static/index.html
 
-tests/                      119 tests, 0 skipped
+tests/                      266 tests across 18 files
 migrations/001_init.sql     schema, with a dimension-conditional HNSW index
 docs/                       the ingestion folder — seed corpus, 5 formats
-config/                     default.yaml + experiments/{local-only,hosted-anthropic,groq-voyage}.yaml
-graphify-out/               generated knowledge graph — graph.html, wiki/, GRAPH_REPORT.md
+config/                     default.yaml + 4 experiment profiles
+osc                         the CLI wrapper — no .venv paths anywhere
+graphify-out/               generated knowledge graph
 ```
 
-`graphify-out/` was regenerated after this session's changes: 1022 nodes, 2230
-edges, 73 communities, and it now covers `ingestion/parsers.py`, the UI and the new
-tests. **`graphify-out/wiki/` is the exception — it is still the previous build's
-output and is stale.** Regenerate it with `/graphify . --wiki`, because
-`CLAUDE.md` directs every new session to read it.
+**One rule to preserve:** business logic imports `protocols` and `types` only. If a
+pipeline, route or CLI command ever imports a provider module, the vendor-agnosticism
+this project is built around has been broken.
 
-**What the knowledge graph says about this structure.** Betweenness centrality
-identifies `ComponentConfig` (bridging 15 communities) and `Document` (bridging 15)
-as the true architectural hubs — configuration and the corpus record are what the
-whole system routes through. That matches the intended design.
+**A second, newer rule:** `integrations/` may import from the core, and the core may
+never import from `integrations/`. That one-way dependency is what stops an outbound
+adapter from becoming a dependency of the platform.
 
-One finding is worth acting on: **`StubEmbeddingModel`, a test double, is the most
-connected node in the entire codebase (57 edges) — ahead of `VectorStore`,
-`Document` and every real provider.** The graph is reporting that the test suite,
-not production wiring, is what actually exercises every seam. That is expected for
-a system whose providers are all optional extras, but it also means the seams are
-proven against stubs far more thoroughly than against real providers (§10).
+### What the knowledge graph says about this structure
+
+Regenerated on 2026-08-04: **1624 nodes, 3841 edges, 104 communities**, up from
+1022/2230/73. Betweenness identifies `MemoryVectorStore` (71 edges), `Document`
+(68), `StubEmbeddingModel` (67), `ComponentConfig` (64) and `Container` (57) as the
+architectural hubs — configuration, the corpus record and the composition root are
+what the system routes through, which matches the intended design.
+
+One change is worth recording. The previous build reported `StubEmbeddingModel`, a
+*test double*, as the single most connected node in the codebase, ahead of every
+real component — the graph's way of saying that the test suite, not production
+wiring, was what exercised every seam. It has now been displaced by
+`MemoryVectorStore` and `Document`. The doubles are still central, and should be:
+they are how the protocol layer is proven. But real components now lead.
+
+**Caveat: `graphify-out/wiki/` is stale.** The graph itself (`graph.json`,
+`graph.html`, `GRAPH_REPORT.md`) is current and is the artefact to navigate by;
+the wiki is generated by the `/graphify` assistant skill rather than the CLI and
+still reflects an 812-node build. Regenerate it or ignore it — do not trust it.
 
 ---
 
-## 5. Completed milestones
+## 7. Completed milestones
 
 | # | Milestone | Evidence |
 |---|---|---|
-| 1 | **Five-protocol seam layer** | `protocols.py`; no provider import in any pipeline (verifiable by grep) |
-| 2 | **Registry + composition root** | 32 registered providers across 5 registries; `osc-assistant providers` lists them from the registries themselves |
-| 3 | **13 chat providers** | `anthropic` (native citations), `gemini` (native SDK), and one OpenAI-compatible adapter serving 11 names: openai, groq, ollama, vllm, lmstudio, huggingface, openrouter, together, gemini_openai, local |
-| 4 | **11 embedding providers** | openai-compatible family, `voyage` (REST, asymmetric input types), `gemini`, `local` (sentence-transformers) |
-| 5 | **2 vector stores** | `pgvector` (production) and `memory` (tests + experiments); identical RRF ranking |
-| 6 | **Layered configuration** | env > `.env` > YAML profile; two working experiment profiles that share no vendor with the default |
-| 7 | **Idempotent ingestion** | content-hash skip, incremental re-index, pruning, per-document failure isolation; re-running an unchanged corpus makes zero embedding calls (asserted) |
-| 8 | **Hybrid retrieval** | BM25-equivalent `tsvector` + pgvector cosine, fused by RRF in SQL; same formula in `fusion.py` for the memory store |
-| 9 | **Grounded generation with citations** | Anthropic native path + marker-parsing fallback, converging on one `Citation` shape |
-| 10 | **Abstention policy** | no hits → no model call; no citations → ungrounded. Identical in streaming and buffered modes; the `complete` event is authoritative |
-| 11 | **HTTP API + SSE streaming** | `/api/health` (reports active components), `/api/search`, `/api/chat` |
-| 12 | **CLI** | `serve`, `ingest`, `ask`, `search`, `providers` |
-| 13 | **Structured logging** | one trace per query with retrieved chunk ids, latency, token counts |
-| 14 | **Test suite** | 119 tests, 0 skipped; 108 run with no network/DB/credentials; ruff + mypy --strict clean |
-| 15 | **Three P0 defects found and fixed** | prompt injection, ingestion data loss, chunker content corruption — see §12 |
-| 16 | **Multi-format document parsing** | `.md` `.markdown` `.txt` `.rst` `.html` `.htm` `.pdf` `.docx`, one function per format; verified against a real corpus of all five families |
-| 17 | **PostgreSQL layer verified against a real database** | 11 integration tests executed for the first time, all green; found and fixed the metadata double-encoding defect (§12) |
-| 18 | **Fully local default stack** | Ollama `qwen3:8b` + `nomic-embed-text` + pgvector; no credential, no corpus text off-host |
-| 19 | **Reasoning-model handling** | thinking disabled by default and budgeted for; leaked `<think>` blocks stripped before citation parsing; exhausted budget reported instead of silently abstaining |
-| 20 | **Prune data-loss guard** | an unreadable file is exempt from pruning, so a transient parse failure cannot delete a healthy indexed document |
-| 21 | **Chat UI** | one static page at `/`, streaming over SSE, honouring the authoritative-`complete` contract |
+| 1 | Five-protocol seam layer | `protocols.py`; no provider import in any pipeline (grep-verifiable) |
+| 2 | Registry + composition root | 37 registered providers across 5 registries |
+| 3 | 15 chat providers | `anthropic` (native citations), `gemini`, an OpenAI-compatible adapter serving 12 names, and the LangChain bridge |
+| 4 | 12 embedding providers | openai-compatible family, `voyage`, `gemini`, `local`, LangChain bridge |
+| 5 | 3 vector store names | `pgvector`/`postgres` (production) and `memory`; identical RRF ranking |
+| 6 | 4 chunking strategies | `recursive`, `fixed`, `langchain_recursive`, `markdown` |
+| 7 | Layered configuration | env > `.env` > YAML profile; four experiment profiles |
+| 8 | Idempotent ingestion | content-hash skip, incremental re-index, pruning, per-document failure isolation, `--reindex` escape hatch |
+| 9 | Hybrid retrieval | BM25-equivalent `tsvector` + pgvector cosine, fused by RRF in SQL |
+| 10 | Grounded generation with citations | Anthropic native path + marker-parsing fallback, one `Citation` shape |
+| 11 | Abstention policy | no hits → no model call; no citations → ungrounded; identical in both modes |
+| 12 | HTTP API + SSE streaming | health, status, search, chat, traces |
+| 13 | Multi-format parsing | 8 extensions, one function per format, verified against a real corpus |
+| 14 | PostgreSQL layer verified | 18 integration tests against a real database |
+| 15 | Fully local default stack | Ollama + pgvector; no credential, no corpus text off-host |
+| 16 | **Execution tracing** | every stage timed; one trace per request; nested traces merge correctly |
+| 17 | **Trace persistence** | bounded JSONL log; traces outlive the process; `traces`/`trace` commands |
+| 18 | **Operational CLI** | 14 commands in three groups; `doctor`, `status`, `config`, document and chunk inspection |
+| 19 | **Store inspection** | `StoreInspector` on both stores; SQL aggregates and percentiles |
+| 20 | **LangChain integration** | two chunkers, two provider bridges, one outbound retriever — all scoped (§4) |
+| 21 | **End-to-end smoke test** | 9 tests driving the real stack; the old manual verification table, executed |
+| 22 | **Human/machine output split** | stderr banner, stdout JSON; both audiences served without compromise |
+| 23 | Chat UI | one static page, streaming over SSE, honouring the authoritative-`complete` contract |
 
 ---
 
-## 6. Partially completed milestones
+## 8. Not yet implemented
 
-**Prompt caching — implemented, currently inert.** The `cache_system_prompt` option
-marks the Anthropic system block as cacheable, and prompts are frozen module
-constants specifically so the prefix stays byte-identical. But `ANSWER_SYSTEM_PROMPT`
-is roughly 250 tokens, below the minimum cacheable prefix on current models, so
-`cache_read_input_tokens` will be zero on every request. The discipline is correct;
-the saving does not currently occur.
-
-**Reranking — built, now safe to enable, still unmeasured.** The `min_score` scale
-defect is fixed: the threshold is applied to first-stage scores before reranking,
-so a cross-encoder's negative logits no longer empty the result set. A regression
-test asserts it. What remains is the reason it is still off by default — there is
-no golden set to demonstrate that it improves anything.
-
-**pgvector store — complete and now verified.** All eleven integration tests have
-been executed against PostgreSQL 18.4 with pgvector 0.8.2 and pass: the migration
-runner, the generated `tsvector` column, the SQL rank-fusion query, the
-`replace_document` transaction, cascade deletion and workspace isolation. Running
-them also surfaced the metadata double-encoding defect (§12).
-
-One caveat: the suite shares a database with the application, so
-`OSC_TEST_DIMENSIONS` must match the width the `chunks` table was migrated with
-(768). A dedicated test database would be better and is a small change.
-
-**Workspace partitioning — schema-complete, single-tenant in practice.** Every table
-carries `workspace_id` and every query is scoped by it, but only one workspace ever
-exists and nothing resolves a workspace from a request.
-
-**Query rewriting — implemented, now disabled by default.** It works and degrades
-safely, but it was never justified by measurement, and on the local stack it costs a
-second Qwen3 call on the critical path. It is off in `config/default.yaml`; the
-architecture, the `fast_llm` seam and the tests remain. The UI correspondingly does
-not send conversation history, so follow-up turns are currently independent
-questions. Turning both on together is the right move once there is a golden set to
-show it helps.
-
-**Prompt caching — implemented, inert, and now doubly so.** `cache_system_prompt`
-marks the Anthropic system block cacheable, but the prompt is below the minimum
-cacheable prefix, and the default stack is Ollama, which has no such feature. The
-discipline (frozen prompts, stable prefix) is still correct and costs nothing.
-
-**Documentation — thorough in code, thin operationally.** Module docstrings explain
-intent and trade-offs throughout, and README now covers ingestion, formats and the
-reasoning-model budget. There is still no deployment guide and no on-call runbook.
-
----
-
-## 7. Not yet implemented features
-
-Ordered by how much they block a production release.
+Ordered by how much each blocks a production release.
 
 1. **Authentication (OIDC).** No identity anywhere. `/api/chat` and `/api/search`
-   accept arbitrary unauthenticated input. Intended design: OIDC against OSC's
-   existing IdP, with group membership feeding access control.
-2. **Per-document access control.** The design calls for ACLs resolved at index time
-   and enforced as a SQL predicate at query time, so an unauthorised chunk is never
-   retrieved and never reaches the model. No ACL column, no principal resolution,
-   no filtering exists. Phase 1 was scoped to company-wide-readable content
-   specifically to avoid needing this yet.
+   accept arbitrary unauthenticated input. Intended design: OIDC against OSC's IdP,
+   with group membership feeding access control.
+2. **Per-document access control.** ACLs resolved at index time and enforced as a
+   SQL predicate at query time, so an unauthorised chunk is never retrieved. No ACL
+   column, no principal resolution, no filtering exists. Phase 1 was scoped to
+   company-wide-readable content specifically to avoid needing this yet.
 3. **Rate limiting and concurrency bounds.** A request can hold a connection for the
    full 120s provider timeout. Nothing caps requests per user.
-4. **Evaluation harness.** The design treats this as a first-class subsystem: a
-   golden set of 50–100 real questions, retrieval metrics (recall@k, MRR) and
-   generation metrics (citation coverage, faithfulness) gating pull requests. None
-   of it exists. Every quality claim in this document is currently unmeasurable.
+4. **Evaluation harness.** A golden set of 50–100 real questions, retrieval metrics
+   (recall@k, MRR) and generation metrics (citation coverage, faithfulness) gating
+   pull requests. None of it exists. Every quality claim here is unmeasurable.
 5. **Conversation persistence.** The API is stateless; history is client-supplied.
-   No storage, no retrieval, no deletion.
-6. **Feedback capture.** No thumbs, no comments, no storage — so no raw material for
-   future evaluation sets.
-7. **Connectors beyond the filesystem.** Confluence, Google Drive, SharePoint. The
-   loader shape (`load() -> AsyncIterator[Document]`) is established and used.
-8. **Admin visibility.** No view of what is indexed, when it last synced, what
-   failed. `IngestionReport` carries the data; nothing surfaces it.
-9. **Web client.** No frontend at all; the API is the only interface besides the CLI.
-10. **Deployment artefacts.** No Dockerfile for the service, no IaC, no CI pipeline.
-    `docker-compose.yml` covers only the development database.
+6. **Feedback capture.** No thumbs, no comments — so no raw material for evaluation.
+7. **Connectors beyond the filesystem.** Confluence, Drive, SharePoint. The loader
+   shape (`load() -> AsyncIterator[Document]`) is established and used.
+8. **Deployment artefacts.** No Dockerfile for the service, no IaC, no CI pipeline.
+   `docker-compose.yml` covers only the development database.
+9. **Trace export.** Traces are local. A collector, and an OTel exporter, is the
+   next step once more than one process matters.
 
 ---
 
-## 8. Technical debt
+## 9. Technical debt
 
-Ordered by impact. P0 items from the last audit are fixed; these are what remains.
+Ordered by impact. Items closed in this iteration are listed first, because a future
+session should not re-derive them.
 
-### Fixed this session
+### Closed in this iteration
 
-- **`min_score` compared against an undefined scale** — now applied to first-stage
-  scores before reranking, with a regression test using a negative-scoring reranker.
-- **Metadata double-encoding in the pgvector store** — see §12.
-- **Pruning could delete an unreadable-but-present document** — see §12.
-- **Migration failed for embedding models wider than 2000 dimensions** — the HNSW
-  index is now conditional. This would have broken the *previous* default profile
-  (`text-embedding-3-large`, 3072-d) on its first real migration.
+- **CLI traces died with the process** — persisted trace log (§5).
+- **A failing command produced a raw traceback** — `AssistantError` reported as a
+  message; trace printed on failure.
+- **asyncpg exceptions escaped untranslated** — now `VectorStoreError`, with the
+  DSN password redacted. This also fixed the API, which could not handle them either.
+- **The SSE stream could end with no terminal event** — every exit now emits one.
+- **Provider resources were never released** — `Container.shutdown()` closes what
+  it built.
+- **`provider: local` meant two different things** — renamed to `openai_local`,
+  alias retained.
+- **`settings.py` had zero tests** — 10 tests pin the four-layer precedence.
+- **`RetrievalResult` was the only unfrozen dataclass** — frozen.
+- **No `py.typed` marker** — added and shipped.
+- **The end-to-end path was not automated** — `make test-e2e`, 9 tests.
+- **The test suite wrote into the working directory** — isolated in `conftest`.
 
 ### P1 — fix before real traffic
 
-**Endpoints are unauthenticated, unbounded and unthrottled.**
-Documented as deferred in the README, which is fine as a plan and not fine as a
-release state — the constraint lives in prose, not in the code path. Now slightly
-more pressing, because a UI at `/` makes the service look ready to use. *Smallest
-fix:* refuse to start when `environment != "development"` and no auth is configured.
-Ten lines, and the constraint becomes enforced.
+**Endpoints are unauthenticated, unbounded and unthrottled.** Documented as
+deferred, which is fine as a plan and not fine as a release state. The service now
+*says so* at every startup when `environment != development`, but the constraint
+still lives in prose rather than in the code path. *Smallest fix:* refuse to start
+when `environment != "development"` and no auth is configured. Ten lines.
 
-**No evaluation harness, and now more surface to evaluate.** Chunk size, `top_k`
-and the reasoning budget were all tuned this session against a 4096-token context by
-reasoning, not measurement. They are plausible; they are not verified. Every
-retrieval and generation setting in `config/default.yaml` is currently an educated
-guess.
+**No evaluation harness, and more surface to evaluate than before.** Chunk size,
+`top_k`, the reasoning budget and the choice of chunking strategy are all tuned by
+reasoning, not measurement. Every retrieval and generation setting in
+`config/default.yaml` is an educated guess.
 
 **The integration suite shares the application database.** Isolation is by
-`workspace_id` and it is honoured, but a test run against a production DSN would
-write to production. *Smallest fix:* a dedicated test database, and refuse to run
-when the DSN matches the configured application DSN.
+`workspace_id` and it is honoured, but a run against a production DSN would write to
+production. The new e2e suite takes a separate database, which is the right pattern;
+the pgvector suite should follow it.
 
 ### P2 — maintainability
 
-**`provider: local` means two different things.** In `llm_registry` it is an
-OpenAI-compatible server on `:8000`; in `embedding_registry` it is
-sentence-transformers. Same token, two unrelated behaviours, in the same profile
-file. *Fix:* rename the LLM one to `openai_local`.
-
-**Provider resources are never released.** `Container.shutdown()` closes only the
-vector store. `VoyageEmbeddingModel` opens an `httpx.AsyncClient` and defines an
-`aclose()` that nothing calls; the OpenAI and Gemini clients are never closed.
-Harmless at process exit, a leak in tests and any future in-process reload.
-
-**`settings.py` has zero tests.** It carries the only hand-written logic an operator
-will touch: a custom YAML settings source and four-layer precedence. Nothing
-verifies that env overrides YAML, that nested `OSC_LLM__PROVIDER` merges rather than
-replacing the whole block, or that a missing profile is tolerated. A precedence
-regression is invisible in tests and surfaces as "production is running the wrong
-model".
+**`api/app.py` uses `response_model=None` on `/chat`**, dropping the JSON branch
+from the OpenAPI schema. Splitting into `/chat` and `/chat/stream` is the fix, and
+it is an API break the bundled UI would have to follow — deferred deliberately
+rather than overlooked.
 
 **Speculative code with no consumer.**
 - `providers/{llm,embeddings}/gemini.py` — ~330 lines and a `google-genai`
   dependency reaching a service the `gemini_openai` preset already reaches through
-  an adapter that is already shipped and already tested.
+  an adapter that is already shipped and tested.
 - `FixedSizeChunker` — an evaluation baseline for an evaluation harness that does
-  not exist.
+  not exist. Now joined by two LangChain chunkers that are also unmeasured, though
+  those at least cost no code to maintain.
 
 **No OCR path for scanned PDFs.** They are detected and rejected with a clear
 message rather than silently indexed as empty, which is the right failure. But a
-real internal corpus contains scans, and today they simply cannot be ingested.
+real internal corpus contains scans.
+
+**Trace reads are whole-file.** `TraceStore._read_backwards` reads both files to
+serve twenty summaries. Bounded by `max_trace_file_bytes` and fine at 5 MB; marked
+with a `ponytail:` comment naming seek-from-end as the upgrade if that limit rises.
 
 ### Minor
 
-- `api/app.py` uses `response_model=None` on `/chat`, dropping the JSON branch from
-  the OpenAPI schema. Split into `/chat` and `/chat/stream`.
-- The SSE generator catches `AssistantError` only; a plain `Exception` kills the
-  stream with no terminal event.
-- `RetrievalResult` is the only unfrozen dataclass in the domain.
-- No `py.typed` marker — the package ships annotations consumers cannot see.
-- `pgvector/pgvector:pg16` is a moving tag; pin the digest.
 - `container.py` imports `RecursiveChunker` purely for a registration side effect.
+- `pgvector/pgvector:pg16` is a moving tag in `docker-compose.yml`; pin the digest.
+- The UI does not send conversation history, so follow-up turns are independent
+  questions (query rewriting is also off by default — §11).
 
 ---
 
-## 9. Known limitations
+## 10. Known limitations
 
 **Citation strength differs by provider, silently.** Anthropic returns citations
-verified against the source text. Every other provider asserts them via `[n]`
-markers that a model can emit for a claim the source does not support. Both produce
-the same `Citation` object, so nothing downstream — including the UI — can tell the
-difference. This is a deliberate trade-off for vendor agnosticism, and the gap is
-supposed to be *measured* by the evaluation harness that does not yet exist.
+verified against the source text. Every other provider — including the local default
+and the LangChain bridge — asserts them via `[n]` markers that a model can emit for
+an unsupported claim. Both produce the same `Citation` object, so nothing downstream
+can tell the difference. A deliberate trade-off for vendor agnosticism, and the gap
+is supposed to be *measured* by the evaluation harness that does not yet exist.
 
 **Prompt injection is mitigated, not eliminated.** Source bodies can no longer close
-the data delimiter (it carries a per-request nonce), but a document can still
-contain persuasive text. Nothing prevents a corpus document from arguing with the
-system prompt — only from impersonating it.
+the data delimiter (it carries a per-request nonce), but a document can still contain
+persuasive text. Nothing prevents a corpus document from arguing with the system
+prompt — only from impersonating it.
 
-**Retrieval quality is unmeasured.** No recall figure, no faithfulness figure. Every
-number in §2's non-functional targets is a target, not an observation.
+**Retrieval quality is unmeasured.** Every number in §2's targets is a target, not
+an observation.
 
-**The local answer model misreads figures.** Observed directly: asked for the
-expense approval thresholds, `qwen3:8b` rendered the source's "500 to 2,500 EUR" as
-"50,000 to 2,500 EUR" while citing the correct passage. The retrieval was right, the
-citation was right, and the number was wrong. This is the central honest caveat of
-the local stack: citations tell a user *where to check*, and on an 8B model they
-genuinely have to. `hosted-anthropic.yaml` exists partly as the comparison point,
-and quantifying this gap is the first job of the evaluation harness.
+**The local answer model misreads figures.** Observed directly: asked for expense
+approval thresholds, `qwen3:8b` rendered "500 to 2,500 EUR" as "50,000 to 2,500 EUR"
+while citing the correct passage. Retrieval was right, the citation was right, the
+number was wrong. This is the central honest caveat of the local stack.
 
 **Answers are limited by a 4096-token context.** Ollama loads `qwen3:8b` with a
-4096-token window, which is what caps the corpus sent to the model at five chunks of
-~900 characters. A longer document needing six passages to answer will be answered
-incompletely rather than incorrectly, but it will still be answered. Serving the
-model with a larger context and raising `top_k`, `chunk_size` and `max_tokens` is a
-configuration change.
+4096-token window, capping the corpus sent to the model at five chunks of ~900
+characters. A document needing six passages will be answered incompletely rather
+than incorrectly.
 
-**Follow-up questions are not conversational.** Query rewriting is off by default
-(§6) and the UI sends no history, so "what about the second one?" retrieves against
-those literal words.
+**Traces are process-local and lossy.** The persisted log is bounded and lives on
+one host. It answers "what happened recently, here". It does not answer "what
+happened last Tuesday across the fleet" — that needs the exporter in §8.
 
-**Chunk overlap can exceed the size budget.** `_merge` prepends the overlap after
-packing, so a chunk may exceed `chunk_size` by up to `chunk_overlap`, and the
-overlap slice can cut mid-word.
+**Trace text may contain corpus content.** Questions, rewritten queries and answers
+are recorded by default. `observability.capture_text: false` retains every timing,
+count and stage while reducing text to a length. The HTTP trace endpoints are
+additionally refused outside `environment: development`, and that check is not
+overridable by configuration.
 
 **Ingestion assumes a single writer.** `_prune` reads the document-hash map once at
-the start of a sync and deletes anything absent at the end. A concurrent writer's
-documents would be deleted.
+the start of a sync and deletes anything absent at the end.
 
-**ACLs, when built, will be a point-in-time snapshot.** A permission revoked between
-syncs will not be reflected until the next one.
-
-**The knowledge graph is missing the database schema.** `migrations/001_init.sql`
-is absent from `graphify-out/` because `tree_sitter_sql` was not installable in the
-tool environment. The tables, indexes and the foreign key that forced the
-`replace_document` design are invisible to the graph. Anyone using the wiki to
-understand storage must read the SQL directly.
-
-**Graph health — now clean.** The previous build reported 135 dangling-endpoint
-edges, 5 self-loops and 100 collapsed undirected edges. After the rebuild the
-diagnostic reports **zero** of each across all 2230 edges, so the edge count no
-longer understates the raw extraction.
-
-**The graph now contains the seed corpus as well as the code.** `docs/` is test
-data for the RAG system, but to graphify it is just more documents, so six
-communities (leave policy, expense limits, incident severity, deployment runbook,
-data retention, access control) describe OSC's fictional internal policies rather
-than this codebase. Harmless, and it does mean a graph query can return a policy
-node. Exclude `docs/` from the scan if that becomes noise.
+**Chunk overlap can exceed the size budget** in the built-in `recursive` chunker.
+`langchain_recursive` does not have this defect and is one config line away.
 
 ---
 
-## 10. Testing status
+## 11. Testing status
 
 ```
-119 tests collected · 119 passing · 0 skipped
+266 tests collected
+  239 pass with no network, no database, no credentials     make test
+  +18 pgvector integration tests against a real database    make test-integration
+   +9 end-to-end tests against live Ollama and PostgreSQL   make test-e2e
+
 ruff check .   clean
-mypy --strict  clean, 45 source files
+mypy --strict  clean, 57 source files
 ```
 
-| File | Tests | Covers |
-|---|---|---|
-| `test_fusion_and_grounding.py` | 16 | RRF ordering/dedup; citation marker parsing; **prompt-injection containment** |
-| `test_retrieval.py` | 15 | store contract, all three strategies, top_k, reranking, query rewriting, **min_score applied pre-rerank** |
-| `test_parsers.py` | 13 | every format, content preservation, script/style stripping, corrupt and scanned files, **failure isolation**, provenance metadata |
-| `test_chunking.py` | 12 | size budget, id stability, **content preservation** |
-| `test_pgvector_integration.py` | 11 | migrations, tsvector, SQL fusion, cascade delete, JSONB, workspace isolation, **transaction rollback** — *all executing* |
-| `test_ingestion.py` | 11 | idempotency, change detection, pruning, **unreadable-file prune exemption**, failure isolation |
-| `test_answerer.py` | 11 | abstention in both modes, citation policy, streaming reassembly |
-| `test_api.py` | 11 | health, search, chat (both modes), SSE event ordering, input validation, UI route |
-| `test_registry.py` | 10 | registration, override, unknown-provider error, built-in inventory |
-| `test_reasoning_models.py` | 9 | `<think>` stripping, anchoring, exhausted-budget error, **reasoning markers never becoming citations** |
-
-**What the suite is good at.** It runs the *real* pipelines — real container, real
-retrieval, real answerer — against in-process implementations of the protocols. The
-API tests register those doubles through the ordinary registry, which is the same
-path a new provider takes. Three of the tests are regressions for defects that were
-actually found and reproduced, not speculative.
-
-**Manual end-to-end verification performed this session** (not automated — see
-gap 1 below):
-
-| Check | Result |
+| File | Covers |
 |---|---|
-| Ingest 7 documents across 5 formats | 7 indexed, 20 chunks, 1.8s |
-| Schema in PostgreSQL | 3 tables, 5 indexes, `vector(768)`, `tsv` populated on all chunks |
-| Re-ingest unchanged corpus | `indexed=0 skipped=7`, zero embedding calls, 0.07s |
-| Edit one file and re-ingest | `indexed=1 skipped=6` |
-| Delete a file and re-ingest | `deleted=1`, chunks 20 → 18 via cascade |
-| Corrupt PDF dropped into corpus | `unreadable=1`, exit 1, **0 documents pruned** |
-| Retrieval (hybrid) | correct document ranked first, RRF scores ~0.016 |
-| Answer from `.pdf` / `.docx` table / `.html` | correct, each citing the right source |
-| Unanswerable question | abstained; general knowledge not used |
-| SSE stream | 88 deltas, sources → citation → complete, usage reported |
-| UI stream parsing | replayed a real stream at adversarial chunk boundaries; frames reassembled, no parse errors |
+| `test_cli.py` | Every operational command; doctor's pass/warn/fail behaviour; trace commands across process boundaries; operator-error reporting; help grouping |
+| `test_langchain_integration.py` | Both chunkers (id stability, content preservation, size budget, heading metadata); the chat and embedding bridges; the outbound retriever |
+| `test_pgvector_integration.py` | Migrations, tsvector, SQL fusion, cascade delete, JSONB, workspace isolation, transaction rollback, inspection SQL |
+| `test_fusion_and_grounding.py` | RRF ordering/dedup; citation marker parsing; **prompt-injection containment** |
+| `test_api.py` | Health, status, search, chat (both modes), SSE ordering, trace endpoints and their environment gate |
+| `test_trace_store.py` | Cross-process readability, rotation, malformed lines, unwritable directories, round-trip fidelity |
+| `test_observability.py` | Span tree shape, nested-trace merging, error capture, span cap, text redaction |
+| `test_retrieval.py` | Store contract, all three strategies, top_k, reranking, rewriting, **min_score applied pre-rerank** |
+| `test_parsers.py` | Every format, content preservation, corrupt and scanned files, **failure isolation** |
+| `test_ingestion.py` | Idempotency, change detection, pruning, **unreadable-file prune exemption**, `--reindex`, trace shape |
+| `test_chunking.py` | Size budget, id stability, **content preservation** |
+| `test_server_lifecycle.py` | Startup notes, **in-flight stream failure emits a terminal event**, shutdown releases components without constructing unused ones |
+| `test_inspection.py` | `StoreInspector` contract on the memory store; empty-store edge cases |
+| `test_answerer.py` | Abstention in both modes, citation policy, streaming reassembly |
+| `test_settings.py` | Four-layer precedence, nested env merge, malformed profiles, trace exposure gate |
+| `test_e2e.py` | Five formats indexed; idempotency; hybrid ranking; a cited answer; abstention; a binary format answerable; both modes agreeing; the run fully traced |
+| `test_reasoning_models.py` | `<think>` stripping, exhausted-budget error, reasoning markers never becoming citations |
+| `test_registry.py` | Registration, override, unknown-provider error |
 
-**Four material gaps:**
+**What the suite is good at.** It runs the *real* pipelines against in-process
+implementations of the protocols. The API and CLI tests register those doubles
+through the ordinary registry — the same path a new provider takes — so "the whole
+stack can be retargeted by configuration alone" is asserted, not assumed. Several
+tests are regressions for defects actually found and reproduced.
 
-1. **The end-to-end path is not automated.** Everything in the table above was run
-   by hand. It needs a smoke test that a CI job can run against a live Ollama and
-   Postgres, or it will rot.
-2. **No hosted provider has ever been called.** Every hosted adapter is exercised
-   only via stubs. Request-shape errors against real Anthropic/OpenAI/Gemini APIs
-   would not be caught by this suite — including the Anthropic native-citation path,
-   which is the only verified-citation implementation in the codebase.
-3. **`settings.py` is untested** (§8), despite carrying custom precedence logic.
-4. **Answer quality is unmeasured.** No coverage measurement, no performance test,
+**Remaining gaps:**
+
+1. **No hosted provider has ever been called.** Every hosted adapter is exercised
+   only via stubs — including the Anthropic native-citation path, the only verified
+   citation implementation in the codebase.
+2. **Answer quality is unmeasured.** No coverage measurement, no performance test,
    no golden set.
-
-**How to run:**
-```bash
-make test              # 119 tests, no network, no database, no credentials
-make test-integration  # the same suite plus the pgvector tests against a real DB
-make check             # lint + typecheck + test
-```
+3. **No load or concurrency test.** Behaviour under parallel requests, and the
+   connection-pool bounds, are untested.
 
 ---
 
-## 11. Configuration and environment requirements
+## 12. Configuration and environment
 
-**Runtime:** Python 3.12+. PostgreSQL 16 with the `pgvector` extension
-(`docker compose up -d` provides one).
-
-**Install:** core dependencies are deliberately small; every provider SDK is an
-optional extra, so a deployment installs only what it configures.
+**Runtime:** Python 3.12+. PostgreSQL 16+ with `pgvector`.
 
 ```bash
-pip install -e ".[dev,anthropic,openai]"     # typical
-pip install -e ".[gemini]"                   # native Gemini adapter
-pip install -e ".[local]"                    # sentence-transformers (local embeddings + cross-encoder)
+make install                    # venv + dev extras
+./osc doctor                    # is everything reachable?
 ```
 
 **Configuration layers**, highest precedence first: process environment → `.env` →
 YAML profile (`config/default.yaml`, overridable with `OSC_PROFILE`). Any value is
-addressable from the environment with `OSC_` and `__` for nesting:
+addressable from the environment with `OSC_` and `__` for nesting.
+`./osc config` prints what was actually resolved, with credentials redacted.
 
-```bash
-OSC_LLM__PROVIDER=groq OSC_LLM__MODEL=llama-3.3-70b-versatile osc-assistant ask "..."
-```
+**Defaults (all local):** Ollama `qwen3:8b` with reasoning disabled, Ollama
+`nomic-embed-text` (768-d), pgvector, `noop` reranker, recursive chunking (900/120),
+hybrid retrieval (30 candidates → top 5), 1500 max completion tokens, query
+rewriting off, tracing on and persisted to `.osc/`.
 
-**Credentials** — only for providers actually configured. `ANTHROPIC_API_KEY`,
-`OPENAI_API_KEY`, `GEMINI_API_KEY`/`GOOGLE_API_KEY`, `GROQ_API_KEY`,
-`VOYAGE_API_KEY`, `HF_TOKEN`. Local providers (ollama, vllm, lmstudio,
-sentence-transformers) need none. `config/experiments/local-only.yaml` runs the
-entire system with zero credentials and no corpus text leaving the host.
+**Reference environment as verified:** PostgreSQL 18.4 with pgvector 0.8.2; Ollama
+0.32.5 serving `qwen3:8b` at a 4096-token context and `nomic-embed-text`.
 
-**Defaults (all local):** Ollama `qwen3:8b` for answers with reasoning disabled,
-Ollama `nomic-embed-text` (768-d) for embeddings, pgvector store, `noop` reranker,
-recursive chunking (900/120), hybrid retrieval (30 candidates → top 5), 1500 max
-completion tokens, query rewriting off.
-
-**Reference environment as verified:** PostgreSQL 18.4 with pgvector 0.8.2, database
-`osc`; Ollama 0.32.5 serving `qwen3:8b` at a 4096-token context and
-`nomic-embed-text`. `docker-compose.yml` remains as an alternative for machines
-without a local PostgreSQL.
-
-**Three constraints that will bite:**
-- Changing the embedding model changes the vector width, which is fixed in the DDL
-  at migration time. It requires a new database (or a dropped `chunks` table) and a
-  full re-index. The store asserts the dimensions match at startup and refuses to
-  run otherwise. This is why each experiment profile names its own database.
-- pgvector cannot build an HNSW index above 2000 dimensions. The migration handles
-  this by skipping the index, so vector search silently becomes an exact scan.
-  Correct, but O(n): check this before choosing a wide embedding model.
-- The prompt budget is sized for a 4096-token context. Raising `top_k` or
-  `chunk_size` without also serving the model with a larger context will push the
-  answer out of the window.
+**Four constraints that will bite:**
+- Changing the embedding model changes the vector width, fixed in the DDL at
+  migration time. It requires a new database and a full re-index.
+- pgvector cannot build an HNSW index above 2000 dimensions; above it search
+  degrades to an exact scan.
+- The prompt budget is sized for a 4096-token context.
+- Changing the chunker invalidates every stored chunk while every content hash
+  still matches. Use `./osc ingest ./docs --reindex`.
 
 ---
 
-## 12. Important design decisions and why they were made
-
-**No LLM framework.** LangChain and LlamaIndex were evaluated and rejected — on
-evidence, per requirement 7. The seams this system needs are five protocols totalling
-about 120 lines. A framework would impose its own document and retriever
-abstractions on top of ours, add a large transitive dependency tree, and place an
-uncontrolled layer on the exact code path that most needs tracing and tuning.
-Provider SDKs are used directly, each as an optional extra.
-
-**One adapter for eight services.** OpenAI, Groq, Ollama, vLLM, LM Studio, Hugging
-Face, OpenRouter and Together all speak `/v1/chat/completions`. They are registered
-under separate provider names with base URL and credential environment variable
-pre-filled. Eight adapters would have been eight places to fix the same bug.
+## 13. Important design decisions
 
 **Protocols, not base classes.** Structural typing means a provider is compatible by
-virtue of its shape. No inheritance, nothing to register beyond the factory, and a
-test double is indistinguishable from a provider — which is what makes the API tests
-meaningful.
+virtue of its shape. A test double is indistinguishable from a provider — which is
+what makes the API and CLI tests meaningful.
 
 **One datastore.** PostgreSQL holds chunk text, embeddings, lexical index and
-document metadata. A chunk and its vector cannot drift apart, there is one backup to
-take, and hybrid retrieval is one round trip instead of a fan-out. A dedicated vector
-database earns its place when vector search p95 degrades or the corpus passes a few
-million chunks; the `VectorStore` protocol is where that swap happens.
+metadata. A chunk and its vector cannot drift apart, there is one backup, and hybrid
+retrieval is one round trip.
 
-**Hybrid retrieval by default.** Internal corpora are dense with acronyms, product
-codenames and error strings that semantic search handles badly, and paraphrase that
-keyword search handles badly. Postgres provides both indexes, so the marginal cost is
-one query and a fusion step. This is avoiding a known failure mode, not premature
-optimisation.
+**Hybrid retrieval by default.** Internal corpora are dense with acronyms, codenames
+and error strings that semantic search handles badly, and paraphrase that keyword
+search handles badly. Avoiding a known failure mode, not premature optimisation.
 
-**Native citations where available, markers elsewhere.** Discussed in §9. The
-capability flag lives in the adapter so no business logic branches on it.
+**Abstention is architectural, not a prompt.** No hits → no model call. In streaming
+mode the final `complete` event is authoritative.
 
-**Abstention is architectural, not a prompt.** No hits → no model call, because
-generating from nothing is guessing. In streaming mode the final `complete` event is
-authoritative and the client discards what it rendered — a policy that only held when
-not streaming would be worse than none.
-
-**Frozen prompts.** System prompts are module constants with no interpolation. Any
-dynamic value would break prefix caching for every request and make evaluation
-results unattributable to a reviewable string.
+**Frozen prompts.** Module constants with no interpolation. Anything dynamic would
+break prefix caching and make evaluation results unattributable.
 
 **`workspace_id` from day one.** The only speculative design in the codebase, and
-defended: adding a partition key to a populated corpus is a data migration; carrying
-it now costs one column and one index prefix.
+defended: adding a partition key to a populated corpus is a data migration.
 
-**Text extraction is a plain dict of functions, not a registry.** The five component
-seams use the `Registry[T]` machinery because they are selected by a name from
-configuration and need per-provider options. A parser is selected by file extension
-and takes none, so `PARSERS: dict[str, Parser]` is the whole mechanism. Reaching for
-the heavier abstraction here would have added indirection without removing a line.
+**Text extraction is a plain dict of functions, not a registry.** A parser is
+selected by file extension and takes no options, so `PARSERS: dict[str, Parser]` is
+the whole mechanism.
 
-**Reasoning control is configuration, not code.** Qwen3's thinking is disabled with
-`extra_body.reasoning_effort: none` through the adapter's existing pass-through for
-vendor-specific parameters. No new code path, and it works for any reasoning model
-behind an OpenAI-compatible endpoint. Only the *consequences* of reasoning —
-stripping a leaked block, reporting an exhausted budget — needed code, because those
-are correctness concerns rather than tuning.
+**Inspection is a separate, optional protocol.** Discussed in §3. The last change to
+`VectorStore` removed a method rather than adding one; that direction is worth
+protecting.
 
-### Three defects found and fixed in this session
+**Instrumentation in pipelines, not adapters.** Discussed in §3.
 
-1. **Metadata was double-encoded in PostgreSQL.** The connection registers a `jsonb`
-   codec whose encoder is `json.dumps`, and `replace_document` *also* called
-   `json.dumps` before passing the value. Postgres therefore stored a JSON string
-   containing JSON, and every read produced `str` where the domain type promises a
-   `Mapping`. Nothing crashed — `Chunk.metadata` is typed as a `Mapping` and a `str`
-   is not one, but nothing at runtime checks that — so any future filtering on
-   metadata would have failed inexplicably. Fixed by passing the dict and letting the
-   codec do its job. `test_metadata_round_trips_as_json` covers it and would have
-   caught it the day it was written, had it ever been run.
+**Human output on stderr, machine output on stdout.** The two audiences are served
+by two streams rather than by compromising one. `serve > run.log` yields a clean
+parseable log while the terminal still shows where the service is listening.
 
-2. **Pruning could permanently delete a document that still exists.** `_prune`
-   deletes anything indexed but absent from the current sync. A file that failed to
-   parse is absent from the sync but present at the source, so a corrupt byte — or
-   simply deploying without the `documents` extra installed — would have deleted
-   every PDF from the index on the next run, reporting `deleted=N` as if it were
-   routine. Loaders now record failures as `LoadFailure`, and the pipeline exempts
-   those document ids from pruning. Two regression tests pin both halves: the
-   exemption, and that genuinely removed documents are still pruned.
+**Operator errors are messages; bugs are tracebacks.** `AssistantError` is the
+project's vocabulary for problems an operator must fix, and each carries an
+actionable message. A traceback buries it under frames describing our call stack
+rather than their problem. Anything else keeps its frames, because for a bug the
+frames are the point.
 
-3. **The migration would have failed on the previous default embedding model.**
-   `CREATE INDEX ... USING hnsw` is capped at 2000 dimensions by pgvector, and the
-   default profile specified `text-embedding-3-large` at 3072. The first real
-   migration on the previous default configuration would have aborted. The index is
-   now created conditionally, with a warning when it is skipped.
+### Defects found and fixed, by session
 
-### Three defects found and fixed in the previous session
+**This session:** asyncpg exceptions escaping untranslated (which also bypassed the
+API error handler); the SSE stream ending with no terminal event on an unexpected
+exception; provider resources never released.
 
-These are recorded because each one changed the design, and each has a regression
-test.
+**Previous session:** retrieval-only runs produced no trace, because only the
+answerer opened one.
 
-1. **Prompt injection via source bodies.** Titles were escaped; bodies were not. A
-   document containing `</source></sources>` closed the data block and landed its own
-   text where the model reads it as instruction — reproduced, two closing tags in the
-   output. Fixed with a per-request nonce in the delimiter. Escaping bodies was
-   rejected because it would corrupt the technical content this corpus is full of,
-   turning `<div>` into `&lt;div&gt;` for the model to read and quote back.
-
-2. **Ingestion could permanently lose a document.** The pipeline wrote the content
-   hash before the chunks, in three separate un-transacted calls. A crash in between
-   left a current hash with zero chunks; every later sync read the hash as "already
-   indexed" and skipped it — silently invisible forever, with the report counting it
-   as success. A plain reorder was impossible (chunks reference the document row via
-   a foreign key), so `upsert` + `record_document` were replaced with a single
-   `replace_document(document, chunks)` in one transaction. **The protocol got
-   smaller** — two methods out, one in.
-
-3. **The chunker silently corrupted document text.** Separators were re-attached with
-   `part + separator`, appending one to the final fragment that was never there — 287
-   characters in, 286 out, with a doubled `.`. In a system whose trust model is "click
-   the citation and verify", the indexed text was not the source text, and the
-   Anthropic path was quoting it back as verbatim evidence. Fixed with a split that
-   guarantees `"".join(parts) == text`.
+**Earlier:** metadata double-encoded in PostgreSQL; pruning could delete an
+unreadable-but-present document; the migration would have failed on the previous
+default embedding model; prompt injection via source bodies; ingestion could
+permanently lose a document; the chunker silently corrupted document text.
 
 ---
 
-## 13. Recommended implementation order for the remaining work
+## 14. Recommended implementation order
 
 The ordering principle is unchanged — **make the system verifiable before making it
-bigger** — but the binding constraint has moved. The storage layer is no longer an
-unknown; measurement is. Every tuning decision in `config/default.yaml` is currently
-an educated guess, and the local model's figure-misreading (§9) is unquantified.
+bigger** — and the binding constraint has not moved: measurement.
 
-1. **Build the evaluation harness.** Now the single highest-leverage item by a wide
-   margin. Nothing after this can be judged without it — not reranking, not chunk
-   size, not the local-versus-hosted question, not whether the 4096-token budget is
-   actually costing answers. It is the gate for items 5–7.
-2. **Automate the end-to-end smoke test.** The table in §10 was produced by hand.
-   One test that ingests a fixture corpus, asks a question and asserts a citation,
-   run against live Ollama and Postgres, keeps all of it honest.
-3. **Add authentication (OIDC).** The first hard blocker to exposing the service,
-   and more pressing now that there is a UI. Group membership from the IdP is also
-   the input to item 4.
-4. **Add per-document ACLs.** Only after auth exists and only with explicit sign-off
-   on which corpora are ingested. Until then, keep the restriction to
-   company-wide-readable content.
-5. **Tune retrieval against the golden set** — reranking, chunk size, query
-   rewriting, top_k, and a serious look at whether a larger-context model changes the
-   answer. Every change gated by a measured improvement; anything that does not move
-   a metric gets reverted.
+1. **Build the evaluation harness.** The single highest-leverage item by a wide
+   margin, and now more so: there are four chunking strategies, two provider tiers
+   and a reranker whose value cannot be judged without it. It is the gate for items
+   5–7.
+2. **Add authentication (OIDC).** The first hard blocker to exposing the service.
+   Group membership from the IdP is also the input to item 3.
+3. **Add per-document ACLs.** Only after auth exists.
+4. **Production start-up guard.** Refuse to start when `environment != development`
+   and no auth is configured. Ten lines, and the constraint becomes enforced rather
+   than announced.
+5. **Tune retrieval against the golden set** — chunking strategy (including the
+   LangChain ones), reranking, `top_k`, query rewriting, and whether a
+   larger-context model changes the answer. Every change gated by a measured
+   improvement.
 6. **Conversation persistence and feedback capture.** Feedback is the raw material
    for future evaluation sets, so it compounds. Re-enabling query rewriting belongs
    here, together with sending history from the UI.
-7. **Second connector.** The loader shape is established and now has a parser layer
+7. **Second connector.** The loader shape is established and has a parser layer
    behind it; this proves both.
-8. **Deployment artefacts and admin visibility.** Dockerfile, CI, ingestion status
-   view. `IngestionReport` already carries the data.
+8. **Deployment artefacts and trace export.** Dockerfile, CI, and an OTel exporter
+   once traces need to leave the host.
 
-**Deliberately late:** the web client (the API and CLI are sufficient for a pilot),
-multi-tenancy beyond the partition key, and any additional provider. **Deliberately
-absent:** fine-tuning, agentic tool use, a knowledge-graph layer.
+**Deliberately late:** a richer web client, multi-tenancy beyond the partition key,
+additional providers (the bridge covers the long tail). **Deliberately absent:**
+fine-tuning, agentic tool use, a knowledge-graph layer.
 
 ---
 
-## 14. Next 3–5 milestones with success criteria
+## 15. Next milestones with success criteria
 
-### ~~Milestone A — Verify the storage layer~~ ✅ complete
-
-Run the integration suite against a real PostgreSQL and fix whatever it reveals.
-
-**Outcome:** `make test-integration` → 119 passed, 0 skipped. The metadata
-double-encoding defect and the >2000-dimension migration failure were found and
-fixed (§12). An end-to-end run against real Postgres ingests `./docs`, searches, and
-re-runs as `indexed=0 skipped=7`. The dimension-mismatch guard produces a clear,
-actionable error. The pgvector image digest is *not* pinned — the reference
-environment uses a native PostgreSQL, so the compose file is now a secondary path.
-
-### Milestone B — Close the remaining P1 debt
-*Estimated 1 day. Partially complete.*
-
-`min_score` is fixed and has a regression test. What remains is the production auth
-guard and the `settings.py` tests.
-
-**Success criteria**
-- ~~Enabling `reranker: cross_encoder` does not reduce the number of retrieved
-  chunks; a test asserts the threshold is applied to first-stage scores.~~ ✅
-- Starting with `OSC_ENVIRONMENT=production` and no auth configured exits non-zero
-  with an explanatory message; a test asserts it.
-- Four settings-precedence tests pass: env over YAML, nested env merge, missing
-  profile tolerated, unknown key rejected.
-- The integration suite refuses to run against the configured application DSN.
-
-### Milestone B2 — Automate the end-to-end check
-*Estimated 0.5 day.*
-
-The verification table in §10 was produced by hand and will rot. One test, marked so
-it is skipped without a live Ollama and Postgres, that ingests a fixture corpus,
-asserts idempotency on a second run, asks a question and asserts a citation back to
-the expected file.
-
-**Success criteria**
-- `make test-e2e` passes against the reference environment and skips cleanly without it.
-- It covers at least one binary format (PDF or DOCX), so a parser regression is caught.
-- It asserts abstention on a question the fixture corpus cannot answer.
-
-### Milestone C — Evaluation harness
+### Milestone A — Evaluation harness
 *Estimated 3–4 days. The highest-leverage item in the project.*
 
 50–100 real questions curated with OSC employees, each with known-correct source
-documents. Offline retrieval metrics and generation metrics, runnable as
-`make eval`, wired into CI as a gate on changes to retrieval or generation.
+documents. Offline retrieval and generation metrics, runnable as `make eval`.
 
 **Success criteria**
-- `make eval` prints recall@10, MRR, citation coverage and faithfulness against the
-  golden set, and writes a JSON result for comparison across runs.
-- A pull request that drops recall@10 below a configured threshold fails CI.
-- Baseline numbers for the current default profile are committed, so future changes
-  are measured against a real starting point rather than an assumption.
-- At least one provider comparison is run end-to-end (default vs
-  `hosted-anthropic.yaml`) and the result recorded — this is also the first real
-  exercise of the vendor-agnosticism the architecture was built for.
-- The local model's numeric-fidelity gap (§9) is quantified rather than anecdotal:
-  a faithfulness figure for `qwen3:8b` against one for a hosted model, so the
-  decision to run locally is made on a number and not on a preference.
+- `make eval` prints recall@10, MRR, citation coverage and faithfulness, and writes
+  a JSON result for comparison across runs.
+- A pull request that drops recall@10 below a threshold fails CI.
+- Baseline numbers for the default profile are committed.
+- At least one provider comparison run end to end (default vs `hosted-anthropic`).
+- The local model's numeric-fidelity gap (§10) is quantified rather than anecdotal.
+- **A chunker comparison is recorded**: `recursive` vs `langchain_recursive` vs
+  `markdown`, with a decision and a number. Whichever wins becomes the default.
 
-### Milestone D — Authentication
+### Milestone B — Authentication
 *Estimated 2–3 days.*
 
 OIDC against OSC's IdP. Tokens validated server-side; the resolved principal set
-(user id + group ids) attached to every request and carried into the retrieval call
-so ACL filtering has somewhere to plug in.
+attached to every request and carried into retrieval so ACL filtering has somewhere
+to plug in.
 
 **Success criteria**
 - An unauthenticated request to `/api/chat` or `/api/search` returns 401.
-- A valid token yields an answer, and the user id and group ids appear in the
-  structured log for that request.
-- The production start-up guard from Milestone B is satisfied by real auth rather
-  than bypassed.
-- Rate limiting per authenticated principal, with a test that a bounded burst is
-  rejected.
+- A valid token yields an answer, and the user and group ids appear in the
+  structured log **and on the trace** for that request.
+- Starting with `OSC_ENVIRONMENT=production` and no auth configured exits non-zero.
+- Rate limiting per authenticated principal, with a test that a burst is rejected.
 
-### Milestone E — Retrieval quality pass
-*Estimated 3–5 days. Requires Milestone C.*
-
-With measurement in place, tune what was deferred: enable and measure reranking,
-try structure-aware chunking, decide on query rewriting with evidence, and remove
-whatever does not earn its place.
+### Milestone C — Retrieval quality pass
+*Estimated 3–5 days. Requires Milestone A.*
 
 **Success criteria**
-- Faithfulness ≥ 95% and recall@10 ≥ 90% on the golden set, or a written explanation
-  of why the target is wrong for this corpus.
+- Faithfulness ≥ 95% and recall@10 ≥ 90% on the golden set, or a written
+  explanation of why the target is wrong for this corpus.
 - A recorded decision on the cross-encoder reranker, with the measured delta.
 - A recorded decision on query rewriting: kept with a measured improvement, or
   defaulted off and the `fast_llm` dependency removed.
-- Every change in this milestone has a before/after number attached. Any change that
-  did not move a metric has been reverted.
+- Every change carries a before/after number. Anything that did not move a metric
+  has been reverted.
+
+### Milestone D — Deployment and export
+*Estimated 2–3 days.*
+
+**Success criteria**
+- A Dockerfile builds a service image; `docker compose up` runs service and
+  database together.
+- CI runs `make check` on every pull request and `make test-integration` on merge.
+- An OTel exporter behind a configuration flag, with the local trace log retained
+  as the default.
 
 ---
 
 ## Appendix — orientation for a new session
 
 **Read in this order:** this file → `README.md` → `claude.md` →
-`src/osc_assistant/protocols.py` (the five seams) → `src/osc_assistant/container.py`
-(how everything is wired).
+`src/osc_assistant/protocols.py` → `src/osc_assistant/container.py`.
 
-**Useful commands**
-
-```bash
-osc-assistant providers          # every registered provider, read from the registries
-osc-assistant ingest ./docs      # index the corpus; safe and cheap to re-run
-osc-assistant search "<query>"   # retrieval only — the debugging surface
-osc-assistant ask "<question>"   # the whole pipeline, with citations
-curl localhost:8000/api/health   # the active component set of a running deployment
-open graphify-out/graph.html     # interactive knowledge graph
-```
-
-**Checking the environment before debugging the code.** Most of a session's
-surprises here come from outside the process:
+**First commands to run**
 
 ```bash
-curl -s localhost:11434/api/tags                    # models Ollama actually has
-psql "$DSN" -c "select count(*) from chunks"        # is anything indexed?
-psql "$DSN" -c "select format_type(atttypid, atttypmod) from pg_attribute \
-  where attrelid='chunks'::regclass and attname='embedding'"   # the fixed vector width
+./osc doctor                 # is every component reachable and consistent?
+./osc status                 # what is indexed?
+./osc providers              # what can I switch to, and what am I running?
+./osc config                 # what settings did the layers actually resolve to?
+./osc search "<query>" --explain     # retrieval only, with the stage waterfall
+./osc ask "<question>" --explain     # the whole pipeline, timed
+./osc traces                 # what has run recently
+./osc trace                  # expand the most recent
+make help                    # every target
 ```
 
-A model's `capabilities` in `/api/tags` is worth checking specifically: `qwen3:8b`
-reports `completion, tools, thinking` and **cannot embed**, which is why a separate
-embedding model is required.
+**When something is wrong**, in order: `./osc doctor` names the broken component;
+`./osc traces --failed` finds the request; `./osc trace <id>` shows which stage
+raised and what every earlier stage had done; `./osc search` separates "the model
+misread the passage" from "the passage was never retrieved"; `./osc chunk <id>`
+shows the exact text the model was given.
 
-**The knowledge graph** in `graphify-out/` was rebuilt on 2026-07-29 and is current:
-1022 nodes, 2230 edges, 73 communities, health diagnostic clean. `wiki/index.md` is
-the agent entry point but **was not regenerated and is stale** — run
-`/graphify . --wiki` to refresh it. One caveat from §9 still stands: the SQL schema
-is absent because `tree_sitter_sql` is not installed (`pip install "graphifyy[sql]"`),
-so `migrations/001_init.sql` contributes no nodes and storage must be read from the
-SQL directly. `docs/handbook/onboarding-checklist.docx` is likewise absent —
-`.docx` extraction needs `pip install "graphifyy[office]"`.
+**The knowledge graph** in `graphify-out/` was regenerated on 2026-08-04 with
+`graphify update .` and labelled with `graphify label . --backend=ollama`. Navigate
+by `graph.html` or `GRAPH_REPORT.md`; `graphify god-nodes`, `graphify query "..."`
+and `graphify affected "X"` answer structural questions from the terminal.
 
-**The one rule to preserve:** business logic imports `protocols` and `types` only.
-If a pipeline, route or CLI command ever imports a provider module, the
-vendor-agnosticism this project is built around has been broken. It is checkable
-with a grep, and it is worth checking.
+Three caveats stand. `graphify-out/wiki/` is **stale** (§6) — the graph is current,
+the wiki is not. `migrations/001_init.sql` contributes no nodes because
+`tree_sitter_sql` is not installed (`pip install "graphifyy[sql]"`), so storage must
+be read from the SQL directly. And `docs/` is the seed corpus, so a graph query can
+return an OSC policy document rather than code.

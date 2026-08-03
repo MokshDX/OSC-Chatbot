@@ -1,0 +1,74 @@
+# Experiment: reach a provider OSC has no native adapter for, via LangChain.
+#
+#   OSC_PROFILE=config/experiments/langchain-bridge.yaml ./osc doctor
+#
+# The point of this profile is what is *not* here: no new adapter, no code change,
+# no entry in a provider table. A LangChain integration package plus three lines of
+# configuration, and the whole pipeline — hybrid retrieval, RRF, citations,
+# abstention, tracing — runs unchanged on top of it.
+#
+# Anthropic is used as the example only because it is easy to verify. In practice
+# the native `anthropic` provider is the better choice for it, because that one
+# returns citations verified against the source text and this bridge parses `[n]`
+# markers. Reach for the bridge when there is no native adapter: Bedrock
+# (langchain_aws.ChatBedrockConverse), Vertex (langchain_google_vertexai.ChatVertexAI),
+# Azure (langchain_openai.AzureChatOpenAI), Cohere, Mistral, Fireworks, Databricks.
+#
+# Install what you name:  pip install langchain-anthropic
+
+workspace_id: langchain
+environment: development
+
+llm:
+  provider: langchain
+  model: claude-sonnet-5
+  options:
+    class_path: langchain_anthropic.ChatAnthropic
+    # Forwarded verbatim to the class constructor, so any integration-specific
+    # parameter is reachable without touching OSC's settings schema.
+    init:
+      timeout: 60
+      max_retries: 2
+
+fast_llm:
+  provider: langchain
+  model: claude-haiku-4-5
+  options:
+    class_path: langchain_anthropic.ChatAnthropic
+
+# Embeddings stay local: they are chosen independently of the chat model, and this
+# experiment is about the chat bridge. Swapping them would confuse two variables.
+embeddings:
+  provider: ollama
+  model: nomic-embed-text
+
+vector_store:
+  provider: pgvector
+
+reranker:
+  provider: noop
+
+# Heading-aware chunking from langchain-text-splitters. Sections are split on
+# structure first and packed to size second, and each chunk records the heading
+# path it sits under.
+#
+# Changing the chunker changes every chunk boundary and therefore every chunk id,
+# which the content hash does not cover — so this profile needs its own database
+# and a `./osc ingest ./docs --reindex`.
+chunking:
+  strategy: markdown
+  chunk_size: 900
+  chunk_overlap: 120
+
+retrieval:
+  strategy: hybrid
+  candidates: 30
+  top_k: 5
+  rewrite_queries: false
+
+generation:
+  max_tokens: 1500
+  require_citations: true
+
+database:
+  dsn: postgresql://mokshdutt@localhost:5432/osc_langchain

@@ -198,3 +198,108 @@ def _parse_sse(lines: Iterator[str]) -> list[tuple[str, dict]]:
             events.append((event_name, json.loads(line.removeprefix("data: "))))
             event_name = None
     return events
+
+
+# ------------------------------------------------------- observability endpoints
+
+
+def test_status_reports_what_is_indexed(client: TestClient) -> None:
+    """The admin view: separate from /health because it queries the store."""
+    response = client.get("/api/status")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["documents"] == 3
+    assert body["chunks"] > 0
+    assert body["embedding_models"] == ["stub-embedding"]
+    assert set(body["chunk_chars"]) == {"min", "mean", "p50", "p95", "max"}
+
+
+def test_an_answer_carries_the_id_of_the_trace_that_produced_it(
+    client: TestClient,
+) -> None:
+    """"This answer is wrong" becomes answerable hours later, without reproducing it."""
+    response = client.post(
+        "/api/chat", json={"question": "how many vacation days", "stream": False}
+    )
+
+    assert response.status_code == 200
+    assert response.json()["trace_id"]
+
+
+def test_search_returns_the_trace_when_asked(client: TestClient) -> None:
+    response = client.post(
+        "/api/search", json={"query": "how many vacation days", "explain": True}
+    )
+
+    body = response.json()
+    assert body["trace"] is not None
+    names = [span["name"] for span in body["trace"]["spans"]]
+    assert "retrieve" in names and "search" in names
+
+
+def test_search_omits_the_trace_by_default(client: TestClient) -> None:
+    response = client.post("/api/search", json={"query": "how many vacation days"})
+
+    assert response.json()["trace"] is None
+
+
+def test_chat_returns_the_trace_when_asked(client: TestClient) -> None:
+    response = client.post(
+        "/api/chat",
+        json={"question": "how many vacation days", "stream": False, "explain": True},
+    )
+
+    trace = response.json()["trace"]
+    assert trace is not None
+    names = [span["name"] for span in trace["spans"]]
+    # The whole request path, in one object: retrieval, generation and the
+    # citation policy that finalised it.
+    assert {"answer", "retrieve", "generate", "finalise"} <= set(names)
+
+
+def _development_client(documents: list[Document]) -> TestClient:
+    settings = _settings().model_copy(update={"environment": "development"})
+    app = create_app(settings)
+    container: Container = app.state.container
+
+    async def seed() -> None:
+        pipeline = IngestionPipeline(
+            chunker=RecursiveChunker(ChunkerOptions(chunk_size=400, chunk_overlap=40)),
+            embeddings=container.embeddings,
+            store=container.vector_store,
+        )
+        await pipeline.ingest(InMemoryLoader(documents).load())
+
+    asyncio.run(seed())
+    return TestClient(app)
+
+
+def test_traces_are_not_exposed_outside_development(client: TestClient) -> None:
+    """Traces carry question text and chunk ids, and no endpoint is authenticated.
+
+    The route is absent rather than merely refusing, so it is missing from the
+    OpenAPI schema too.
+    """
+    assert client.get("/api/traces").status_code == 404
+
+
+def test_traces_are_listable_and_expandable_in_development(
+    documents: list[Document],
+) -> None:
+    with _development_client(documents) as client:
+        client.post("/api/chat", json={"question": "how many vacation days", "stream": False})
+
+        listing = client.get("/api/traces")
+        assert listing.status_code == 200
+        traces = listing.json()["traces"]
+        assert traces
+
+        detail = client.get(f"/api/traces/{traces[0]['trace_id']}")
+        assert detail.status_code == 200
+        assert detail.json()["name"] == "answer"
+
+
+def test_an_unknown_trace_id_is_a_404(documents: list[Document]) -> None:
+    with _development_client(documents) as client:
+        assert client.get("/api/traces/nonexistent").status_code == 404

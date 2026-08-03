@@ -241,12 +241,75 @@ A successful contribution:
 Always leave the project in a better state than you found it.
 
 
+---
+
+# Operational Tooling
+
+Before debugging by reading source, use the tooling. It exists so that the common
+questions have answers that cannot go stale.
+
+```bash
+./osc doctor                 # is every configured component reachable and consistent?
+./osc status                 # what is indexed: counts, chunk sizes, formats
+./osc config                 # what did the configuration layers actually resolve to?
+./osc providers              # what can I switch to, and what am I running?
+./osc traces                 # what has run recently  (--failed, --name, --slower-than)
+./osc trace [id]             # expand one trace, or the most recent, into a waterfall
+./osc documents / document / chunk    # what is in the index, down to the exact text
+make help                    # every target
+```
+
+`./osc` runs the CLI without activating the virtualenv. **Never write `.venv/bin/...`
+in a command, a Makefile target or documentation** — if a workflow needs a path into
+the virtualenv, add a target instead.
+
+## Diagnosing a failure
+
+In this order, because each step narrows the next:
+
+1. `./osc doctor` — names the broken component on one line.
+2. `./osc traces --failed` — finds the request.
+3. `./osc trace <id>` — shows which stage raised, and what every earlier stage had
+   already done.
+4. `./osc search "<query>"` — separates "the model misread the passage" from "the
+   passage was never retrieved". Different bugs, different fixes.
+5. `./osc chunk <id>` — the exact text the model was given.
+
+A failing command prints its trace automatically; `--explain` is for when it
+succeeded and you still want to know how.
+
+## Observability rules for new code
+
+* **A new pipeline stage gets a span.** `with span("name", **attributes)`, with
+  attributes describing how the data changed — counts, ids, scores — not prose.
+* **Instrument the pipeline, not the adapter.** Provider adapters stay pure
+  translation; wrapping the call site covers every provider at once.
+* **Anything derived from a document or a user goes through `set_text`**, never
+  `set`. That is the seam `observability.capture_text: false` switches off.
+* **Never let instrumentation raise.** A tracer that can break the thing it observes
+  is a liability, because it is trusted.
+
+## Output rules
+
+* **Machine-readable output goes to stdout; human-readable output goes to stderr.**
+  `./osc serve > run.log` must still produce a clean parseable log.
+* **Operator problems are messages; bugs are tracebacks.** Raise an `AssistantError`
+  subclass with an actionable message for anything an operator must fix. Everything
+  else keeps its frames.
+* **Never let a vendor exception escape a provider adapter.** Translate it into the
+  error hierarchy at the adapter boundary, or the layers above cannot handle it.
+
+---
+
 ## Session Startup
 
 Before implementing any feature:
 
-1. Read PROJECT_STATUS.md
-2. Read README.md
-3. Read graphify-out/wiki/
-4. Understand the current milestone.
-5. Confirm the implementation plan before modifying code.
+1. Read PROJECT_STATUS.md — the engineering report and handover document.
+2. Read README.md — how to run it and what the commands are.
+3. Read graphify-out/ — the generated architectural map. Use it to navigate to the
+   files a change touches rather than reading the repository recursively.
+4. Run `./osc doctor` — confirm the environment before suspecting the code. Most
+   surprises here come from outside the process.
+5. Understand the current milestone (PROJECT_STATUS.md §15).
+6. Confirm the implementation plan before modifying code.

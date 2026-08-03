@@ -13,7 +13,8 @@ from __future__ import annotations
 
 import hashlib
 import re
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -54,7 +55,7 @@ class RecursiveChunker:
     def split(self, document: Document) -> list[Chunk]:
         pieces = self._split_text(document.text.strip(), list(self._options.separators))
         merged = _merge(pieces, self._options.chunk_size, self._options.chunk_overlap)
-        return _to_chunks(document, merged)
+        return to_chunks(document, merged)
 
     def _split_text(self, text: str, separators: list[str]) -> list[str]:
         if len(text) <= self._options.chunk_size:
@@ -95,7 +96,7 @@ class FixedSizeChunker:
         size = self._options.chunk_size
         stride = size - self._options.chunk_overlap
         windows = [text[start : start + size] for start in range(0, len(text), stride)]
-        return _to_chunks(document, [window for window in windows if window.strip()])
+        return to_chunks(document, [window for window in windows if window.strip()])
 
 
 def _split_keeping_separator(text: str, separator: str) -> list[str]:
@@ -143,20 +144,44 @@ def _merge(pieces: Sequence[str], chunk_size: int, overlap: int) -> list[str]:
     return merged
 
 
-def _to_chunks(document: Document, texts: Sequence[str]) -> list[Chunk]:
-    return [
-        Chunk(
-            id=_chunk_id(document.id, ordinal, text),
-            document_id=document.id,
-            ordinal=ordinal,
-            text=text,
-            title=document.title,
-            source_uri=document.source_uri,
-            metadata=dict(document.metadata),
+def to_chunks(
+    document: Document,
+    texts: Sequence[str],
+    extra_metadata: Sequence[Mapping[str, Any]] | None = None,
+) -> list[Chunk]:
+    """Turn split text into `Chunk`s, denormalising the document's identity onto each.
+
+    Shared by every chunker, including the LangChain-backed ones, so that chunk id
+    derivation — the property ingestion idempotency rests on — has exactly one
+    implementation and cannot drift between strategies.
+
+    `extra_metadata` supplies per-chunk facts the splitter discovered, such as the
+    Markdown heading path a chunk sits under. It is merged over the document's own
+    metadata, one entry per text, and omitted entirely by strategies that find
+    nothing extra to say.
+    """
+    chunks: list[Chunk] = []
+    for position, text in enumerate(texts):
+        if not text.strip():
+            continue
+        # The ordinal counts emitted chunks, not candidate texts, so blank
+        # fragments cannot leave gaps in the sequence.
+        ordinal = len(chunks)
+        metadata = dict(document.metadata)
+        if extra_metadata is not None and position < len(extra_metadata):
+            metadata.update(extra_metadata[position])
+        chunks.append(
+            Chunk(
+                id=_chunk_id(document.id, ordinal, text),
+                document_id=document.id,
+                ordinal=ordinal,
+                text=text,
+                title=document.title,
+                source_uri=document.source_uri,
+                metadata=metadata,
+            )
         )
-        for ordinal, text in enumerate(texts)
-        if text.strip()
-    ]
+    return chunks
 
 
 def _chunk_id(document_id: str, ordinal: int, text: str) -> str:
