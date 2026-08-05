@@ -35,7 +35,7 @@ HTML_SAMPLE = """<!doctype html>
 
 def test_supported_extensions_are_lowercase_and_dotted() -> None:
     assert all(ext.startswith(".") and ext.islower() for ext in SUPPORTED_EXTENSIONS)
-    assert {".md", ".txt", ".html", ".pdf", ".docx"} <= set(SUPPORTED_EXTENSIONS)
+    assert {".md", ".txt", ".html", ".pdf", ".docx", ".xlsx"} <= set(SUPPORTED_EXTENSIONS)
 
 
 def test_text_parser_preserves_content_exactly(tmp_path: Path) -> None:
@@ -102,6 +102,55 @@ def test_docx_extracts_paragraphs_and_table_cells(tmp_path: Path) -> None:
     assert "Probation lasts six months." in parsed.text
     assert "Home office allowance" in parsed.text
     assert "600 EUR" in parsed.text
+
+
+def test_xlsx_keeps_a_row_together_and_labels_it_with_its_sheet(tmp_path: Path) -> None:
+    """A spreadsheet's meaning is two-dimensional; retrieval is not.
+
+    The row is the unit that has to survive, because a scenario workbook's facts —
+    a quantity band and the price that applies to it — are only true together.
+    """
+    openpyxl = pytest.importorskip("openpyxl")
+
+    path = tmp_path / "scenarios.xlsx"
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = "Tier Pricing"
+    sheet.append(["Quantity", "Unit price"])
+    sheet.append([500, "$5.76"])
+    second = workbook.create_sheet("Notes")
+    second.append(["Applies to every size"])
+    workbook.save(str(path))
+
+    parsed = parse(path)
+
+    assert "## Tier Pricing" in parsed.text
+    assert "## Notes" in parsed.text
+    # Cells of one row stay on one line, where an embedding can see them together.
+    assert "500\t$5.76" in parsed.text
+    assert parsed.metadata["sheet_count"] == 2
+
+
+def test_empty_xlsx_is_an_error_rather_than_an_unfindable_empty_document(
+    tmp_path: Path,
+) -> None:
+    openpyxl = pytest.importorskip("openpyxl")
+
+    path = tmp_path / "blank.xlsx"
+    openpyxl.Workbook().save(str(path))
+
+    with pytest.raises(ParseError, match="no cell values"):
+        parse(path)
+
+
+def test_corrupt_xlsx_raises_parse_error_not_a_library_exception(tmp_path: Path) -> None:
+    pytest.importorskip("openpyxl")
+
+    path = tmp_path / "broken.xlsx"
+    path.write_bytes(b"not a spreadsheet")
+
+    with pytest.raises(ParseError):
+        parse(path)
 
 
 def test_scanned_pdf_reports_that_it_has_no_text(tmp_path: Path) -> None:

@@ -86,7 +86,28 @@
       "Bash(graphify update *)",
       "Bash(graphify god-nodes *)",
       "Bash(./osc doctor *)",
-      "Bash(./osc version *)"
+      "Bash(./osc version *)",
+      "Bash(echo \"=== EXIT $? ===\")",
+      "Bash(./osc ingest *)",
+      "Bash(./osc documents *)",
+      "Bash(./osc eval *)",
+      "Bash(.venv/bin/pytest tests/test_evaluation.py -q)",
+      "Bash(sed -i '' 's|empty — run `osc-assistant ingest ./docs`|empty — run `osc-assistant ingest ./docs/company`|' src/osc_assistant/cli/diagnose.py)",
+      "Bash(sed -i '' 's|\"Run `./osc ingest ./docs`.\"|\"Run `./osc ingest ./docs/company`.\"|' src/osc_assistant/api/banner.py)",
+      "Bash(sed -i '' 's|Run `./osc ingest ./docs`\\\\.|Run `./osc ingest ./docs/company`.|' README.md)",
+      "Bash(\" src/ README.md)",
+      "Bash(grep -rn \"ingest ./docs`\" src/ README.md)",
+      "Bash(grep -rn 'ingest \\\\./docs`\\\\|ingest \\\\./docs\\\\b' src README.md)",
+      "Bash(graphify label *)",
+      "Bash(make eval-gate *)",
+      "Bash(.venv/bin/pytest tests/test_ingestion.py -q)",
+      "Bash(make check *)",
+      "Bash(md5 -q OSCP_B2B_Scenario_Document.docx OSCP_B2B_Scenario_Document-1.docx)",
+      "Bash(awk -F/ '{print $1}')",
+      "Bash(git rm *)",
+      "Bash(xargs -0 du -ch)",
+      "Bash(graphify query *)",
+      "Bash(grep *)"
     ]
   }
 }

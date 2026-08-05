@@ -239,3 +239,41 @@ async def test_a_sync_reports_the_trace_that_produced_it(
     # different problems with three different fixes.
     assert {"ingest", "load_hashes", "document", "chunk", "embed", "store"} <= names
     assert recorded.spans[0].attributes["indexed"] == 3
+
+
+def test_the_ingest_root_is_the_company_corpus_and_excludes_the_knowledge_base() -> None:
+    """Regression: the corpus boundary is enforced by two defaults agreeing.
+
+    `docs/company/` is the answer corpus; `docs/engineering/` is this repository's own
+    knowledge base and must never be retrievable. An answer sourced from an ADR would
+    retrieve cleanly, ground correctly and cite accurately while being from entirely
+    the wrong universe — and nothing downstream catches it.
+
+    The boundary lives in exactly two places, `DOCS` in the Makefile and the `--corpus`
+    default on `doctor`, so the failure mode is that one moves and the other does not.
+    This asserts they agree and that neither has drifted back to a bare `docs`, which
+    would sweep the knowledge base into the index.
+    """
+    import re
+
+    from osc_assistant.cli.diagnose import doctor
+
+    repository = Path(__file__).resolve().parent.parent
+
+    makefile = (repository / "Makefile").read_text(encoding="utf-8")
+    match = re.search(r"^DOCS \?= (.+)$", makefile, re.MULTILINE)
+    assert match, "Makefile no longer defines a DOCS corpus root"
+    make_root = Path(match.group(1).strip())
+
+    cli_default = doctor.__defaults__[2]  # type: ignore[index]
+    assert cli_default is not None
+
+    assert Path(*make_root.parts[-2:]) == Path(*Path(cli_default).parts[-2:]), (
+        f"Makefile ingests {make_root} but `doctor` checks {cli_default}"
+    )
+    assert make_root.name == "company"
+
+    # And the knowledge base must not be reachable from the corpus root.
+    corpus_root = (repository / "docs" / "company").resolve()
+    knowledge_base = (repository / "docs" / "engineering").resolve()
+    assert not knowledge_base.is_relative_to(corpus_root)

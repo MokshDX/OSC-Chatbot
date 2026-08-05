@@ -1,14 +1,20 @@
 # ComponentConfig
 
-> God node · 46 connections · `src/osc_assistant/registry.py`
+> God node · 64 connections · `src/osc_assistant/registry.py`
 
-**Community:** [Component Config & Registry Tests](Component_Config_%26_Registry_Tests.md)
+**Community:** [Error Hierarchy & Protocol Seams](Error_Hierarchy_%26_Protocol_Seams.md)
 
 ## Connections by Relation
 
 ### calls
 - _settings() `EXTRACTED`
+- _settings() `EXTRACTED`
+- _settings() `EXTRACTED`
+- test_shutdown_releases_every_component_that_was_built() `EXTRACTED`
+- test_a_component_that_fails_to_close_does_not_break_shutdown() `EXTRACTED`
+- test_shutdown_does_not_construct_what_was_never_used() `EXTRACTED`
 - .vector_store() `EXTRACTED`
+- test_langchain_chunkers_are_registered_and_satisfy_the_protocol() `EXTRACTED`
 - test_re_registration_overrides() `EXTRACTED`
 - .chunker() `EXTRACTED`
 - test_options_are_passed_through_untouched() `EXTRACTED`
@@ -20,20 +26,23 @@
 - registry.py `EXTRACTED`
 
 ### imports
+- llm/langchain_bridge.py `EXTRACTED`
+- container.py `EXTRACTED`
+- settings.py `EXTRACTED`
+- memory.py `EXTRACTED`
+- pgvector.py `EXTRACTED`
+- llm/openai_compatible.py `EXTRACTED`
 - llm/gemini.py `EXTRACTED`
 - anthropic_provider.py `EXTRACTED`
-- llm/openai_compatible.py `EXTRACTED`
-- container.py `EXTRACTED`
-- pgvector.py `EXTRACTED`
-- memory.py `EXTRACTED`
+- langchain_splitters.py `EXTRACTED`
 - recursive.py `EXTRACTED`
-- settings.py `EXTRACTED`
+- embeddings/langchain_bridge.py `EXTRACTED`
 - embeddings/gemini.py `EXTRACTED`
 - embeddings/openai_compatible.py `EXTRACTED`
 - cross_encoder.py `EXTRACTED`
+- noop.py `EXTRACTED`
 - local.py `EXTRACTED`
 - voyage.py `EXTRACTED`
-- noop.py `EXTRACTED`
 
 ### inherits
 - BaseModel `EXTRACTED`
@@ -42,8 +51,12 @@
 - Selects and configures one swappable component. `options` is intentionally… `EXTRACTED`
 
 ### references
+- _build_langchain_recursive() `EXTRACTED`
+- _build_markdown() `EXTRACTED`
 - _build_recursive() `EXTRACTED`
 - _build_fixed() `EXTRACTED`
+- _build() `EXTRACTED`
+- _build() `EXTRACTED`
 - _build() `EXTRACTED`
 - _build() `EXTRACTED`
 - _build() `EXTRACTED`
@@ -56,13 +69,18 @@
 - .create() `EXTRACTED`
 
 ### uses
-- Container `INFERRED`
-- Settings `INFERRED`
+- [Container](Container.md) `INFERRED`
+- [Settings](Settings.md) `INFERRED`
+- _FakeEmbeddings `INFERRED`
+- _ExplodingChatModel `INFERRED`
+- _SyncClosableReranker `INFERRED`
 - RetrievalSettings `INFERRED`
-- UnknownComponentError `INFERRED`
+- _ClosableEmbedding `INFERRED`
 - GenerationSettings `INFERRED`
-- _YamlProfileSource `INFERRED`
 - ChunkingSettings `INFERRED`
+- UnknownComponentError `INFERRED`
+- _YamlProfileSource `INFERRED`
+- ObservabilitySettings `INFERRED`
 - DatabaseSettings `INFERRED`
 - ServerSettings `INFERRED`
 

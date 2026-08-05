@@ -84,7 +84,7 @@ async def startup_notes(container: Container, settings: Settings) -> list[str]:
         if stats is not None and stats.documents == 0:
             notes.append(
                 "the index is empty — every question will abstain. "
-                "Run `./osc ingest ./docs`."
+                "Run `./osc ingest ./docs/company`."
             )
         elif stats is not None and len(stats.embedding_models) > 1:
             notes.append(

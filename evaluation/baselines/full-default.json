@@ -1,0 +1,2957 @@
+{
+  "started_at": "2026-08-05T00:39:15.692037+00:00",
+  "duration_seconds": 983.375,
+  "golden_set": "golden-set.yaml",
+  "case_count": 86,
+  "failed_count": 0,
+  "top_k": 5,
+  "concurrency": 2,
+  "generation": true,
+  "configuration": {
+    "profile_environment": "development",
+    "llm": "ollama/qwen3:8b",
+    "embeddings": "ollama/nomic-embed-text",
+    "reranker": "noop",
+    "vector_store": "pgvector",
+    "chunking": {
+      "strategy": "recursive",
+      "chunk_size": 900,
+      "chunk_overlap": 120
+    },
+    "retrieval": {
+      "strategy": "hybrid",
+      "candidates": 30,
+      "top_k": 5,
+      "rrf_k": 60,
+      "min_score": 0.0,
+      "rewrite_queries": false
+    },
+    "generation": {
+      "max_tokens": 1500,
+      "require_citations": true
+    }
+  },
+  "summary": {
+    "cases_scored": 86.0,
+    "recall@5": 0.9321,
+    "precision@5": 0.1901,
+    "mrr": 0.8601,
+    "hit_rate@5": 0.9383,
+    "citation_coverage": 1.0,
+    "groundedness": 1.0,
+    "citation_precision": 0.7321,
+    "fact_match": 0.9,
+    "abstention_accuracy": 0.8,
+    "latency_p50_seconds": 12.639,
+    "latency_p95_seconds": 92.856,
+    "latency_mean_seconds": 22.793,
+    "throughput_per_second": 0.087,
+    "input_tokens_total": 126287.0,
+    "output_tokens_total": 4565.0
+  },
+  "cases": [
+    {
+      "id": "tier-collection-level",
+      "question": "Can I set up a bulk discount that applies to a whole collection?",
+      "tags": [
+        "tiered-pricing"
+      ],
+      "relevant_documents": [
+        "faq/tiered-pricing-guide.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "Yes, you can set up a bulk discount that applies to a whole collection. To do this, you need to configure the discount to apply to selected collections and define thresholds for quantity that trigger the discount [1]. The discount can be applied to products within the collection based on specific criteria such as quantity thresholds and pricing modes [2][3].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 3,
+      "grounded_citations": 3,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 58.87514675001148,
+      "input_tokens": 1599,
+      "output_tokens": 70,
+      "trace_id": "0759849243704f0e",
+      "error": null
+    },
+    {
+      "id": "tier-product-level",
+      "question": "How do I give my wholesale customers a discount on specific products?",
+      "tags": [
+        "tiered-pricing"
+      ],
+      "relevant_documents": [
+        "faq/tiered-pricing-guide.md"
+      ],
+      "retrieved_documents": [
+        "faq/free-gift.md",
+        "faq/theme-compatibility.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "To give your wholesale customers a discount on specific products, you can create an offer that applies wholesale pricing to selected products or collections based on customer groups. Here's how:\n\n1. On the App Dashboard, click on the **Create Offer** tab.\n2. Mention the **Offer Name** and **Offer Details** (e.g., Wholesale Pricing).\n3. Apply the discount to **Selected Products** or **Selected Collections**.\n4. Assign the discount to **Customer Groups**, such as:\n   - All Customers\n   - Logged-in Customers\n   - Customers with Specific Tags (e.g., 'wholesale' or 'VIP' group) [2].\n\nFor tiered discounts (e.g., 'Buy 10 \u2192 10% off', 'Buy 20 \u2192 15% off'), ensure that the system applies the correct tier based on the cart quantity, and that the discount is visible only to logged-in wholesale customers [3][4].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 3,
+      "grounded_citations": 3,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 223.1602906669723,
+      "input_tokens": 1532,
+      "output_tokens": 197,
+      "trace_id": "488e0a69480b4723",
+      "error": null
+    },
+    {
+      "id": "tier-variants-supported",
+      "question": "Does tiered pricing work for individual product variants?",
+      "tags": [
+        "tiered-pricing"
+      ],
+      "relevant_documents": [
+        "faq/tiered-pricing-guide.md"
+      ],
+      "retrieved_documents": [
+        "faq/add-on-tier-pricing.md",
+        "faq/priority-of-the-offers.md",
+        "faq/tiered-pricing-guide.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.3333333333333333,
+      "hit": true,
+      "answer": "Yes, tiered pricing works for individual product variants. Each variant can have its own tier pricing structure, and the app evaluates each line item independently based on its quantity, cost parameters, and margins [5].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 106.31765599991195,
+      "input_tokens": 1388,
+      "output_tokens": 43,
+      "trace_id": "814f03a9d88746be",
+      "error": null
+    },
+    {
+      "id": "tier-shopify-admin-order",
+      "question": "If I create an order myself from the Shopify admin, does the tier price still apply?",
+      "tags": [
+        "tiered-pricing"
+      ],
+      "relevant_documents": [
+        "faq/tiered-pricing-guide.md"
+      ],
+      "retrieved_documents": [
+        "faq/tiered-pricing-guide.md",
+        "faq/priority-of-the-offers.md",
+        "faq/combined-collection-quantity-discount-slabs.md",
+        "faq/add-on-tier-pricing.md",
+        "faq/draft-order.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, tier pricing will work when placing an order through Shopify admin [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 92.85589474998415,
+      "input_tokens": 1434,
+      "output_tokens": 17,
+      "trace_id": "82512184caad4d17",
+      "error": null
+    },
+    {
+      "id": "priority-variant-wins",
+      "question": "I have offers at variant, product and collection level on the same item. Which one wins?",
+      "tags": [
+        "priority"
+      ],
+      "relevant_documents": [
+        "faq/priority-of-the-offers.md"
+      ],
+      "retrieved_documents": [
+        "faq/priority-of-the-offers.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "The variant level offer has the highest priority and will be applied first [2]. If there are conflicting offers at different levels (variant, product, and collection), the variant offer will take precedence over both the product and collection offers [2].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 86.31863962498028,
+      "input_tokens": 1435,
+      "output_tokens": 49,
+      "trace_id": "c29c180956f04dc6",
+      "error": null
+    },
+    {
+      "id": "priority-two-collections",
+      "question": "A product sits in two collections that both have discount rules. Which discount shows?",
+      "tags": [
+        "priority"
+      ],
+      "relevant_documents": [
+        "faq/priority-of-the-offers.md"
+      ],
+      "retrieved_documents": [
+        "faq/priority-of-the-offers.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "faq/combined-collection-quantity-discount-slabs.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "The best discount tier from any collection applies. For example, if a product is in Collection A with a 20% discount and Collection B with a 10% discount, the 20% discount will show [5]. If the collections have different tier price rules, the Collection with the Offer displayed on top in \"List of Offers\" will be applied first [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 2,
+      "grounded_citations": 2,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 114.89276570803486,
+      "input_tokens": 1457,
+      "output_tokens": 79,
+      "trace_id": "06e002f594f44761",
+      "error": null
+    },
+    {
+      "id": "priority-one-variant-only",
+      "question": "Why is my offer only showing on one variant instead of all of them?",
+      "tags": [
+        "priority",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/priority-of-the-offers.md"
+      ],
+      "retrieved_documents": [
+        "faq/priority-of-the-offers.md",
+        "faq/market.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Your offer is only showing on one variant because the priority of the offer determines which variant it applies to. If there are multiple offers applied, the one with the highest priority will be displayed. For instance, if there is a variant tier pricing offer and a product-level offer, the variant tier pricing offer will take precedence and be displayed on the product page [1]. \n\nIf you have an offer applied at the variant level, it will have higher priority than offers at the product or collection level [2]. Therefore, only the variant with the highest priority will show the offer. To ensure your offer is visible on all variants, you may need to adjust the priority settings or apply the offer at the variant level for each relevant variant [3].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 3,
+      "grounded_citations": 3,
+      "cited_relevant": 3,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 163.67299004201777,
+      "input_tokens": 1375,
+      "output_tokens": 149,
+      "trace_id": "6015afdd5c00430c",
+      "error": null
+    },
+    {
+      "id": "integration-buy-now",
+      "question": "Is the Buy Now button supported by the app?",
+      "tags": [
+        "integration"
+      ],
+      "relevant_documents": [
+        "faq/product-and-collection-page-integration.md"
+      ],
+      "retrieved_documents": [
+        "faq/product-and-collection-page-integration.md",
+        "faq/theme-compatibility.md",
+        "faq/draft-order.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, \"BUY NOW\" button is supported by the app [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 91.37659220793284,
+      "input_tokens": 1317,
+      "output_tokens": 16,
+      "trace_id": "3159683753904f17",
+      "error": null
+    },
+    {
+      "id": "integration-no-grid",
+      "question": "Instead of a pricing table, can I just show the discounted price next to the normal price?",
+      "tags": [
+        "integration"
+      ],
+      "relevant_documents": [
+        "faq/product-and-collection-page-integration.md",
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md",
+        "faq/row-level-discount.md"
+      ],
+      "recall": 0.5,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, you can display the discounted price next to the normal price by disabling the pricing table and adding the discounted price block below the default price block [5].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 14.13323287491221,
+      "input_tokens": 1353,
+      "output_tokens": 33,
+      "trace_id": "62bff3c2cf6c4d0f",
+      "error": null
+    },
+    {
+      "id": "integration-payment-gateways",
+      "question": "Will this work with my payment gateway?",
+      "tags": [
+        "integration"
+      ],
+      "relevant_documents": [
+        "faq/product-and-collection-page-integration.md"
+      ],
+      "retrieved_documents": [
+        "faq/product-and-collection-page-integration.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, this app is compatible with other Payment Gateways [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 10.040565499919467,
+      "input_tokens": 1464,
+      "output_tokens": 15,
+      "trace_id": "1a74128200d246b5",
+      "error": null
+    },
+    {
+      "id": "integration-collection-limit",
+      "question": "What is the maximum number of collections I can put in one offer?",
+      "tags": [
+        "integration",
+        "limits"
+      ],
+      "relevant_documents": [
+        "faq/product-and-collection-page-integration.md"
+      ],
+      "retrieved_documents": [
+        "faq/priority-of-the-offers.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "The sources provided do not specify the maximum number of collections that can be included in one offer. Therefore, this information is not available in the given materials [1][2][3][4][5].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 5,
+      "grounded_citations": 5,
+      "cited_relevant": 0,
+      "missing_facts": [
+        "10"
+      ],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 12.20742883393541,
+      "input_tokens": 1756,
+      "output_tokens": 42,
+      "trace_id": "b51eaf7b3ae04593",
+      "error": null
+    },
+    {
+      "id": "theme-grid-colour",
+      "question": "How do I change the colours of the discount grid to match my theme?",
+      "tags": [
+        "theme"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md",
+        "faq/combined-collection-quantity-discount-slabs.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "To change the colours of the discount grid to match your theme, add the following CSS code at the bottom of your Theme CSS file:\n\n```css\n<style>\n    #oscpPriceGrid th\n    {\n    color: white !important;\n    background-color: #557b97 !important;\n    }\n</style>\n```\n\nThis code sets the text color to white and the background color to a specific shade of blue. You can modify the colors to better match your theme's design [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 15.006824958021753,
+      "input_tokens": 1323,
+      "output_tokens": 105,
+      "trace_id": "fe4a2a2a5fd84401",
+      "error": null
+    },
+    {
+      "id": "theme-variant-offer-setup",
+      "question": "Where in the dashboard do I create a variant offer based on customer tags?",
+      "tags": [
+        "theme",
+        "setup"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "On the App Dashboard, click on Tiered Pricing for Variants. A new tab will open where you can select products and apply Wholesale pricing to each Variant based on Customer Tags [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 13.481347708962858,
+      "input_tokens": 1427,
+      "output_tokens": 39,
+      "trace_id": "c8147bba955e4c23",
+      "error": null
+    },
+    {
+      "id": "theme-customer-groups",
+      "question": "Which customer groups can I assign a discount to?",
+      "tags": [
+        "theme",
+        "setup"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "You can assign a discount to the following customer groups:\n\n1. All Customers  \n2. Logged in Customers  \n3. Customers with Specific Tags [Wholesale, VIP]  \n\nThese options are available when creating an offer or discount in the App Dashboard [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 12.071539415977895,
+      "input_tokens": 1475,
+      "output_tokens": 53,
+      "trace_id": "4bc1c77e8ae6471f",
+      "error": null
+    },
+    {
+      "id": "theme-table-missing",
+      "question": "The discount table is not showing up on my product page. What should I check?",
+      "tags": [
+        "theme",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md",
+        "faq/combined-collection-quantity-discount-slabs.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Ensure the **Custom Price Grid** app is enabled in the Shopify admin under **Sales Channel \u2192 Online Store \u2192 Customization \u2192 App Embeds** [1]. Verify that the **Discount** is enabled on the **Offer List Page** [1]. Check if any other **price-related apps** are installed, as they might conflict with the display of the discount table [1]. Confirm that the **Custom Price Grid block** is added and positioned correctly below the **Price block** in the product information section [2]. If the issue persists, check the **cart page** and **checkout page** to see if the pricing rules are applied there, which can help identify if the issue is due to customizations on the product page [2].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 2,
+      "grounded_citations": 2,
+      "cited_relevant": 2,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 15.906317249988206,
+      "input_tokens": 1419,
+      "output_tokens": 150,
+      "trace_id": "aa763c77f5a54bd1",
+      "error": null
+    },
+    {
+      "id": "theme-cart-price-missing",
+      "question": "The discounted price is not appearing on the cart page.",
+      "tags": [
+        "theme",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md",
+        "faq/combined-collection-quantity-discount-slabs.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Check the element ID or Class of the Input boxes in Shopify admin under Sales Channel \u2192 Online Store \u2192 Customization \u2192 App Embeds \u2192 Click on Wholesale Price [4].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 15.105802125064656,
+      "input_tokens": 1397,
+      "output_tokens": 35,
+      "trace_id": "2a7d99f3f31e40a6",
+      "error": null
+    },
+    {
+      "id": "theme-mini-cart",
+      "question": "My mini cart is still showing the full price.",
+      "tags": [
+        "theme",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "faq/theme-compatibility.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "faq/draft-order.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.3333333333333333,
+      "hit": true,
+      "answer": "The discount price is not reflecting in the Mini Cart because the Wholesale Price app needs to be configured correctly in Shopify admin. Navigate to Sales Channel \u2192 Online Store \u2192 Customization \u2192 App Embeds \u2192 Click on Wholesale Price and enter the element ID or Class of the following Input boxes [3].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.945877957972698,
+      "input_tokens": 1442,
+      "output_tokens": 59,
+      "trace_id": "2029a63fa3184653",
+      "error": null
+    },
+    {
+      "id": "theme-checkout-button",
+      "question": "The price is wrong when I click checkout from the cart drawer. How do I fix it?",
+      "tags": [
+        "theme",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "The price is wrong when you click checkout from the cart drawer because the Discount price is not reflecting properly. To fix this, you need to ensure that the element ID or Class for the Checkout button on the Cart Page and Cart Drawer is correctly entered in the Wholesale Price settings. In Shopify admin, navigate to Sales Channel \u2192 Online Store \u2192 Customization \u2192 App Embeds \u2192 Click on Wholesale Price, and enter the element ID or Class for the Checkout button on the Cart Page and Cart Drawer (Mini cart) in the Checkout Button input box [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 14.743298207991756,
+      "input_tokens": 1457,
+      "output_tokens": 111,
+      "trace_id": "a1f4d1beb88e4c41",
+      "error": null
+    },
+    {
+      "id": "theme-add-to-cart",
+      "question": "What do I configure so the discount applies when Add to Cart is clicked?",
+      "tags": [
+        "theme",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/cart-discount.md",
+        "faq/theme-compatibility.md",
+        "faq/row-level-discount.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.5,
+      "hit": true,
+      "answer": "To ensure the discount applies when the \"Add to Cart\" button is clicked, you need to configure the following:\n\n1. **Theme Setup:** In Shopify admin, navigate to Theme Setup (Left Navigation in App) \u2192 Select Theme (click on Continue) \u2192 App Block Setup \u2192 Click on Add Discounted Price \u2192 Move Discounted Price below default Price block \u2192 Disable Wholesale Price (Grid) [2].\n\n2. **Enable Custom Price Grid:** In Shopify admin, click Sales Channel \u2192 Online Store \u2192 Customization \u2192 App Embeds \u2192 Enable Custom Price Grid [5].\n\n3. **Block Setup:** In Shopify admin, click Sales Channel \u2192 Online Store \u2192 Customization \u2192 In Home Page drop down select Products \u2192 Click on Default Product \u2192 In Product information click on Add block \u2192 In APPS click on Custom Price Grid \u2192 Drag and drop Custom Price Grid below Price (in Product information) [5].\n\n4. **Check Dashboard:** Ensure the App is Enabled (ON) in the Dashboard [5].\n\nBy following these steps, the discounted price will be displayed and apply when the \"Add to Cart\" button is clicked.",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 2,
+      "grounded_citations": 2,
+      "cited_relevant": 2,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 20.810953542008065,
+      "input_tokens": 1395,
+      "output_tokens": 225,
+      "trace_id": "231445aa55ab4f09",
+      "error": null
+    },
+    {
+      "id": "theme-single-quantity-price",
+      "question": "How can I display a discounted price for a single unit on the product page?",
+      "tags": [
+        "theme"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "To display a discounted price for a single unit on the product page, follow these steps:\n\n1. In Shopify admin, navigate to **Theme Setup (Left Navigation in App)** \u2192 **Select Theme** (click on Continue) \u2192 **App Block Setup** \u2192 **Click on Add Discounted Price** \u2192 **Move Discounted Price below default Price block** [1].\n2. **Disable Wholesale Price (Grid)** [1].\n3. **Save changes** [1].\n\nThese steps will ensure that the discounted price for a single unit is displayed directly on the product page, replacing the pricing grid.",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 22.937294958042912,
+      "input_tokens": 1400,
+      "output_tokens": 121,
+      "trace_id": "6eb1778b8199471a",
+      "error": null
+    },
+    {
+      "id": "theme-grid-customisation",
+      "question": "My price grid does not appear at all. Could my theme customisations be the cause?",
+      "tags": [
+        "theme",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, your theme customizations could be the cause of the price grid not appearing. If the price grid is not displayed on the product page, it may be due to customizations made to the product page [1]. You should check the cart page to see if the pricing rules are applied there and on the checkout page. If the rules are working on the cart page, the issue is likely due to the customizations on the product page [1]. \n\nAdditionally, ensure that the \"Custom Price Grid\" app is enabled in the App Embeds section under Online Store Customization [3]. If other pricing-related apps are installed, they may conflict with the price grid, so consider disabling them to resolve the issue [3].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 2,
+      "grounded_citations": 2,
+      "cited_relevant": 2,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 20.066930041997693,
+      "input_tokens": 1363,
+      "output_tokens": 147,
+      "trace_id": "a128aa95b81944a9",
+      "error": null
+    },
+    {
+      "id": "registration-create-form",
+      "question": "How do I build a wholesale signup form?",
+      "tags": [
+        "registration"
+      ],
+      "relevant_documents": [
+        "faq/registration-form.md"
+      ],
+      "retrieved_documents": [
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "faq/theme-compatibility.md"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "Use the Registration Form feature with custom fields to collect business details from applicants. Configure the form to include fields such as Business name, VAT number, Annual turnover, and Upload trade licence. Enable auto-email notification to the merchant upon submission [1]. The customer receives a confirmation email, and the account is placed in a 'pending' state until the merchant approves and applies the relevant customer tag [1]. \n\nEnsure required fields are validated before submission, and the merchant receives a notification for review [4]. If the form is not configured correctly, issues like duplicate submissions or missing required fields may occur, leaving the customer unable to access wholesale prices until approved [4].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 2,
+      "grounded_citations": 2,
+      "cited_relevant": 0,
+      "missing_facts": [
+        "registration form setup"
+      ],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 18.132938000024296,
+      "input_tokens": 1274,
+      "output_tokens": 133,
+      "trace_id": "70971cefe1af46d4",
+      "error": null
+    },
+    {
+      "id": "registration-show-frontend",
+      "question": "How do customers actually reach the registration form on my storefront?",
+      "tags": [
+        "registration"
+      ],
+      "relevant_documents": [
+        "faq/registration-form.md"
+      ],
+      "retrieved_documents": [
+        "faq/registration-form.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Customers can reach the registration form by navigating to the Main menu in the storefront. To set this up, go to the Shopify admin page, click on Online stores > Navigation, then Main menu. From there, add a menu item by clicking Add menu item, fill in the name, and add the link to your Registration Form Setup. You can copy the Registration form link from Dashboard > Registration Form Setup [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 15.53858791606035,
+      "input_tokens": 1344,
+      "output_tokens": 84,
+      "trace_id": "791846e81f6d452f",
+      "error": null
+    },
+    {
+      "id": "registration-no-emails",
+      "question": "My customers are not getting approval emails. What is wrong?",
+      "tags": [
+        "registration",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/registration-form.md"
+      ],
+      "retrieved_documents": [
+        "faq/registration-form.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "The issue might be that the Email Notification Setup has not been properly configured. You need to configure the emails notifying your customers of account approval by navigating to the Email Notification Setup tab in the app's navigation [1]. \n\nAdditionally, ensure that the required fields are validated before submission, as missing fields can prevent the approval email from being sent [5]. If the email notification fails to send, the submission should still be saved, but the customer may not receive the approval email [3]. \n\nIf the problem persists, check the configuration for the \"Customer's Approval Notification\" template, as it is responsible for sending the approval email to the customer [2].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 4,
+      "grounded_citations": 4,
+      "cited_relevant": 2,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 15.833934625028633,
+      "input_tokens": 1350,
+      "output_tokens": 132,
+      "trace_id": "e31862949c71428f",
+      "error": null
+    },
+    {
+      "id": "export-metafields-csv",
+      "question": "How do I export my pricing data to a CSV?",
+      "tags": [
+        "export"
+      ],
+      "relevant_documents": [
+        "faq/export.md"
+      ],
+      "retrieved_documents": [
+        "faq/export.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "To export your pricing data to a CSV, follow these steps:\n\n- Navigate to the app dashboard.\n- Click on the \"Export\" button.\n- A message will pop up indicating that the CSV file is in progress.\n- Once the process is complete, you will receive a message confirming that the CSV file has been sent to your email address.\n- You can then download the exported CSV file from your email [2].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 16.327207541908138,
+      "input_tokens": 1453,
+      "output_tokens": 85,
+      "trace_id": "1c87d74091814c38",
+      "error": null
+    },
+    {
+      "id": "export-bulk-edit-variants",
+      "question": "Is there a way to edit lots of variant rules at once instead of one by one?",
+      "tags": [
+        "export"
+      ],
+      "relevant_documents": [
+        "faq/export.md"
+      ],
+      "retrieved_documents": [
+        "faq/export.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, you can edit multiple variant rules at once by using the CSV import feature. This allows you to modify pricing rules for variants in bulk, rather than editing them one by one [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 14.821155083016492,
+      "input_tokens": 1793,
+      "output_tokens": 40,
+      "trace_id": "670bc0b36a1b45e0",
+      "error": null
+    },
+    {
+      "id": "export-pricing-in-csv",
+      "question": "Can the CSV include the discount rules for each variant?",
+      "tags": [
+        "export"
+      ],
+      "relevant_documents": [
+        "faq/export.md"
+      ],
+      "retrieved_documents": [
+        "faq/export.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, the CSV can include discount rules for each variant. You can define the price for each variant in the relevant column to include pricing rules [1]. Additionally, you can import pricing rules in bulk via CSV, which allows for the management of discount rules for variants efficiently [2].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 2,
+      "grounded_citations": 2,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 13.799579125014134,
+      "input_tokens": 1427,
+      "output_tokens": 58,
+      "trace_id": "c8b77b9590384bf7",
+      "error": null
+    },
+    {
+      "id": "quick-order-styling",
+      "question": "Can the quick order form be restyled to match my shop?",
+      "tags": [
+        "quick-order"
+      ],
+      "relevant_documents": [
+        "faq/quick-order-form.md"
+      ],
+      "retrieved_documents": [
+        "faq/quick-order-form.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, the Quick Order Form can be customized to match your shop's theme. The store admin can adjust colors, borders, and other visual elements to align with your store's design [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.870261915959418,
+      "input_tokens": 1302,
+      "output_tokens": 40,
+      "trace_id": "0e85586b61e34f38",
+      "error": null
+    },
+    {
+      "id": "quick-order-bulk-sku",
+      "question": "Can I paste in a list of SKUs rather than typing them one at a time?",
+      "tags": [
+        "quick-order",
+        "limitations"
+      ],
+      "relevant_documents": [
+        "faq/quick-order-form.md"
+      ],
+      "retrieved_documents": [
+        "faq/quick-order-form.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, you can paste in a list of SKUs. The Quick Order Form supports bulk SKU entry by pasting a list, allowing customers to add multiple SKUs at once [4].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 0,
+      "missing_facts": [
+        "apps@oscprofessionals.com"
+      ],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 11.486790832947008,
+      "input_tokens": 1546,
+      "output_tokens": 39,
+      "trace_id": "14192b1c297642ab",
+      "error": null
+    },
+    {
+      "id": "quick-order-variants",
+      "question": "Does entering a variant SKU add that exact variant to the cart?",
+      "tags": [
+        "quick-order"
+      ],
+      "relevant_documents": [
+        "faq/quick-order-form.md"
+      ],
+      "retrieved_documents": [
+        "faq/quick-order-form.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, entering the SKU of a specific variant will ensure that exact variant is added to the cart [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.404468500055373,
+      "input_tokens": 1463,
+      "output_tokens": 23,
+      "trace_id": "73fc771139ec4225",
+      "error": null
+    },
+    {
+      "id": "quick-order-bad-sku",
+      "question": "What happens if a customer types an SKU that does not exist?",
+      "tags": [
+        "quick-order"
+      ],
+      "relevant_documents": [
+        "faq/quick-order-form.md"
+      ],
+      "retrieved_documents": [
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "faq/quick-order-form.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.3333333333333333,
+      "hit": true,
+      "answer": "The product will not show if the SKU is invalid, you have to enter the correct SKU [3]. Additionally, the row shows 'SKU not found' error [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 2,
+      "grounded_citations": 2,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 10.850566208013333,
+      "input_tokens": 1423,
+      "output_tokens": 36,
+      "trace_id": "487616dfe65a4ed8",
+      "error": null
+    },
+    {
+      "id": "quick-order-tier-pricing",
+      "question": "Will quantity discounts show inside the quick order form?",
+      "tags": [
+        "quick-order",
+        "tiered-pricing"
+      ],
+      "relevant_documents": [
+        "faq/quick-order-form.md"
+      ],
+      "retrieved_documents": [
+        "faq/quick-order-form.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "faq/row-level-discount.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, quantity discounts (tiered pricing) will show inside the Quick Order Form if a product variant has tiered pricing rules configured. These rules will be displayed in the form, allowing customers to see quantity-based pricing directly while placing their orders [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.022445417009294,
+      "input_tokens": 1256,
+      "output_tokens": 52,
+      "trace_id": "81bbe61cf84a422c",
+      "error": null
+    },
+    {
+      "id": "cart-discount-testing",
+      "question": "How can I check that my cart discount is actually working?",
+      "tags": [
+        "cart-discount"
+      ],
+      "relevant_documents": [
+        "faq/cart-discount.md"
+      ],
+      "retrieved_documents": [
+        "faq/cart-discount.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "faq/row-level-discount.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Add products to your cart that meet the discount conditions and check on the cart page and checkout page. You should see the discount automatically applied [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.161856999970041,
+      "input_tokens": 1495,
+      "output_tokens": 31,
+      "trace_id": "1f96a6c20d7c48ca",
+      "error": null
+    },
+    {
+      "id": "cart-discount-scheduling",
+      "question": "Can I schedule a cart discount to run only over a weekend?",
+      "tags": [
+        "cart-discount",
+        "limitations"
+      ],
+      "relevant_documents": [
+        "faq/cart-discount.md"
+      ],
+      "retrieved_documents": [
+        "faq/cart-discount.md",
+        "faq/row-level-discount.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "No, the ability to schedule cart discounts for specific dates or time periods is not currently available. This functionality is on the roadmap for future releases [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.087253667064942,
+      "input_tokens": 1425,
+      "output_tokens": 32,
+      "trace_id": "34231e4d6ba048bb",
+      "error": null
+    },
+    {
+      "id": "cart-discount-customer-tags",
+      "question": "Can cart discounts be limited to customers with a particular tag?",
+      "tags": [
+        "cart-discount",
+        "limitations"
+      ],
+      "relevant_documents": [
+        "faq/cart-discount.md"
+      ],
+      "retrieved_documents": [
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "faq/cart-discount.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.3333333333333333,
+      "hit": true,
+      "answer": "Yes, cart discounts can be limited to customers with a particular tag. The discount application is based on customer tags, and each tag group receives exactly its configured discount, not another group's [1]. Additionally, it is possible to apply cart discounts based on specific customer tags, although this functionality is not supported by default and is part of future updates [3].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 2,
+      "grounded_citations": 2,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 13.208932249923237,
+      "input_tokens": 1669,
+      "output_tokens": 73,
+      "trace_id": "f28781b438454c5f",
+      "error": null
+    },
+    {
+      "id": "cart-discount-tiers",
+      "question": "Can I make a cart discount get bigger as the customer spends more?",
+      "tags": [
+        "cart-discount"
+      ],
+      "relevant_documents": [
+        "faq/cart-discount.md"
+      ],
+      "retrieved_documents": [
+        "faq/cart-discount.md",
+        "faq/row-level-discount.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, you can create tiered discounts where the discount amount increases as the customer spends more. While creating a cart discount, you can define multiple tiers by entering different minimum values and corresponding discount amounts [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 13.661155708949082,
+      "input_tokens": 1412,
+      "output_tokens": 43,
+      "trace_id": "fe919e3c46d9471b",
+      "error": null
+    },
+    {
+      "id": "market-testing",
+      "question": "How do I test that customers in another country see the right offer?",
+      "tags": [
+        "market"
+      ],
+      "relevant_documents": [
+        "faq/market.md"
+      ],
+      "retrieved_documents": [
+        "faq/market.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Use a test address from the desired country or a VPN to simulate the customer's location and observe how the system applies offers [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 11.453361249994487,
+      "input_tokens": 1515,
+      "output_tokens": 28,
+      "trace_id": "7ddd634bb5d34a49",
+      "error": null
+    },
+    {
+      "id": "market-conflicting-offers",
+      "question": "Two offers target the same country with different discounts. Which applies?",
+      "tags": [
+        "market",
+        "priority"
+      ],
+      "relevant_documents": [
+        "faq/market.md"
+      ],
+      "retrieved_documents": [
+        "faq/market.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "faq/priority-of-the-offers.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "The offer with the best price will apply [1]. If two offers target the same market, only one will apply \u2014 typically the one with the best price.",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 10.9074369170703,
+      "input_tokens": 1389,
+      "output_tokens": 33,
+      "trace_id": "b0f3b622e9694ca5",
+      "error": null
+    },
+    {
+      "id": "market-all-vs-specific",
+      "question": "I have an All Markets offer and a USA offer. What does a US customer see?",
+      "tags": [
+        "market",
+        "priority"
+      ],
+      "relevant_documents": [
+        "faq/market.md"
+      ],
+      "retrieved_documents": [
+        "faq/market.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "faq/priority-of-the-offers.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "A US customer will see the USA-specific offer, as it takes priority over the \"All Markets\" offer for customers located in the USA [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 10.616926167043857,
+      "input_tokens": 1407,
+      "output_tokens": 31,
+      "trace_id": "c7fd8f560ae04907",
+      "error": null
+    },
+    {
+      "id": "tax-what-it-does",
+      "question": "What is the tax display feature for?",
+      "tags": [
+        "tax"
+      ],
+      "relevant_documents": [
+        "faq/tax-display.md"
+      ],
+      "retrieved_documents": [
+        "faq/tax-display.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "The tax display feature allows merchants to show both inclusive and exclusive tax prices on the pricing grid, based on the customer's selected country [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.40335233299993,
+      "input_tokens": 1487,
+      "output_tokens": 30,
+      "trace_id": "0905119cfd5d44c9",
+      "error": null
+    },
+    {
+      "id": "tax-enable",
+      "question": "Where do I turn on tax display?",
+      "tags": [
+        "tax"
+      ],
+      "relevant_documents": [
+        "faq/tax-display.md"
+      ],
+      "retrieved_documents": [
+        "faq/tax-display.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "You can enable the Tax Display feature from the Settings page of the app by checking the \"Enable Tax Display\" option [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 11.455032041994855,
+      "input_tokens": 1473,
+      "output_tokens": 27,
+      "trace_id": "1959df2884714bf5",
+      "error": null
+    },
+    {
+      "id": "tax-per-country-rates",
+      "question": "Can I use a different tax rate for each country I sell to?",
+      "tags": [
+        "tax"
+      ],
+      "relevant_documents": [
+        "faq/tax-display.md"
+      ],
+      "retrieved_documents": [
+        "faq/tax-display.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, you can define country-specific tax rates, which will override the global rate if both are set [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.293281457968988,
+      "input_tokens": 1488,
+      "output_tokens": 24,
+      "trace_id": "b7e7776b595d4061",
+      "error": null
+    },
+    {
+      "id": "tax-global-vs-country",
+      "question": "If I set a global tax rate and a country rate, which one is used?",
+      "tags": [
+        "tax",
+        "priority"
+      ],
+      "relevant_documents": [
+        "faq/tax-display.md"
+      ],
+      "retrieved_documents": [
+        "faq/tax-display.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "The country-specific tax rate will take priority over the global rate [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 11.607604207936674,
+      "input_tokens": 1479,
+      "output_tokens": 16,
+      "trace_id": "6c3746597a2442e7",
+      "error": null
+    },
+    {
+      "id": "tax-shopify-prerequisite",
+      "question": "Do I need to set anything up in Shopify before tax display works?",
+      "tags": [
+        "tax",
+        "setup"
+      ],
+      "relevant_documents": [
+        "faq/tax-display.md"
+      ],
+      "retrieved_documents": [
+        "faq/tax-display.md",
+        "faq/theme-compatibility.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, the countries you assign tax rates to must have markets created in your Shopify admin [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 10.622665375005454,
+      "input_tokens": 1382,
+      "output_tokens": 21,
+      "trace_id": "b25a3140ce124c7e",
+      "error": null
+    },
+    {
+      "id": "tax-affects-checkout",
+      "question": "Does the tax display setting change what the customer is actually charged?",
+      "tags": [
+        "tax",
+        "limitations"
+      ],
+      "relevant_documents": [
+        "faq/tax-display.md"
+      ],
+      "retrieved_documents": [
+        "faq/tax-display.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "No, the tax display setting does not change what the customer is actually charged. The actual tax charged at checkout depends on your Shopify tax settings [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.141334499930963,
+      "input_tokens": 1492,
+      "output_tokens": 32,
+      "trace_id": "783a45cf55c5442e",
+      "error": null
+    },
+    {
+      "id": "tax-per-product",
+      "question": "Can I switch tax display on for only some products?",
+      "tags": [
+        "tax",
+        "limitations"
+      ],
+      "relevant_documents": [
+        "faq/tax-display.md"
+      ],
+      "retrieved_documents": [
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "faq/tax-display.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.5,
+      "hit": true,
+      "answer": "No, you cannot apply tax display settings to only some products. Tax display settings are applied globally across the storefront and not on a per-product basis [2].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 12.419741707970388,
+      "input_tokens": 1461,
+      "output_tokens": 33,
+      "trace_id": "5fcff3c82b794baa",
+      "error": null
+    },
+    {
+      "id": "combined-deleted-label",
+      "question": "I deleted the discount label the app created. What happens now?",
+      "tags": [
+        "combined-collections",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md"
+      ],
+      "retrieved_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md",
+        "faq/theme-compatibility.md",
+        "faq/row-level-discount.md",
+        "faq/draft-order.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Discounts stop working. Recreate the label and update rules [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.500714957946911,
+      "input_tokens": 1345,
+      "output_tokens": 16,
+      "trace_id": "f8074819f08b4f2e",
+      "error": null
+    },
+    {
+      "id": "combined-not-applying",
+      "question": "My combined collection discounts are not applying. What should I check?",
+      "tags": [
+        "combined-collections",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md"
+      ],
+      "retrieved_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md",
+        "faq/theme-compatibility.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "faq/cart-discount.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Check that products are in the registered collection, customer group/quantity matches the rules, there are no conflicting rules, and the discount label exists [1]. If the issue persists, contact support at apps@oscprofessionals.com or through OSCP's support portal [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 12.234383665956557,
+      "input_tokens": 1457,
+      "output_tokens": 56,
+      "trace_id": "a22e033ee96d4b45",
+      "error": null
+    },
+    {
+      "id": "combined-multiple-collections",
+      "question": "If a product is in more than one registered collection, which discount does it get?",
+      "tags": [
+        "combined-collections",
+        "priority"
+      ],
+      "relevant_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md"
+      ],
+      "retrieved_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md",
+        "faq/priority-of-the-offers.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "The best discount tier from any collection applies. For example, if a product is in two collections with different discount tiers, the discount with the higher value will be applied [1]. If the collections have different discount tiers, such as 20% from Collection A and 10% from Collection B, the 20% discount from Collection A will be applied [1]. \n\nAdditionally, the priority of the discount can be influenced by the order of the collections in the \"List of Offers,\" where the collection displayed first will have its discount applied first [2].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 2,
+      "grounded_citations": 2,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 15.551336084026843,
+      "input_tokens": 1482,
+      "output_tokens": 116,
+      "trace_id": "ae6e0fd545664065",
+      "error": null
+    },
+    {
+      "id": "combined-update-collection",
+      "question": "What happens to discounts when I add products to a registered collection?",
+      "tags": [
+        "combined-collections"
+      ],
+      "relevant_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md"
+      ],
+      "retrieved_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md",
+        "faq/theme-compatibility.md",
+        "faq/row-level-discount.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Adding products to a registered collection auto-updates discount eligibility [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 13.604684874997474,
+      "input_tokens": 1354,
+      "output_tokens": 15,
+      "trace_id": "bdb4295e684343a3",
+      "error": null
+    },
+    {
+      "id": "combined-restrict-groups",
+      "question": "Can I limit combined collection discounts to my VIP customers?",
+      "tags": [
+        "combined-collections"
+      ],
+      "relevant_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md"
+      ],
+      "retrieved_documents": [
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "Yes, you can limit combined collection discounts to VIP customers by applying the discount under the VIP customer group [Customer Group: VIP] [1][2][3][4][5]. This ensures that only VIP customers are eligible for the discount based on their customer tag.",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 5,
+      "grounded_citations": 5,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 12.96479562507011,
+      "input_tokens": 1718,
+      "output_tokens": 55,
+      "trace_id": "6e98f4d823f948c7",
+      "error": null
+    },
+    {
+      "id": "limits-combine-row-and-order",
+      "question": "Can a row-level discount and an order-level discount both apply to one order?",
+      "tags": [
+        "order-limits",
+        "row-level"
+      ],
+      "relevant_documents": [
+        "faq/order-limits.md",
+        "faq/row-level-discount.md"
+      ],
+      "retrieved_documents": [
+        "faq/order-limits.md",
+        "faq/row-level-discount.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.4,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, a row-level discount and an order-level discount can both apply to one order. First, the row-level discount is calculated and applied. After that, if the order qualifies for the order-level discount based on the final amount, the order-level discount will also be applied [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 14.37270291603636,
+      "input_tokens": 1405,
+      "output_tokens": 59,
+      "trace_id": "4368e22669194c21",
+      "error": null
+    },
+    {
+      "id": "limits-conditions",
+      "question": "If I set several conditions on an order limit, do they all have to be met?",
+      "tags": [
+        "order-limits"
+      ],
+      "relevant_documents": [
+        "faq/order-limits.md"
+      ],
+      "retrieved_documents": [
+        "faq/order-limits.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, if you set several conditions on an order limit, all conditions must be met [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 12.372083374997601,
+      "input_tokens": 1531,
+      "output_tokens": 21,
+      "trace_id": "5986675acacf4006",
+      "error": null
+    },
+    {
+      "id": "limits-scope",
+      "question": "Can I apply an order limit to just one product rather than the whole cart?",
+      "tags": [
+        "order-limits",
+        "limitations"
+      ],
+      "relevant_documents": [
+        "faq/order-limits.md"
+      ],
+      "retrieved_documents": [
+        "faq/order-limits.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "No, order limits can only be applied to the entire cart, either based on the total quantity or the total order amount [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.82014404097572,
+      "input_tokens": 1443,
+      "output_tokens": 28,
+      "trace_id": "2ca239bdd4f0498a",
+      "error": null
+    },
+    {
+      "id": "row-before-tax",
+      "question": "Is a row-level discount taken off before or after tax and shipping?",
+      "tags": [
+        "row-level"
+      ],
+      "relevant_documents": [
+        "faq/row-level-discount.md"
+      ],
+      "retrieved_documents": [
+        "faq/row-level-discount.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Row-level discounts apply before shipping and tax are calculated. This ensures accurate tax calculations [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 11.746745291049592,
+      "input_tokens": 1525,
+      "output_tokens": 20,
+      "trace_id": "6a62228c646c42c3",
+      "error": null
+    },
+    {
+      "id": "row-tiered",
+      "question": "How do I set 10% off over $100 and 15% off over $500 at row level?",
+      "tags": [
+        "row-level"
+      ],
+      "relevant_documents": [
+        "faq/row-level-discount.md"
+      ],
+      "retrieved_documents": [
+        "faq/row-level-discount.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "To set 10% off over $100 and 15% off over $500 at row level, you'll need to create two separate offers \u2014 one for 10% off at $100 and another for 15% off at $500 [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 13.797772917081602,
+      "input_tokens": 1762,
+      "output_tokens": 65,
+      "trace_id": "3f8dcbfe96144d76",
+      "error": null
+    },
+    {
+      "id": "row-threshold-drop",
+      "question": "What happens to the discount if the customer removes an item and drops below the minimum?",
+      "tags": [
+        "row-level"
+      ],
+      "relevant_documents": [
+        "faq/row-level-discount.md"
+      ],
+      "retrieved_documents": [
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "faq/row-level-discount.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.3333333333333333,
+      "hit": true,
+      "answer": "The discount is removed automatically if the cart drops below the threshold [1]. If a customer removes one product and the cart value drops below the minimum order threshold, the discount will be recalculated. If the new cart subtotal is below the defined minimum value (e.g., $100), the discount will no longer apply [5].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 2,
+      "grounded_citations": 2,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 15.107135666999966,
+      "input_tokens": 1528,
+      "output_tokens": 69,
+      "trace_id": "d461afe30a254245",
+      "error": null
+    },
+    {
+      "id": "row-selected-products",
+      "question": "Can row-level discounts apply to only some products in the cart?",
+      "tags": [
+        "row-level",
+        "limitations"
+      ],
+      "relevant_documents": [
+        "faq/row-level-discount.md"
+      ],
+      "retrieved_documents": [
+        "faq/row-level-discount.md",
+        "faq/order-limits.md",
+        "faq/cart-discount.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "No, currently the app only provides the option to apply row-level discounts to all products in the cart [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 12.869425958022475,
+      "input_tokens": 1423,
+      "output_tokens": 24,
+      "trace_id": "3714215d375b4473",
+      "error": null
+    },
+    {
+      "id": "fee-what-is-it",
+      "question": "What can I use the extra fee feature for?",
+      "tags": [
+        "extra-fee"
+      ],
+      "relevant_documents": [
+        "faq/extra-fee.md"
+      ],
+      "retrieved_documents": [
+        "faq/extra-fee.md",
+        "faq/export.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "The Extra Fee feature can be used to add one or more surcharges to a customer's order based on rules you define. These fees can include a handling fee, a packaging charge, a COD fee, or a B2B service fee. Fees appear automatically in the cart and at checkout [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 12.480283292010427,
+      "input_tokens": 1369,
+      "output_tokens": 62,
+      "trace_id": "4c5d37177125449a",
+      "error": null
+    },
+    {
+      "id": "fee-specific-products",
+      "question": "I want a packaging charge on fragile items only. How do I set that up?",
+      "tags": [
+        "extra-fee"
+      ],
+      "relevant_documents": [
+        "faq/extra-fee.md"
+      ],
+      "retrieved_documents": [
+        "faq/extra-fee.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Set the rule's \"Applies To\" field to Specific Products (or a collection) and add a fixed fee. Only those products will trigger the packaging charge \u2014 other items in the cart are ignored [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 14.218209958053194,
+      "input_tokens": 1721,
+      "output_tokens": 44,
+      "trace_id": "28c57272a9c840eb",
+      "error": null
+    },
+    {
+      "id": "fee-flat-handling",
+      "question": "How do I add the same handling charge to every order?",
+      "tags": [
+        "extra-fee"
+      ],
+      "relevant_documents": [
+        "faq/extra-fee.md"
+      ],
+      "retrieved_documents": [
+        "faq/extra-fee.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Create a rule that applies to All Products with a single slab and a fixed fee. The fee will be added to every cart that meets the rule's conditions [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 13.861917417030782,
+      "input_tokens": 1662,
+      "output_tokens": 35,
+      "trace_id": "4493e747d41a4a47",
+      "error": null
+    },
+    {
+      "id": "fee-multiple-rules",
+      "question": "Can I have several extra fees running at once?",
+      "tags": [
+        "extra-fee"
+      ],
+      "relevant_documents": [
+        "faq/extra-fee.md"
+      ],
+      "retrieved_documents": [
+        "faq/extra-fee.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx",
+        "faq/add-on-tier-pricing.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes. You can create unlimited rules. They run side-by-side and you control whether they stack or whether only one wins [2].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 12.18657775002066,
+      "input_tokens": 1536,
+      "output_tokens": 28,
+      "trace_id": "d483097cc20a4301",
+      "error": null
+    },
+    {
+      "id": "fee-requires-code",
+      "question": "Do I need a developer to set up an extra fee?",
+      "tags": [
+        "extra-fee"
+      ],
+      "relevant_documents": [
+        "faq/extra-fee.md"
+      ],
+      "retrieved_documents": [
+        "faq/extra-fee.md",
+        "faq/export.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "No. You create rules from the app dashboard using simple conditions such as cart value, quantity, customer tag, or selected products. The fee is added on the storefront automatically [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.151051333989017,
+      "input_tokens": 1371,
+      "output_tokens": 38,
+      "trace_id": "a058369bb78249a1",
+      "error": null
+    },
+    {
+      "id": "addon-single-cost",
+      "question": "I only have one unit cost and one margin. Can I still use add-on tier pricing?",
+      "tags": [
+        "add-on-pricing"
+      ],
+      "relevant_documents": [
+        "faq/add-on-tier-pricing.md"
+      ],
+      "retrieved_documents": [
+        "faq/add-on-tier-pricing.md",
+        "faq/tiered-pricing-guide.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes. The simplest setup uses just one cost parameter and one profit margin, applied across all your quantity tiers. The result is a clean, flat wholesale price [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.623463583062403,
+      "input_tokens": 1474,
+      "output_tokens": 35,
+      "trace_id": "2b499246c41a45c9",
+      "error": null
+    },
+    {
+      "id": "addon-mixed-cart",
+      "question": "If a customer orders several different products and variants together, is each priced correctly?",
+      "tags": [
+        "add-on-pricing"
+      ],
+      "relevant_documents": [
+        "faq/add-on-tier-pricing.md"
+      ],
+      "retrieved_documents": [
+        "faq/add-on-tier-pricing.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, each product in the cart is evaluated on its own quantity, cost parameters, and margins. The app keeps every line item priced correctly even when the cart contains different products [1]. \n\nAdditionally, the app supports multiple products, each with multiple variants, all in the same cart. Every variant uses its own quantity range to determine its tier price [3].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 2,
+      "grounded_citations": 2,
+      "cited_relevant": 2,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 14.100420832983218,
+      "input_tokens": 1555,
+      "output_tokens": 74,
+      "trace_id": "3f346a7962df4142",
+      "error": null
+    },
+    {
+      "id": "addon-all-sizes",
+      "question": "Can one tier structure cover every size of a product?",
+      "tags": [
+        "add-on-pricing"
+      ],
+      "relevant_documents": [
+        "faq/add-on-tier-pricing.md"
+      ],
+      "retrieved_documents": [
+        "faq/add-on-tier-pricing.md",
+        "faq/priority-of-the-offers.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes. You can apply one tier structure to every variant of a product \u2014 XS, S, M, L, and beyond \u2014 so every size benefits from the same volume discounts [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 13.566315083997324,
+      "input_tokens": 1425,
+      "output_tokens": 39,
+      "trace_id": "629bec9ea1ca43fd",
+      "error": null
+    },
+    {
+      "id": "addon-cost-components",
+      "question": "How many cost parameters and profit margins can I define for a variant?",
+      "tags": [
+        "add-on-pricing",
+        "limits"
+      ],
+      "relevant_documents": [
+        "faq/add-on-tier-pricing.md"
+      ],
+      "retrieved_documents": [
+        "faq/add-on-tier-pricing.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "You can define up to four cost parameters and two profit margins for a variant [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 2,
+      "faithful": null,
+      "latency_seconds": 12.554552749963477,
+      "input_tokens": 1938,
+      "output_tokens": 19,
+      "trace_id": "57f1f7a0d1fb45d0",
+      "error": null
+    },
+    {
+      "id": "gift-what-is-it",
+      "question": "How does the free gift feature work?",
+      "tags": [
+        "free-gift"
+      ],
+      "relevant_documents": [
+        "faq/free-gift.md"
+      ],
+      "retrieved_documents": [
+        "faq/free-gift.md",
+        "faq/priority-of-the-offers.md",
+        "faq/theme-compatibility.md",
+        "faq/row-level-discount.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "The free gift feature automatically adds a free product to a customer's order when their cart meets a condition you set up, such as buying a specific item, reaching a quantity, or spending a minimum amount. The gift is added to their order at checkout without them having to do anything [1]. The customer will see a note on the product page indicating that \"Your free gifts will be added at checkout automatically\" [1]. There is no coupon or discount code to type; the gift appears by itself if the cart meets the rule [2].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 2,
+      "grounded_citations": 2,
+      "cited_relevant": 2,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 15.150802957941778,
+      "input_tokens": 1440,
+      "output_tokens": 110,
+      "trace_id": "c591365cc8b24349",
+      "error": null
+    },
+    {
+      "id": "gift-shows-as-free",
+      "question": "Will the customer see the gift as costing nothing in their cart?",
+      "tags": [
+        "free-gift"
+      ],
+      "relevant_documents": [
+        "faq/free-gift.md"
+      ],
+      "retrieved_documents": [
+        "faq/free-gift.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "faq/row-level-discount.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes. The gift line shows the discount applied so the customer clearly sees it costs them nothing [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 14.324705666978844,
+      "input_tokens": 1406,
+      "output_tokens": 22,
+      "trace_id": "da0cf33872f44766",
+      "error": null
+    },
+    {
+      "id": "gift-multiple",
+      "question": "Can one rule hand out more than one gift product?",
+      "tags": [
+        "free-gift"
+      ],
+      "relevant_documents": [
+        "faq/free-gift.md"
+      ],
+      "retrieved_documents": [
+        "faq/free-gift.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, a single rule can include more than one gift product [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 12.089625916909426,
+      "input_tokens": 1615,
+      "output_tokens": 16,
+      "trace_id": "6a01b87dc7da4d0d",
+      "error": null
+    },
+    {
+      "id": "gift-triggers",
+      "question": "What conditions can I use to trigger a free gift?",
+      "tags": [
+        "free-gift"
+      ],
+      "relevant_documents": [
+        "faq/free-gift.md"
+      ],
+      "retrieved_documents": [
+        "faq/free-gift.md",
+        "faq/extra-fee.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "You can base the free gift on things like buying a specific product, buying a certain quantity, or reaching a minimum cart total. You decide the condition when you create the rule [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.48400366702117,
+      "input_tokens": 1373,
+      "output_tokens": 39,
+      "trace_id": "b5d1b847c58d489a",
+      "error": null
+    },
+    {
+      "id": "gift-audience",
+      "question": "Can I restrict free gifts to logged-in or VIP customers only?",
+      "tags": [
+        "free-gift"
+      ],
+      "relevant_documents": [
+        "faq/free-gift.md"
+      ],
+      "retrieved_documents": [
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx",
+        "faq/free-gift.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.5,
+      "hit": true,
+      "answer": "Yes. You can choose who gets the free gift by setting conditions such as offering it only to logged-in customers or only to customers with a specific tag, like your \"VIP\" group [4].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 13.146638290956616,
+      "input_tokens": 1700,
+      "output_tokens": 41,
+      "trace_id": "fb5933da788b486d",
+      "error": null
+    },
+    {
+      "id": "gift-discount-code",
+      "question": "Does the customer have to enter a coupon code to get the gift?",
+      "tags": [
+        "free-gift"
+      ],
+      "relevant_documents": [
+        "faq/free-gift.md"
+      ],
+      "retrieved_documents": [
+        "faq/free-gift.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "faq/theme-compatibility.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "No. There's no coupon or discount code to type. As long as the cart meets the rule you set up, the gift appears by itself [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 14.009353957953863,
+      "input_tokens": 1423,
+      "output_tokens": 33,
+      "trace_id": "f0e971b32ad24c92",
+      "error": null
+    },
+    {
+      "id": "draft-how-pricing-applied",
+      "question": "How does the app apply wholesale prices at checkout using draft orders?",
+      "tags": [
+        "draft-order"
+      ],
+      "relevant_documents": [
+        "faq/draft-order.md"
+      ],
+      "retrieved_documents": [
+        "faq/draft-order.md",
+        "faq/theme-compatibility.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "The app applies wholesale prices at checkout by creating a Shopify Draft Order with the wholesale pricing applied directly. The discounted price is displayed without using a strikethrough pricing format [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 11.659383291960694,
+      "input_tokens": 1346,
+      "output_tokens": 38,
+      "trace_id": "48da753ea1784b04",
+      "error": null
+    },
+    {
+      "id": "draft-coupon-stacking",
+      "question": "If a customer uses a Shopify discount code on top of tier pricing, what do they pay?",
+      "tags": [
+        "draft-order",
+        "priority"
+      ],
+      "relevant_documents": [
+        "faq/draft-order.md"
+      ],
+      "retrieved_documents": [
+        "faq/tiered-pricing-guide.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "faq/draft-order.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.25,
+      "hit": true,
+      "answer": "The customer pays the final price after both the tier pricing discount and the Shopify discount code have been applied. The tier pricing discount is applied first, and then the Shopify discount code is applied to the discounted price. \n\nFor example, if the product price is $30, and there is a 10% tier pricing discount, the discounted price becomes $27. If a Shopify discount code provides an additional $5 discount, the final price the customer pays is $22 [4].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 14.266559083014727,
+      "input_tokens": 1519,
+      "output_tokens": 101,
+      "trace_id": "145d6409879c45c9",
+      "error": null
+    },
+    {
+      "id": "draft-order-tag",
+      "question": "How can I tell which of my orders were created by the app?",
+      "tags": [
+        "draft-order"
+      ],
+      "relevant_documents": [
+        "faq/draft-order.md"
+      ],
+      "retrieved_documents": [
+        "faq/draft-order.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Look for the tag `oscp-order-processing` on the order in Shopify admin. This tag is applied to all orders created through the app [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 14.21234816708602,
+      "input_tokens": 1364,
+      "output_tokens": 32,
+      "trace_id": "0c1b03772b304efc",
+      "error": null
+    },
+    {
+      "id": "draft-supported-features",
+      "question": "Which wholesale pricing features work with draft orders right now?",
+      "tags": [
+        "draft-order",
+        "limitations"
+      ],
+      "relevant_documents": [
+        "faq/draft-order.md"
+      ],
+      "retrieved_documents": [
+        "faq/draft-order.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Variant-level tier pricing is the only wholesale pricing feature currently supported with Draft Orders [2].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 10.901349833002314,
+      "input_tokens": 1462,
+      "output_tokens": 19,
+      "trace_id": "dcbc284c21944c0d",
+      "error": null
+    },
+    {
+      "id": "draft-cart-page-price",
+      "question": "Why does my cart page still show the full price in draft order mode?",
+      "tags": [
+        "draft-order",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/draft-order.md"
+      ],
+      "retrieved_documents": [
+        "faq/draft-order.md",
+        "faq/theme-compatibility.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "In Draft Order mode, the cart page continues to display the original product prices. Wholesale pricing becomes visible only after the Draft Order is created and the customer reaches the checkout page [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 11.313909959048033,
+      "input_tokens": 1293,
+      "output_tokens": 38,
+      "trace_id": "f55eb158bbec41eb",
+      "error": null
+    },
+    {
+      "id": "draft-plan-downgrade",
+      "question": "I downgraded my plan. Do I need to do anything about the draft order setting?",
+      "tags": [
+        "draft-order"
+      ],
+      "relevant_documents": [
+        "faq/draft-order.md"
+      ],
+      "retrieved_documents": [
+        "faq/draft-order.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Yes, you must manually review and re-save your app settings after changing plans, as the Draft Order setting is not automatically removed when a plan is downgraded [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.902913041994907,
+      "input_tokens": 1438,
+      "output_tokens": 35,
+      "trace_id": "24fe5ccaf23e4c9f",
+      "error": null
+    },
+    {
+      "id": "draft-price-security",
+      "question": "Can a customer tamper with the wholesale price before checkout?",
+      "tags": [
+        "draft-order",
+        "security"
+      ],
+      "relevant_documents": [
+        "faq/draft-order.md"
+      ],
+      "retrieved_documents": [
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "faq/draft-order.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.25,
+      "hit": true,
+      "answer": "No, a customer cannot tamper with the wholesale price before checkout. All wholesale pricing calculations and discounts are verified server-side to ensure customers receive the correct pricing and cannot manipulate discount values [4].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 12.077950000064448,
+      "input_tokens": 1484,
+      "output_tokens": 40,
+      "trace_id": "d641e75953ac4b16",
+      "error": null
+    },
+    {
+      "id": "draft-double-click",
+      "question": "What stops duplicate draft orders if someone clicks checkout twice?",
+      "tags": [
+        "draft-order"
+      ],
+      "relevant_documents": [
+        "faq/draft-order.md"
+      ],
+      "retrieved_documents": [
+        "faq/draft-order.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "Duplicate-click protection stops duplicate draft orders if someone clicks checkout twice. If the cart contents remain unchanged, the same draft order will be reused within a 15-minute invoice reuse window instead of creating multiple draft orders [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 12.639007040997967,
+      "input_tokens": 1451,
+      "output_tokens": 46,
+      "trace_id": "87582a7389a34c94",
+      "error": null
+    },
+    {
+      "id": "abstain-pricing-plans",
+      "question": "How much does the OSCP Wholesale B2B app cost per month?",
+      "tags": [
+        "abstention"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "I could not find anything in the indexed OSC documents that answers this. Try rephrasing, or check whether the relevant source has been indexed.",
+      "abstained": true,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 12.270465625100769,
+      "input_tokens": 1470,
+      "output_tokens": 22,
+      "trace_id": "ea0f49d183a04926",
+      "error": null
+    },
+    {
+      "id": "abstain-refund-policy",
+      "question": "What is OSC's refund policy for annual subscriptions?",
+      "tags": [
+        "abstention"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "faq/combined-collection-quantity-discount-slabs.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "I could not find anything in the indexed OSC documents that answers this. Try rephrasing, or check whether the relevant source has been indexed.",
+      "abstained": true,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.499486708082259,
+      "input_tokens": 1546,
+      "output_tokens": 17,
+      "trace_id": "5f890347f7754ba4",
+      "error": null
+    },
+    {
+      "id": "abstain-woocommerce",
+      "question": "Does this app work with WooCommerce or BigCommerce?",
+      "tags": [
+        "abstention"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "faq/theme-compatibility.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx",
+        "faq/combined-collection-quantity-discount-slabs.md"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "The sources provided do not mention compatibility with WooCommerce or BigCommerce. The app is specifically described as a Shopify app [1][2].",
+      "abstained": false,
+      "must_abstain": true,
+      "citations": 2,
+      "grounded_citations": 2,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.325786000001244,
+      "input_tokens": 1435,
+      "output_tokens": 28,
+      "trace_id": "72768aa499f24185",
+      "error": null
+    },
+    {
+      "id": "abstain-api-rate-limits",
+      "question": "What are the API rate limits for the wholesale pricing endpoints?",
+      "tags": [
+        "abstention"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "I could not find anything in the indexed OSC documents that answers this. Try rephrasing, or check whether the relevant source has been indexed.",
+      "abstained": true,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.138762166025117,
+      "input_tokens": 1495,
+      "output_tokens": 17,
+      "trace_id": "837aee47da3a47d6",
+      "error": null
+    },
+    {
+      "id": "abstain-employee-leave",
+      "question": "How many days of annual leave does an OSC employee get?",
+      "tags": [
+        "abstention"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "I could not find anything in the indexed OSC documents that answers this. Try rephrasing, or check whether the relevant source has been indexed.",
+      "abstained": true,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 12.046334250015207,
+      "input_tokens": 1590,
+      "output_tokens": 22,
+      "trace_id": "12e5242a82dc4f10",
+      "error": null
+    }
+  ]
+}

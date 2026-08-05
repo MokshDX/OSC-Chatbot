@@ -12,3 +12,52 @@ build/
 
 # Persisted execution traces (observability.trace_dir).
 .osc/
+
+# Ad-hoc evaluation runs. A run worth keeping is promoted to a named file under
+# evaluation/baselines/, which IS committed — that is what a comparison is made
+# against, and a baseline nobody can see is not a baseline.
+evaluation/results/
+
+# ---------------------------------------------------------------- graphify-out
+#
+# The split is by one question: does a fresh clone need this to navigate the
+# codebase without paying to rebuild the graph?
+#
+#   COMMITTED  graph.json · GRAPH_REPORT.md · wiki/ · manifest.json · labels ·
+#              converted/ · cost.json
+#     Rebuilding costs a full semantic extraction (~358k tokens), so the graph is
+#     a build artefact worth keeping — CLAUDE.md tells every new session to
+#     navigate by it. manifest.json is what makes the next `--update` incremental
+#     rather than a full re-extract.
+#
+#   IGNORED    everything below
+#
+# Content-addressed AST cache. Pure derived data, ~3 MB, rebuilt in seconds with
+# no LLM and no network.
+graphify-out/cache/
+
+# Dated backups graphify writes before each overwrite. Useful locally, and ~2.5 MB
+# of duplicated graph per run in a repository.
+graphify-out/20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
+
+# 2 MB of generated HTML, regenerable from graph.json by `graphify export html`.
+graphify-out/graph.html
+
+# Absolute paths to whoever ran graphify last. These were committed, and because
+# the skill *reads* .graphify_python to pick its interpreter, a teammate's clone
+# inherited a path to a virtualenv that does not exist on their machine.
+graphify-out/.graphify_python
+graphify-out/.graphify_root
+
+# Per-run scratch: detection, extraction, per-subagent chunks, analysis handoff.
+# All deleted by the pipeline's own cleanup; ignored so an interrupted run cannot
+# leave them staged.
+graphify-out/.graphify_detect.json
+graphify-out/.graphify_ast.json
+graphify-out/.graphify_semantic*.json
+graphify-out/.graphify_extract.json
+graphify-out/.graphify_analysis.json
+graphify-out/.graphify_cached.json
+graphify-out/.graphify_uncached.txt
+graphify-out/.graphify_chunk_*.json
+graphify-out/.needs_update

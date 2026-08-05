@@ -88,6 +88,10 @@ class AnthropicChatModel:
             max_retries=options.max_retries,
         )
 
+    async def aclose(self) -> None:
+        """Release the underlying HTTP client. See `Container.shutdown()`."""
+        await self._client.close()
+
     @property
     def model_id(self) -> str:
         return self._model

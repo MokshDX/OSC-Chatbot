@@ -53,6 +53,15 @@ class ParseError(AssistantError):
     """
 
 
+class EvaluationError(AssistantError):
+    """An evaluation could not be run as specified.
+
+    Raised for a malformed golden set, a missing baseline, or a run whose result
+    cannot be trusted — all of which an operator fixes in a file rather than in the
+    code, so they are reported as messages and not as tracebacks.
+    """
+
+
 class ProviderError(AssistantError):
     """An upstream provider (LLM, embeddings, reranker) failed."""
 

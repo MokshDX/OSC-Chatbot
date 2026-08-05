@@ -24,10 +24,16 @@ make install                       # creates .venv and installs the project
 export OSC_DATABASE__DSN=postgresql://USER@localhost:5432/osc
 
 ./osc doctor                       # is everything actually reachable?
-./osc ingest ./docs                # migrations run automatically on first use
-./osc ask "How many days of annual leave do employees get?"
+./osc ingest ./docs/company        # migrations run automatically on first use
+./osc ask "Can I apply tiered pricing at collection level?"
 ./osc serve                        # HTTP API + chat UI on http://localhost:8000
+
+make eval-retrieval                # is retrieval any good? fast, no model calls
 ```
+
+**The corpus is `docs/company/`, not `docs/`.** `docs/engineering/` holds this
+repository's own engineering knowledge base and is deliberately never indexed — see
+[`docs/engineering/architecture/knowledge-corpus.md`](docs/engineering/architecture/knowledge-corpus.md).
 
 `./osc` runs the CLI without activating the virtualenv or typing a path into it;
 `make help` lists a target for every command.
@@ -38,7 +44,7 @@ export OSC_DATABASE__DSN=postgresql://USER@localhost:5432/osc
 |---|---|
 | **Running things** | |
 | `./osc serve` | HTTP API and chat UI |
-| `./osc ingest ./docs [--reindex]` | Index a directory |
+| `./osc ingest ./docs/company [--reindex]` | Index a directory |
 | `./osc ask "…" [--explain] [--json]` | The whole pipeline, with citations |
 | `./osc search "…" [--explain] [--json]` | Retrieval only — the debugging surface |
 | **Understanding things** | |
@@ -46,6 +52,7 @@ export OSC_DATABASE__DSN=postgresql://USER@localhost:5432/osc
 | `./osc config` | The fully resolved configuration and where it came from |
 | `./osc providers` | Every registered provider, marking the active ones |
 | `./osc status` | What is indexed: counts, chunk sizes, formats |
+| `./osc eval [--retrieval-only]` | Score the golden set — retrieval and answer quality |
 | **Looking at data** | |
 | `./osc documents [search]` | Indexed documents and their chunk counts |
 | `./osc document <id\|path>` | One document's record and how it chunked |
@@ -55,7 +62,7 @@ export OSC_DATABASE__DSN=postgresql://USER@localhost:5432/osc
 | `./osc version` | Installed version and the versions that shape behaviour |
 
 Every inspection command takes `--json`, so they compose into scripts. `--help`
-groups them by purpose rather than listing fourteen commands flat.
+groups them by purpose rather than listing fifteen commands flat.
 
 ## How it fits together
 
@@ -175,7 +182,7 @@ stays readable.
   llm          ollama/qwen3:8b
   embeddings   ollama/nomic-embed-text
   store        pgvector   retrieval hybrid   chunker recursive
-  note         the index is empty — every question will abstain. Run `./osc ingest ./docs`.
+  note         the index is empty — every question will abstain. Run `./osc ingest ./docs/company`.
 ```
 
 That last line is the one that earns its place: a service which starts perfectly and
@@ -184,7 +191,7 @@ somebody thinks to look.
 
 ## Ingestion
 
-Drop files anywhere under `./docs` and run `./osc ingest ./docs`.
+Drop files anywhere under `./docs/company` and run `./osc ingest ./docs/company`.
 
 | Format | Extensions | Extraction |
 |---|---|---|
@@ -192,8 +199,9 @@ Drop files anywhere under `./docs` and run `./osc ingest ./docs`.
 | HTML | `.html` `.htm` | Standard library; `<script>` and `<style>` discarded, `<title>` used |
 | PDF | `.pdf` | `pypdf`, page by page, page count retained |
 | Word | `.docx` | `python-docx`, including table cells |
+| Excel | `.xlsx` | `openpyxl`, one block per sheet, cells tab-joined so a row survives as one line |
 
-PDF and Word need the `documents` extra. Adding a format is a function plus one
+PDF, Word and Excel need the `documents` extra. Adding a format is a function plus one
 dict entry in `ingestion/parsers.py`; nothing else changes.
 
 **Idempotent by content hash.** Re-running over an unchanged corpus makes zero
@@ -204,7 +212,7 @@ with its chunks.
 text and nothing else, so changing `chunking.strategy`, `chunk_size` or the
 embedding model leaves every stored chunk stale while every hash still matches. An
 ordinary sync would report `skipped` for the whole corpus and quietly keep the old
-chunks. `./osc ingest ./docs --reindex` forces the work.
+chunks. `./osc ingest ./docs/company --reindex` forces the work.
 
 **One bad file cannot break a sync.** A corrupt or password-protected document is
 reported and skipped, the rest of the corpus still indexes, and the command exits
@@ -432,11 +440,15 @@ stores implement it.
 ## Testing
 
 ```bash
-make test              # 239 tests: no network, no database, no credentials
+make test              # 279 tests: no network, no database, no credentials
 make test-integration  # +18 pgvector tests against a real database
 make test-e2e          # +9 end-to-end tests against live Ollama and PostgreSQL
 make check             # lint + typecheck + test
 ```
+
+**`make test` asks whether the system is correct. `make eval` asks whether it is
+good.** They are different questions, and a system can pass every test while
+answering every question badly — see [Evaluation](#evaluation).
 
 `make test-e2e` needs its **own** database: the `chunks` table fixes its vector
 width at creation, and the suite deletes every document in its workspace when it
@@ -451,10 +463,55 @@ stack can be retargeted by configuration alone" is asserted, not assumed.
 database was migrated with (768 for `nomic-embed-text`), because the `chunks` table
 fixes its vector width at creation.
 
+## Evaluation
+
+Quality is measured, not asserted. `evaluation/golden-set.yaml` holds 86 curated
+questions — 81 with known-correct source documents, 5 the corpus cannot answer and
+must be declined.
+
+```bash
+make eval-retrieval    # fast and free: recall@k, MRR, precision@k, no model calls
+make eval              # adds citation, grounding, fact and abstention metrics
+make eval-gate         # what CI runs: fails on a regression against the baseline
+```
+
+Measured baseline for the default local profile
+(`evaluation/baselines/full-default.json`):
+
+| Retrieval | | Generation | |
+|---|---|---|---|
+| `recall@5` | 0.932 | `citation_coverage` | 1.00 |
+| `hit_rate@5` | 0.938 | `groundedness` | 1.00 |
+| `mrr` | 0.860 | `citation_precision` | 0.732 |
+| `precision@5` | 0.190 | `fact_match` | 0.90 |
+
+Comparing two configurations is two commands, because `--profile` already retargets
+the whole stack:
+
+```bash
+./osc eval --retrieval-only -o evaluation/results/before.json
+./osc eval --retrieval-only --profile config/experiments/hosted-anthropic.yaml \
+  --baseline evaluation/results/before.json
+```
+
+The comparison prints per-metric deltas and every configuration key that differs, so
+two runs of different systems cannot be mistaken for a result. Add `--judge` for
+LLM-as-judge faithfulness; it is opt-in because a gate that can change its mind
+between two runs of the same commit is not a gate.
+
+Full detail: [`docs/engineering/architecture/evaluation.md`](docs/engineering/architecture/evaluation.md).
+
+## Engineering knowledge base
+
+[`docs/engineering/`](docs/engineering/README.md) explains **why** the system is built
+the way it is — architecture, technologies and Architecture Decision Records, with
+diagrams and references. Start with
+[`architecture/overview.md`](docs/engineering/architecture/overview.md).
+
 ## Not yet built
 
 Authentication (OIDC), per-document access control, rate limiting, conversation
-persistence, the evaluation harness, and connectors beyond the filesystem. The
+persistence, and connectors beyond the filesystem. The
 service exposes no write endpoint — ingestion is a CLI operation — and must sit
 behind the corporate identity proxy until OIDC lands. See `PROJECT_STATUS.md` for
 the full picture and the recommended order of work.

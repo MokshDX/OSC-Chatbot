@@ -1,13 +1,15 @@
 # PROJECT_STATUS.md
 
 **Project:** OSC Internal Knowledge Assistant
-**Status:** Phase 3 — a verified, observable, operable knowledge engine; not yet production-ready
-**Last updated:** 2026-08-04
+**Status:** Phase 4 — a **measured**, observable, operable knowledge engine; not yet production-ready
+**Last updated:** 2026-08-05
 **Audience:** a senior engineer, or a future Claude session, joining with zero context
 
 Read this file first, then `README.md` for how to run it, then `claude.md` for the
-engineering standards this repository is held to. `graphify-out/` holds a generated,
-agent-crawlable map of the codebase.
+engineering standards this repository is held to. `docs/engineering/` is the
+engineering knowledge base — architecture, technologies and decision records, written
+to explain *why* rather than *what*. `graphify-out/` holds a generated, agent-crawlable
+map of the codebase.
 
 ---
 
@@ -34,30 +36,45 @@ made it. A developer can ask what happened during any recent request — where t
 time went, how the data changed between stages, which stage failed — without adding
 a log line, attaching a debugger, or reproducing the request.
 
+**Measurement.** As of this iteration every quality claim below is a number produced
+by `make eval` against a curated golden set of 86 real questions, not an opinion.
+Baselines are committed to `evaluation/baselines/` and a regression fails CI.
+
 **Where it stands.** The full path runs against real infrastructure: drop PDFs, Word
-documents, HTML, Markdown and text into `./docs`, ingest them, and they are parsed,
-chunked, embedded and stored in PostgreSQL with pgvector. Questions retrieve by
-hybrid search and are answered by Qwen3 through Ollama, with citations back to the
-source file. **266 tests**: 239 run with no network, database or credential; 18 more
-against real PostgreSQL; 9 more end to end against live Ollama *and* PostgreSQL.
-`ruff` and `mypy --strict` clean across 57 source files.
+documents, spreadsheets, HTML, Markdown and text into `./docs/company`, ingest them,
+and they are parsed, chunked, embedded and stored in PostgreSQL with pgvector.
+Questions retrieve by hybrid search and are answered by Qwen3 through Ollama, with
+citations back to the source file. **277 tests**: all run with no network, database or
+credential; 18 more against real PostgreSQL; 9 more end to end against live Ollama
+*and* PostgreSQL. `ruff` and `mypy --strict` clean across 63 source files.
 
-**What changed in the last two iterations.** Iteration 2 added the observability
+**Measured baseline** — default local profile, 86 golden cases, corpus of 21 documents
+/ 193 chunks (`evaluation/baselines/full-default.json`):
+
+| | | | |
+|---|---|---|---|
+| `recall@5` | **0.932** | `citation_coverage` | **1.00** |
+| `hit_rate@5` | **0.938** | `groundedness` | **1.00** |
+| `mrr` | **0.860** | `citation_precision` | **0.732** |
+| `precision@5` | 0.190 | `fact_match` | **0.90** |
+| `latency_p50` | 12.6 s | `abstention_accuracy` | 0.80 |
+| `latency_p95` | 92.9 s | tokens in/out | 126k / 4.6k |
+
+**What changed in the last three iterations.** Iteration 2 added the observability
 layer, the operational CLI, `StoreInspector`, and a deliberately scoped LangChain
-integration (§4). Iteration 3 — this one — completed the observability story for
-one-shot commands, made the CLI coherent, gave the server a human face without
-sacrificing machine-readable logs, and closed four architectural gaps that had been
-carried as debt (§5).
+integration (§4). Iteration 3 completed the observability story for one-shot commands,
+made the CLI coherent, and closed four architectural gaps. Iteration 4 — this one —
+**built the evaluation framework**, restructured the knowledge corpus around the real
+company documents, and wrote the engineering knowledge base (§5).
 
-**Where it does not stand.** There is still no authentication, no per-document
-access control, no rate limiting, no conversation persistence, and **no evaluation
-harness** — so no quality claim in this document is measured. Answer quality is also
-bounded by an 8B local model: it is grounded and cites correctly, but it misreads
-figures (§10).
+**Where it does not stand.** There is still no authentication, no per-document access
+control, no rate limiting, and no conversation persistence. Answer quality is bounded
+by an 8B local model, and `latency_p95` of 92.9 s under concurrency is the number that
+would most surprise a user (§10).
 
-**The honest one-line summary:** a working, verified, thoroughly observable
-knowledge engine on a local stack, one authentication story and one evaluation
-harness away from being defensible in production.
+**The honest one-line summary:** a working, verified, thoroughly observable and now
+**measurable** knowledge engine on a local stack, one authentication story away from
+being defensible in production.
 
 ---
 
@@ -89,9 +106,16 @@ maintainability → readability → scalability → performance → development 
 7. Evaluate frameworks pragmatically — adopt LangChain/LlamaIndex if they genuinely
    improve the architecture, reject them if not, on evidence rather than ideology.
 
-**Non-functional targets set during design** (none yet measured — see §11):
+**Non-functional targets set during design** (now partly measured — see §11):
 time-to-first-token < 2s p95, full answer < 10s p95, faithfulness ≥ 95%, retrieval
 recall@10 ≥ 90%, full index rebuildable unattended in < 4h.
+
+**Status against those targets, as of Phase 4.** `recall@5` is 0.932, so the recall
+target is met at a *stricter* k than it was set at. The latency targets are not met on
+the local stack — `latency_p50` is 12.6s against a 10s p95 target — and that is a
+statement about an 8B model on a laptop rather than about the architecture. Whether
+the latency target is wrong for this deployment, or the deployment is wrong for the
+target, is a decision that now has numbers behind it.
 
 ---
 
@@ -103,6 +127,7 @@ connectors ──▶ parse ──▶ chunk ──▶ embed ──▶ vector stor
 question ──▶ rewrite ──▶ search ──▶ rerank ──▶ generate ──▶ answer + citations
 
             every stage above is a timed span in one trace
+            every stage above is scored by `make eval`
 ```
 
 ### The five seams
@@ -288,10 +313,68 @@ LangChain strategies are registered, tested and one profile line away.
 
 ---
 
-## 5. What changed in this iteration
+## 5. What changed in this iteration (Phase 4)
 
-The brief was maturity, not features: complete the observability story, make the
-tooling coherent, close architectural gaps.
+The brief was maturity and measurement. Three things were built.
+
+### 5.1 The evaluation framework — the headline
+
+`src/osc_assistant/evaluation/` (four modules), `evaluation/golden-set.yaml`
+(86 curated cases), `./osc eval`, and three Makefile targets.
+
+It drives the **real** pipelines built by the **real** `Container`, because an
+evaluation that ran against a special code path would measure the special code path.
+Full design and rationale: `docs/engineering/architecture/evaluation.md` and
+ADR 0005.
+
+| Decision | Reason |
+|---|---|
+| **Built in-repo, not RAGAS/TruLens/DeepEval** | Each is LLM-judge-first, so the metrics that should gate CI are the non-deterministic ones; each imposes its own data model on the code path we most want to read; and the metrics themselves are twenty lines of set arithmetic. The value in those tools is the judge prompts, and one prompt is not a dependency |
+| **Relevance scored at document level** | Chunk ids derive from chunk boundaries, so changing the chunker changes every id — invalidating the golden set on precisely the experiment it exists to run |
+| **Deterministic metrics gate CI; the judge is `--judge`** | A gate that can change its mind between two runs of the same commit is not a gate |
+| **`groundedness` from ids, not judgement** | A citation whose chunk was not in the retrieved set cannot have been read from a source. Set arithmetic, no model |
+| **Abstention cases in the golden set** | Without them an evaluation rewards a model that answers everything confidently |
+| **Configuration snapshot in every result** | So comparing two runs cannot silently compare two different systems |
+
+**A defect found by building it**, recorded because it is the class of bug this
+subsystem is most prone to: `fact_match` initially reported **1.0** on
+`--retrieval-only` runs. It is computed as "no expected fact was missing", and a run
+that generated no answers has missed nothing — arithmetically correct, factually a
+lie. Fixed by omitting generation metrics entirely from a retrieval-only run;
+`test_evaluation.py` holds the regression.
+
+### 5.2 The knowledge corpus, restructured around real company documents
+
+The seed corpus was replaced with production content: the OSCP Wholesale B2B advance
+FAQ plus four scenario documents. That forced two decisions (ADR 0007).
+
+**The ingest root moved from `docs/` to `docs/company/`.** The engineering knowledge
+base had to live somewhere, and with the old root an employee asking "how does OSC
+handle refunds?" could have been answered from an ADR about reciprocal rank fusion,
+with a correct citation, confidently. The failure mode is invisible — retrieval
+succeeds, grounding succeeds, the citation is right, the universe is wrong. An
+exclusion list would fail open; a directory boundary fails safe.
+
+**The 633-line FAQ was split into 17 topic files**, all 89 questions preserved
+verbatim. The reason is measurement: with a single-document corpus, `recall@k` is 1.0
+for every answerable question and the retrieval metrics measure nothing. Citations
+also improved from *"Advance FAQ"* to *"Tax Display"*.
+
+Also: an `.xlsx` parser (`openpyxl`, read-only, one block per sheet, cells tab-joined
+per row) because two of the four scenario documents were otherwise invisible; and
+`./osc doctor` no longer reports dotfiles as unparseable corpus. Doctor went from
+8 ok / 1 warn to **9 ok / 0 warn**.
+
+### 5.3 The engineering knowledge base
+
+`docs/engineering/` — 8 architecture pages, 6 technology pages and 8 ADRs, with
+Mermaid diagrams and authoritative references. It exists because `PROJECT_STATUS.md`
+answers *what the system is* and the code answers *what it does*, and neither answers
+*why it is built this way* — the question that actually costs time on handover.
+
+---
+
+## 5b. What changed in the previous iteration (Phase 3)
 
 ### The observability gap that was actually there
 
@@ -358,16 +441,24 @@ src/osc_assistant/
 ├── ingestion/              parsers.py · loaders.py · pipeline.py
 ├── retrieval/              pipeline.py · rewrite.py
 ├── generation/             answerer.py · prompts.py
+├── evaluation/             dataset.py · metrics.py · judge.py · runner.py
 ├── integrations/           langchain.py — OSC exposed outward
 └── api/                    app.py · schemas.py · sse.py · banner.py · static/index.html
 
-tests/                      266 tests across 18 files
+tests/                      277 tests across 19 files
 migrations/001_init.sql     schema, with a dimension-conditional HNSW index
-docs/                       the ingestion folder — seed corpus, 5 formats
+docs/company/               THE CORPUS — company knowledge, 21 documents, 6 formats
+docs/engineering/           the engineering knowledge base — NOT ingested
+evaluation/golden-set.yaml  86 curated cases
+evaluation/baselines/       committed reference runs (results/ is gitignored)
 config/                     default.yaml + 4 experiment profiles
 osc                         the CLI wrapper — no .venv paths anywhere
 graphify-out/               generated knowledge graph
 ```
+
+**A third rule, new in this phase:** `docs/company/` is the corpus and
+`docs/engineering/` is not. The ingest root is named in exactly two places — `DOCS` in
+the `Makefile` and the `--corpus` default in `cli/diagnose.py` — and they must agree.
 
 **One rule to preserve:** business logic imports `protocols` and `types` only. If a
 pipeline, route or CLI command ever imports a provider module, the vendor-agnosticism
@@ -379,23 +470,52 @@ adapter from becoming a dependency of the platform.
 
 ### What the knowledge graph says about this structure
 
-Regenerated on 2026-08-04: **1624 nodes, 3841 edges, 104 communities**, up from
-1022/2230/73. Betweenness identifies `MemoryVectorStore` (71 edges), `Document`
-(68), `StubEmbeddingModel` (67), `ComponentConfig` (64) and `Container` (57) as the
-architectural hubs — configuration, the corpus record and the composition root are
-what the system routes through, which matches the intended design.
+Rebuilt in full on 2026-08-05 (not an incremental update): **1981 nodes, 4624
+edges, 114 communities**, with 89% of edges EXTRACTED and 11% INFERRED at an average
+confidence of 0.72. The evaluation subsystem is visible as its own cluster —
+`runner.py`, `evaluate.py`, `test_evaluation.py` and `Evaluation` all appear as
+community hubs, which is what a genuinely new subsystem should look like rather than
+code smeared across existing ones.
 
-One change is worth recording. The previous build reported `StubEmbeddingModel`, a
-*test double*, as the single most connected node in the codebase, ahead of every
-real component — the graph's way of saying that the test suite, not production
-wiring, was what exercised every seam. It has now been displaced by
-`MemoryVectorStore` and `Document`. The doubles are still central, and should be:
-they are how the protocol layer is proven. But real components now lead.
+**Node count went down and edge count went up**, which is the interesting part. The
+previous build reported 2086/4572; this one reports 1981/4624 — density 2.19 → 2.33
+edges per node. The earlier build derived its document nodes structurally (heading
+stubs); this one extracted them semantically, so 429 stubs were replaced by 324
+concepts that carry rationale attributes, external citations and hyperedges. A
+smaller, denser, more meaningful graph. `to_json`'s shrink guard correctly refused
+the write until the reduction was verified.
 
-**Caveat: `graphify-out/wiki/` is stale.** The graph itself (`graph.json`,
-`graph.html`, `GRAPH_REPORT.md`) is current and is the artefact to navigate by;
-the wiki is generated by the `/graphify` assistant skill rather than the CLI and
-still reflects an 812-node build. Regenerate it or ignore it — do not trust it.
+`MemoryVectorStore` (72 edges), `Document` (70), `StubEmbeddingModel` (69),
+`ComponentConfig` (64) and `Container` (60) are the architectural hubs —
+configuration, the corpus record and the composition root are what the system routes
+through, which matches the intended design. An *earlier* build reported
+`StubEmbeddingModel`, a **test double**, as the single most connected node in the
+codebase, ahead of every real component: the graph's way of saying that the test
+suite, not production wiring, was what exercised every seam. Real components lead
+now. The doubles are still central and should be — they are how the protocol layer is
+proven.
+
+**Two gaps closed in this rebuild**, both previously invisible rather than known:
+
+- `graphifyy[office]` — the four `.docx`/`.xlsx` scenario documents were being
+  reported as `skipped_sensitive` and silently dropped. They are 82 of the production
+  index's 193 chunks, so the graph had been blind to roughly 42% of the real corpus.
+- `graphifyy[sql]` — `migrations/001_init.sql` now contributes nodes, so the storage
+  schema no longer has to be read from raw SQL.
+
+**On graph health.** The diagnostic reports 273 dangling-endpoint edges, and 245 of
+them (90%) are `imports`/`imports_from` edges pointing at third-party packages and
+stdlib modules — `pkg_pydantic`, `pathlib`, `typing`, `json`. Those are the graph
+correctly declining to invent nodes for things outside the scanned corpus, not
+information loss. Roughly 17 edges (0.3%) are genuine cross-chunk semantic references
+that failed to resolve, which is the real and small cost of parallel extraction. The
+202/232 "collapsed" edges are an undirected simple `Graph` merging multi-edges such
+as `evaluate_eval → typer.Option ×8` at one source line — expected, not corruption.
+
+**One caveat stands.** Community *labels* are hand-written for the 70 largest
+communities and hub-derived for the remaining 44; `graphify label --backend=ollama`
+requires the `openai` package, which is not installed. Hub names are arguably the
+more honest label anyway.
 
 ---
 
@@ -426,6 +546,10 @@ still reflects an 812-node build. Regenerate it or ignore it — do not trust it
 | 21 | **End-to-end smoke test** | 9 tests driving the real stack; the old manual verification table, executed |
 | 22 | **Human/machine output split** | stderr banner, stdout JSON; both audiences served without compromise |
 | 23 | Chat UI | one static page, streaming over SSE, honouring the authoritative-`complete` contract |
+| 24 | **Evaluation framework** | 4 modules, 86-case golden set, 11 metrics, `./osc eval`, committed baselines, CI gate |
+| 25 | **Measured quality baseline** | recall@5 0.932 · mrr 0.860 · groundedness 1.00 · fact_match 0.90 |
+| 26 | **Knowledge corpus restructure** | real company documents; corpus/engineering split; 17-file FAQ; `.xlsx` support |
+| 27 | **Engineering knowledge base** | 8 architecture pages, 6 technology pages, 8 ADRs |
 
 ---
 
@@ -442,11 +566,10 @@ Ordered by how much each blocks a production release.
    company-wide-readable content specifically to avoid needing this yet.
 3. **Rate limiting and concurrency bounds.** A request can hold a connection for the
    full 120s provider timeout. Nothing caps requests per user.
-4. **Evaluation harness.** A golden set of 50–100 real questions, retrieval metrics
-   (recall@k, MRR) and generation metrics (citation coverage, faithfulness) gating
-   pull requests. None of it exists. Every quality claim here is unmeasurable.
-5. **Conversation persistence.** The API is stateless; history is client-supplied.
-6. **Feedback capture.** No thumbs, no comments — so no raw material for evaluation.
+4. **Conversation persistence.** The API is stateless; history is client-supplied,
+   and the bundled UI does not send it — so follow-up turns are independent questions.
+5. **Feedback capture.** No thumbs, no comments — so the golden set cannot yet be fed
+   by real user questions, which is the natural way for it to grow past 86 cases.
 7. **Connectors beyond the filesystem.** Confluence, Drive, SharePoint. The loader
    shape (`load() -> AsyncIterator[Document]`) is established and used.
 8. **Deployment artefacts.** No Dockerfile for the service, no IaC, no CI pipeline.
@@ -461,9 +584,41 @@ Ordered by how much each blocks a production release.
 Ordered by impact. Items closed in this iteration are listed first, because a future
 session should not re-derive them.
 
-### Closed in this iteration
+### Closed in Phase 4 (this iteration)
 
-- **CLI traces died with the process** — persisted trace log (§5).
+- **No evaluation harness** — built (§5.1). Every setting in `config/default.yaml` is
+  still an educated guess, but they are now *measurable* guesses.
+- **`fact_match` scored 1.0 for work never done** — a defect in the new harness,
+  found and fixed before the baseline was committed.
+- **The end-to-end suite ingested the production corpus path** (`CORPUS =
+  Path("docs")`), so it asserted against company documents anyone could edit *and*
+  swept `docs/engineering/` into its index — the knowledge base being retrieved,
+  which is the exact failure the corpus split exists to prevent. It now generates its
+  own six-format corpus in `tmp_path`, including a hand-assembled minimal PDF so that
+  PDF text extraction is still proven without adding a rendering dependency. Runtime
+  fell from 139s to 22s as a side effect. A regression test now asserts the Makefile
+  and CLI corpus roots agree and that the knowledge base is not reachable from the
+  corpus root.
+- **The default local stack leaked an HTTP client per container.**
+  `Container.shutdown()` probes each component for `aclose`/`close`, but the
+  OpenAI-compatible chat and embedding adapters — what `provider: ollama` resolves to
+  — owned an `AsyncOpenAI` client and exposed neither, so they were silently exempt
+  from the mechanism whose docstring claimed the leak was fixed. Only `voyage` and
+  `pgvector` of eight adapters implemented their side of it. `aclose()` added to the
+  OpenAI-compatible and Anthropic adapters, with a structural regression test.
+- **The corpus and the repository's own documentation shared an ingest root** — split
+  (§5.2). This was latent rather than active; writing the knowledge base activated it.
+- **Two `.xlsx` corpus documents were unparseable** — `openpyxl` parser added; they
+  contribute 82 of the index's 193 chunks.
+- **`./osc doctor` reported `.DS_Store` as a corpus problem** — dotfiles skipped.
+  A warning an operator learns to ignore defeats the warning.
+- **Retrieval metrics were structurally impossible** — a one-document corpus makes
+  `recall@k` 1.0 for every answerable question. The FAQ split fixed the measurement,
+  not just the presentation.
+
+### Closed in Phase 3
+
+- **CLI traces died with the process** — persisted trace log (§5b).
 - **A failing command produced a raw traceback** — `AssistantError` reported as a
   message; trace printed on failure.
 - **asyncpg exceptions escaped untranslated** — now `VectorStoreError`, with the
@@ -487,10 +642,35 @@ deferred, which is fine as a plan and not fine as a release state. The service n
 still lives in prose rather than in the code path. *Smallest fix:* refuse to start
 when `environment != "development"` and no auth is configured. Ten lines.
 
-**No evaluation harness, and more surface to evaluate than before.** Chunk size,
-`top_k`, the reasoning budget and the choice of chunking strategy are all tuned by
-reasoning, not measurement. Every retrieval and generation setting in
-`config/default.yaml` is an educated guess.
+**Every retrieval and generation setting is still an educated guess** — but now a
+measurable one. Chunk size, `top_k`, `rrf_k`, the reasoning budget and the choice of
+chunking strategy have never been tuned against the golden set. The harness exists;
+the tuning pass has not been run. This is now the cheapest high-value work in the
+project, and it is Milestone C.
+
+**`latency_p95` is 92.9 s.** Measured under `--concurrency 2` against a single Ollama
+instance, so it is partly contention and partly cold start — the slowest case took
+223 s for 197 output tokens. But the provider timeout is 120 s, which means the
+observed p95 is within a factor of 1.3 of the point where requests start failing
+rather than merely being slow. Nothing caps concurrency today.
+
+**The two scenario workbooks are 42% of the index.** 82 of 193 chunks come from the
+two `.xlsx` files, and they compete for retrieval slots against the FAQ. Four of the
+six recall failures retrieved a spreadsheet chunk in place of the FAQ document that
+answers the question. Whether that is bad chunking of tabular data, bad ranking, or a
+golden set that under-specifies its relevant documents is not yet determined — and it
+is exactly the kind of question the harness now makes answerable.
+
+**34 of 193 chunks (17.6%) are exact duplicates**, and nothing detects it.
+`OSCP_B2B_Scenario_Document.docx` and `OSCP_B2B_Scenario_Document-1.docx` differ at
+the byte level but extract to byte-identical text (content hash `54314756e14a2f4f`),
+so they index as two documents of 34 chunks each. Duplicate chunks compete for the
+same `top_k = 5` slots, which is a plausible contributor to the recall failures above.
+`content_hash` answers "has *this* document changed?", never "is this the same as
+*another* document?" — see ADR 0008. *Smallest fix:* a `duplicates` check in
+`./osc doctor` grouping indexed documents by content hash. Roughly ten lines; the
+store already exposes `list_document_hashes()`. Deleting the duplicate file is the
+corpus owner's call, not ours.
 
 **The integration suite shares the application database.** Isolation is by
 `workspace_id` and it is honoured, but a run against a production DSN would write to
@@ -543,13 +723,35 @@ the data delimiter (it carries a per-request nonce), but a document can still co
 persuasive text. Nothing prevents a corpus document from arguing with the system
 prompt — only from impersonating it.
 
-**Retrieval quality is unmeasured.** Every number in §2's targets is a target, not
-an observation.
+**Retrieval quality is now measured, and it is good but not uniform.** `recall@5`
+0.932 over 81 scored cases. The six misses cluster where the corpus genuinely
+overlaps: a question about collection-level bulk discounts is answered by both
+`tiered-pricing-guide.md` and `combined-collection-quantity-discount-slabs.md`, and
+the golden set names only one. Part measurement finding, part curation finding.
+
+`precision@5` of 0.190 looks alarming and is not: most cases have exactly one relevant
+document out of five slots, so the ceiling is 0.2. It is useful as a *relative*
+measure across runs and misleading as an absolute one.
+
+**Abstention has two mechanisms and only one is measured.** `abstention_accuracy` is
+0.80 — four of five. The fifth (`abstain-woocommerce`) did not trip the architectural
+abstention because retrieval returned hits; instead the model correctly wrote *"The
+sources provided do not mention compatibility with WooCommerce or BigCommerce."* That
+is the right answer, scored as a miss. The architectural guarantee (no hits → no model
+call) is solid; the prose self-abstention is a model behaviour with no guarantee behind
+it, and the metric currently cannot distinguish them.
 
 **The local answer model misreads figures.** Observed directly: asked for expense
 approval thresholds, `qwen3:8b` rendered "500 to 2,500 EUR" as "50,000 to 2,500 EUR"
 while citing the correct passage. Retrieval was right, the citation was right, the
-number was wrong. This is the central honest caveat of the local stack.
+number was wrong. This is the central honest caveat of the local stack. `fact_match`
+is now 0.90, and all three failures were retrieval or omission rather than
+transcription — so the gap is quantified but not yet reproduced under measurement.
+
+**Citation precision is 0.732 while groundedness is 1.00.** Every citation the model
+emitted pointed at a chunk it was actually shown — no fabrication. But roughly a
+quarter of citations point at a document the golden set does not consider relevant,
+which is what citing all five sources indiscriminately looks like.
 
 **Answers are limited by a 4096-token context.** Ollama loads `qwen3:8b` with a
 4096-token window, capping the corpus sent to the model at five chunks of ~900
@@ -577,17 +779,26 @@ the start of a sync and deletes anything absent at the end.
 ## 11. Testing status
 
 ```
-266 tests collected
-  239 pass with no network, no database, no credentials     make test
-  +18 pgvector integration tests against a real database    make test-integration
-   +9 end-to-end tests against live Ollama and PostgreSQL   make test-e2e
+279 tests collected
+  279 pass with no network, no database, no credentials     make test    ✅ verified
+  +18 pgvector integration tests against a real database    make test-integration  ✅
+   +9 end-to-end tests against live Ollama and PostgreSQL   make test-e2e  ✅ 21.8s
+
+  86 golden cases scored                                    make eval    ✅
+  gate passes                                               make eval-gate  ✅
 
 ruff check .   clean
-mypy --strict  clean, 57 source files
+mypy --strict  clean, 63 source files
 ```
+
+**`make test` asks whether the system is correct. `make eval` asks whether it is
+good.** They are different questions and a system can pass every test while answering
+every question badly, which is why evaluation is a separate command and not a test
+file.
 
 | File | Covers |
 |---|---|
+| `test_evaluation.py` | **New.** Metrics against worked examples; golden-set validation and its five rejection cases; failed cases excluded from quality means; retrieval-only omits generation metrics; concurrency does not change results; judge verdict parsing and failure handling |
 | `test_cli.py` | Every operational command; doctor's pass/warn/fail behaviour; trace commands across process boundaries; operator-error reporting; help grouping |
 | `test_langchain_integration.py` | Both chunkers (id stability, content preservation, size budget, heading metadata); the chat and embedding bridges; the outbound retriever |
 | `test_pgvector_integration.py` | Migrations, tsvector, SQL fusion, cascade delete, JSONB, workspace isolation, transaction rollback, inspection SQL |
@@ -617,11 +828,20 @@ tests are regressions for defects actually found and reproduced.
 
 1. **No hosted provider has ever been called.** Every hosted adapter is exercised
    only via stubs — including the Anthropic native-citation path, the only verified
-   citation implementation in the codebase.
-2. **Answer quality is unmeasured.** No coverage measurement, no performance test,
-   no golden set.
-3. **No load or concurrency test.** Behaviour under parallel requests, and the
-   connection-pool bounds, are untested.
+   citation implementation in the codebase. Running
+   `./osc eval --profile config/experiments/hosted-anthropic.yaml` is one command and
+   needs one credential; it would put a number on the citation-strength gap.
+2. **No load or concurrency test.** Behaviour under parallel requests, and the
+   connection-pool bounds, are untested. `./osc eval --concurrency N` is now the
+   closest thing to one and was not built for that purpose — though it is what
+   produced the p95 figure in §9.
+3. **The Gemini adapters still hold an unreleasable client.** `genai.Client` exposes
+   no async close in the installed surface and the package is an optional extra, so
+   guessing at a method name on an untestable path would be worse than recording it.
+   The other six adapters are covered.
+4. **The golden set contains no question written by a real user.** It was curated from
+   the corpus, so it inherits the corpus's blind spots. Feedback capture is the natural
+   next source.
 
 ---
 
@@ -654,7 +874,7 @@ rewriting off, tracing on and persisted to `.osc/`.
   degrades to an exact scan.
 - The prompt budget is sized for a 4096-token context.
 - Changing the chunker invalidates every stored chunk while every content hash
-  still matches. Use `./osc ingest ./docs --reindex`.
+  still matches. Use `./osc ingest ./docs/company --reindex`.
 
 ---
 
@@ -720,29 +940,31 @@ permanently lose a document; the chunker silently corrupted document text.
 ## 14. Recommended implementation order
 
 The ordering principle is unchanged — **make the system verifiable before making it
-bigger** — and the binding constraint has not moved: measurement.
+bigger** — but **the binding constraint has moved.** Measurement was item 1 for three
+phases; it now exists, and everything it was gating is unblocked at once.
 
-1. **Build the evaluation harness.** The single highest-leverage item by a wide
-   margin, and now more so: there are four chunking strategies, two provider tiers
-   and a reranker whose value cannot be judged without it. It is the gate for items
-   5–7.
+1. **Spend the harness.** The highest-value work in the project, and now the cheapest:
+   a chunker comparison (`recursive` vs `langchain_recursive` vs `markdown`), a
+   reranker decision, a `top_k`/`rrf_k` sweep, and one hosted-provider run. Each is two
+   commands and a recorded number. Several of these decisions have been *waiting on a
+   measurement for two phases*; leaving them unmeasured now would be the worst outcome
+   of this iteration.
 2. **Add authentication (OIDC).** The first hard blocker to exposing the service.
    Group membership from the IdP is also the input to item 3.
-3. **Add per-document ACLs.** Only after auth exists.
-4. **Production start-up guard.** Refuse to start when `environment != development`
+3. **Production start-up guard.** Refuse to start when `environment != development`
    and no auth is configured. Ten lines, and the constraint becomes enforced rather
-   than announced.
-5. **Tune retrieval against the golden set** — chunking strategy (including the
-   LangChain ones), reranking, `top_k`, query rewriting, and whether a
-   larger-context model changes the answer. Every change gated by a measured
-   improvement.
-6. **Conversation persistence and feedback capture.** Feedback is the raw material
-   for future evaluation sets, so it compounds. Re-enabling query rewriting belongs
-   here, together with sending history from the UI.
+   than announced. Cheap enough to land alongside item 2.
+4. **Add per-document ACLs.** Only after auth exists.
+5. **Investigate the spreadsheet chunks.** 42% of the index, implicated in four of six
+   recall failures. Either tabular data needs a different chunking strategy, or the
+   golden set under-specifies. Answerable now, unanswerable a week ago.
+6. **Conversation persistence and feedback capture.** Feedback is the raw material for
+   growing the golden set past curated questions, so it compounds. Re-enabling query
+   rewriting belongs here, together with sending history from the UI.
 7. **Second connector.** The loader shape is established and has a parser layer
    behind it; this proves both.
-8. **Deployment artefacts and trace export.** Dockerfile, CI, and an OTel exporter
-   once traces need to leave the host.
+8. **Deployment artefacts and trace export.** Dockerfile, CI (running `make check` and
+   `make eval-gate`), and an OTel exporter once traces need to leave the host.
 
 **Deliberately late:** a richer web client, multi-tenancy beyond the partition key,
 additional providers (the bridge covers the long tail). **Deliberately absent:**
@@ -752,21 +974,34 @@ fine-tuning, agentic tool use, a knowledge-graph layer.
 
 ## 15. Next milestones with success criteria
 
-### Milestone A — Evaluation harness
-*Estimated 3–4 days. The highest-leverage item in the project.*
+### Milestone A — Evaluation harness — **DONE, except two criteria**
+*Delivered in Phase 4.*
 
-50–100 real questions curated with OSC employees, each with known-correct source
-documents. Offline retrieval and generation metrics, runnable as `make eval`.
+| Criterion | Status |
+|---|---|
+| `make eval` prints retrieval and generation metrics and writes a comparable JSON | ✅ 11 metrics |
+| A pull request that drops recall below a threshold fails CI | ✅ `make eval-gate` — but no CI runs it yet |
+| Baseline numbers for the default profile are committed | ✅ `evaluation/baselines/` |
+| The local model's numeric-fidelity gap is quantified | ✅ `fact_match` 0.90 |
+| At least one provider comparison run end to end | ❌ needs a credential |
+| **A chunker comparison is recorded** with a decision and a number | ❌ **not run** |
+
+The two open criteria are the first item in §14. The harness was built and *not yet
+spent*, which is the honest state and the obvious next move.
+
+### Milestone A′ — Spend the harness
+*Estimated 1 day. No new code.*
 
 **Success criteria**
-- `make eval` prints recall@10, MRR, citation coverage and faithfulness, and writes
-  a JSON result for comparison across runs.
-- A pull request that drops recall@10 below a threshold fails CI.
-- Baseline numbers for the default profile are committed.
-- At least one provider comparison run end to end (default vs `hosted-anthropic`).
-- The local model's numeric-fidelity gap (§10) is quantified rather than anecdotal.
-- **A chunker comparison is recorded**: `recursive` vs `langchain_recursive` vs
-  `markdown`, with a decision and a number. Whichever wins becomes the default.
+- A recorded chunker decision: `recursive` vs `langchain_recursive` vs `markdown`,
+  with a before/after number. Whichever wins becomes the default and supersedes
+  ADR 0006.
+- A recorded reranker decision, with the measured delta.
+- A recorded decision on `top_k` and `rrf_k` — the latter is currently the SIGIR
+  paper's value, adopted on authority and never tuned for this corpus.
+- One hosted-provider run (`config/experiments/hosted-anthropic.yaml`), putting a
+  number on the verified-vs-parsed citation gap.
+- The spreadsheet-chunk question (§9) answered either way.
 
 ### Milestone B — Authentication
 *Estimated 2–3 days.*
@@ -786,7 +1021,8 @@ to plug in.
 *Estimated 3–5 days. Requires Milestone A.*
 
 **Success criteria**
-- Faithfulness ≥ 95% and recall@10 ≥ 90% on the golden set, or a written
+- Faithfulness ≥ 95% and recall@5 ≥ 95% on the golden set (recall@5 is already
+  0.932), or a written
   explanation of why the target is wrong for this corpus.
 - A recorded decision on the cross-encoder reranker, with the measured delta.
 - A recorded decision on query rewriting: kept with a measured improvement, or
@@ -809,7 +1045,12 @@ to plug in.
 ## Appendix — orientation for a new session
 
 **Read in this order:** this file → `README.md` → `claude.md` →
-`src/osc_assistant/protocols.py` → `src/osc_assistant/container.py`.
+`docs/engineering/architecture/overview.md` → `src/osc_assistant/protocols.py` →
+`src/osc_assistant/container.py`.
+
+**Before changing retrieval**, read `docs/engineering/architecture/evaluation.md`. The
+project's rule is that a retrieval change ships with a measured improvement, and
+`make eval` is what makes that enforceable rather than aspirational.
 
 **First commands to run**
 
@@ -822,6 +1063,7 @@ to plug in.
 ./osc ask "<question>" --explain     # the whole pipeline, timed
 ./osc traces                 # what has run recently
 ./osc trace                  # expand the most recent
+make eval-retrieval          # is retrieval any good? (fast, no model calls)
 make help                    # every target
 ```
 
@@ -831,13 +1073,23 @@ raised and what every earlier stage had done; `./osc search` separates "the mode
 misread the passage" from "the passage was never retrieved"; `./osc chunk <id>`
 shows the exact text the model was given.
 
-**The knowledge graph** in `graphify-out/` was regenerated on 2026-08-04 with
-`graphify update .` and labelled with `graphify label . --backend=ollama`. Navigate
-by `graph.html` or `GRAPH_REPORT.md`; `graphify god-nodes`, `graphify query "..."`
-and `graphify affected "X"` answer structural questions from the terminal.
+**The knowledge graph** in `graphify-out/` was rebuilt in full on 2026-08-05 via
+the `/graphify` skill (AST + semantic extraction over docs). Navigate by
+`wiki/index.md` (agent entry point, 124 articles, current), `GRAPH_REPORT.md`, or
+`graph.html`; `graphify query "..."`, `graphify path "A" "B"` and
+`graphify explain "X"` answer structural questions from the terminal.
 
-Three caveats stand. `graphify-out/wiki/` is **stale** (§6) — the graph is current,
-the wiki is not. `migrations/001_init.sql` contributes no nodes because
-`tree_sitter_sql` is not installed (`pip install "graphifyy[sql]"`), so storage must
-be read from the SQL directly. And `docs/` is the seed corpus, so a graph query can
-return an OSC policy document rather than code.
+**Rebuilding requires the extras**: `uv tool install "graphifyy[office,sql]"`.
+Without `office` the four scenario documents are silently skipped; without `sql` the
+migration contributes nothing.
+
+Only committed artefacts are the ones a fresh clone needs to navigate without paying
+for a rebuild — `graph.json`, `GRAPH_REPORT.md`, `wiki/`, `manifest.json`, the
+labels and `converted/`. The AST cache, the dated backups, `graph.html` and the
+per-run scratch files are gitignored; `.graphify_python` and `.graphify_root` are
+too, because they hold absolute paths to whoever ran graphify last and were being
+committed.
+
+One caveat stands: `docs/company/` is the live corpus while `docs/engineering/` is
+the knowledge base, so a graph query can return an OSCP FAQ answer or an ADR rather
+than code.

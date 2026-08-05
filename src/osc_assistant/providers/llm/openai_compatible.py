@@ -152,6 +152,17 @@ class OpenAICompatibleChatModel:
             max_retries=options.max_retries,
         )
 
+    async def aclose(self) -> None:
+        """Release the underlying HTTP client.
+
+        `Container.shutdown()` probes every component it built for this method. An
+        adapter that owns a client and does not offer one is silently exempt from
+        that mechanism — which is how the default local stack leaked a connection
+        pool per container until it was caught by the event loop closing underneath
+        an unclosed client during the end-to-end suite.
+        """
+        await self._client.close()
+
     @property
     def model_id(self) -> str:
         return self._model

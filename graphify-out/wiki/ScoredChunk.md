@@ -1,8 +1,8 @@
 # ScoredChunk
 
-> God node · 32 connections · `src/osc_assistant/types.py`
+> God node · 40 connections · `src/osc_assistant/types.py`
 
-**Community:** [Hybrid Search Scoring](Hybrid_Search_Scoring.md)
+**Community:** [Outbound LangChain Retriever](Outbound_LangChain_Retriever.md)
 
 ## Connections by Relation
 
@@ -11,13 +11,16 @@
 
 ### imports
 - protocols.py `EXTRACTED`
-- pgvector.py `EXTRACTED`
+- runner.py `EXTRACTED`
 - memory.py `EXTRACTED`
-- schemas.py `EXTRACTED`
+- pgvector.py `EXTRACTED`
 - retrieval/pipeline.py `EXTRACTED`
+- schemas.py `EXTRACTED`
+- judge.py `EXTRACTED`
 - cross_encoder.py `EXTRACTED`
 - noop.py `EXTRACTED`
 - fusion.py `EXTRACTED`
+- langchain.py `EXTRACTED`
 
 ### rationale_for
 - A chunk with a relevance score. Scores are only comparable within a single… `EXTRACTED`
@@ -26,27 +29,31 @@
 - reciprocal_rank_fusion() `EXTRACTED`
 - _to_scored_chunk() `EXTRACTED`
 - _ranking() `EXTRACTED`
+- ._score_retrieval() `EXTRACTED`
+- .is_faithful() `EXTRACTED`
 - .search_hybrid() `EXTRACTED`
 - .search_vector() `EXTRACTED`
 - .search_hybrid() `EXTRACTED`
 - .search_vector() `EXTRACTED`
 - .search_keyword() `EXTRACTED`
 - .from_domain() `EXTRACTED`
+- to_langchain_document() `EXTRACTED`
 - .search_hybrid() `EXTRACTED`
 - .search_keyword() `EXTRACTED`
+- ._search() `EXTRACTED`
+- ._search_store() `EXTRACTED`
 - .search_vector() `EXTRACTED`
 - .search_keyword() `EXTRACTED`
-- .rerank() `EXTRACTED`
-- ._search() `EXTRACTED`
 - .rerank() `EXTRACTED`
 - .rerank() `EXTRACTED`
 
 ### uses
-- [VectorStore](VectorStore.md) `INFERRED`
-- [EmbeddingModel](EmbeddingModel.md) `INFERRED`
 - ChatModel `INFERRED`
-- Reranker `INFERRED`
+- EmbeddingModel `INFERRED`
+- VectorStore `INFERRED`
 - Chunker `INFERRED`
+- Reranker `INFERRED`
+- StoreInspector `INFERRED`
 
 ---
 

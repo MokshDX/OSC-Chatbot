@@ -328,3 +328,35 @@ async def test_embedding_vectors_are_unaffected_by_the_close_probe() -> None:
 
     assert len(vector) == 32
     assert Usage() == Usage()
+
+
+def test_every_adapter_that_owns_an_sdk_client_can_be_released() -> None:
+    """Regression: `Container.shutdown()` probes for `aclose`/`close`, and an adapter
+    that owns a client without offering one is *silently* exempt from the mechanism.
+
+    That is how the default local stack — the OpenAI-compatible chat and embedding
+    adapters, which is what `provider: ollama` resolves to — leaked an HTTP
+    connection pool per container while `shutdown()`'s docstring claimed the leak was
+    fixed. Nothing failed; the pools were finalised by the garbage collector after
+    the event loop had closed, which surfaced only as `RuntimeError: Event loop is
+    closed` noise at the end of the end-to-end suite.
+
+    Asserted on the classes rather than on instances because constructing them needs
+    provider configuration, and the defect is structural: the class owns a client and
+    must therefore expose a way to release it.
+    """
+    from osc_assistant.providers.embeddings.openai_compatible import (
+        OpenAICompatibleEmbeddingModel,
+    )
+    from osc_assistant.providers.embeddings.voyage import VoyageEmbeddingModel
+    from osc_assistant.providers.llm.openai_compatible import OpenAICompatibleChatModel
+
+    for adapter in (
+        OpenAICompatibleChatModel,
+        OpenAICompatibleEmbeddingModel,
+        VoyageEmbeddingModel,
+    ):
+        assert hasattr(adapter, "aclose"), (
+            f"{adapter.__name__} constructs its own HTTP client but offers no "
+            f"aclose(); Container.shutdown() cannot release it."
+        )

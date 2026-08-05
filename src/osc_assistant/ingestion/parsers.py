@@ -153,6 +153,60 @@ def parse_docx(path: Path, _encoding: str) -> ParsedContent:
     )
 
 
+def parse_xlsx(path: Path, _encoding: str) -> ParsedContent:
+    """Extract cell values from an Excel workbook, one block per worksheet.
+
+    A spreadsheet carries meaning in two dimensions and the retrieval pipeline is
+    one-dimensional, so the row is chosen as the unit that must survive: cells are
+    joined with a tab exactly as `parse_docx` joins table cells, keeping a record
+    together on one line where an embedding can see it whole. The sheet name is
+    emitted as a Markdown heading so that the heading-aware chunkers can keep a row
+    attached to the sheet it came from, and so a citation quoting one row is
+    traceable back to a tab an operator can open.
+
+    Read-only mode streams rows rather than building a cell graph, and `data_only`
+    returns the cached result of a formula rather than its source text — the number
+    a reader would see, which is the fact being asked about.
+    """
+    try:
+        import openpyxl
+    except ImportError as exc:  # pragma: no cover - exercised only without the extra
+        raise MissingDependencyError("openpyxl", "openpyxl", "documents") from exc
+
+    try:
+        workbook = openpyxl.load_workbook(str(path), read_only=True, data_only=True)
+    except Exception as exc:
+        raise ParseError(f"Could not read XLSX {path.name}: {exc}") from exc
+
+    try:
+        blocks: list[str] = []
+        for sheet in workbook.worksheets:
+            rows = [
+                "\t".join("" if value is None else str(value).strip() for value in row).strip()
+                for row in sheet.iter_rows(values_only=True)
+            ]
+            populated = [row for row in rows if row]
+            if not populated:
+                continue
+            blocks.append(f"## {sheet.title}\n\n" + "\n".join(populated))
+    finally:
+        # Read-only workbooks hold the underlying zip archive open until closed.
+        workbook.close()
+
+    if not blocks:
+        # An empty workbook parses without error. Indexing it would put a document
+        # with no retrievable content in the corpus and hide the real problem.
+        raise ParseError(f"{path.name} contains no cell values in any worksheet.")
+
+    return ParsedContent(
+        text="\n\n".join(blocks),
+        metadata={
+            "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "sheet_count": len(workbook.sheetnames),
+        },
+    )
+
+
 # The supported corpus formats. Adding one is a new function plus a line here.
 PARSERS: dict[str, Parser] = {
     ".md": parse_text,
@@ -163,6 +217,7 @@ PARSERS: dict[str, Parser] = {
     ".htm": parse_html,
     ".pdf": parse_pdf,
     ".docx": parse_docx,
+    ".xlsx": parse_xlsx,
 }
 
 SUPPORTED_EXTENSIONS: tuple[str, ...] = tuple(sorted(PARSERS))

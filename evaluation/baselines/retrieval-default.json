@@ -1,0 +1,2951 @@
+{
+  "started_at": "2026-08-05T00:37:22.747068+00:00",
+  "duration_seconds": 4.561,
+  "golden_set": "golden-set.yaml",
+  "case_count": 86,
+  "failed_count": 0,
+  "top_k": 5,
+  "concurrency": 1,
+  "generation": false,
+  "configuration": {
+    "profile_environment": "development",
+    "llm": "ollama/qwen3:8b",
+    "embeddings": "ollama/nomic-embed-text",
+    "reranker": "noop",
+    "vector_store": "pgvector",
+    "chunking": {
+      "strategy": "recursive",
+      "chunk_size": 900,
+      "chunk_overlap": 120
+    },
+    "retrieval": {
+      "strategy": "hybrid",
+      "candidates": 30,
+      "top_k": 5,
+      "rrf_k": 60,
+      "min_score": 0.0,
+      "rewrite_queries": false
+    },
+    "generation": {
+      "max_tokens": 1500,
+      "require_citations": true
+    }
+  },
+  "summary": {
+    "cases_scored": 86.0,
+    "recall@5": 0.9321,
+    "precision@5": 0.1901,
+    "mrr": 0.8601,
+    "hit_rate@5": 0.9383,
+    "citation_coverage": 0.0,
+    "groundedness": 0.0,
+    "citation_precision": 0.0,
+    "fact_match": 1.0,
+    "abstention_accuracy": 0.0,
+    "latency_p50_seconds": 0.043,
+    "latency_p95_seconds": 0.049,
+    "latency_mean_seconds": 0.053,
+    "throughput_per_second": 18.854,
+    "input_tokens_total": 0.0,
+    "output_tokens_total": 0.0
+  },
+  "cases": [
+    {
+      "id": "tier-collection-level",
+      "question": "Can I set up a bulk discount that applies to a whole collection?",
+      "tags": [
+        "tiered-pricing"
+      ],
+      "relevant_documents": [
+        "faq/tiered-pricing-guide.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.9089426250429824,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "7f60ac5d696d4c17",
+      "error": null
+    },
+    {
+      "id": "tier-product-level",
+      "question": "How do I give my wholesale customers a discount on specific products?",
+      "tags": [
+        "tiered-pricing"
+      ],
+      "relevant_documents": [
+        "faq/tiered-pricing-guide.md"
+      ],
+      "retrieved_documents": [
+        "faq/free-gift.md",
+        "faq/theme-compatibility.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04860804101917893,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "fabd17f5a9ca4314",
+      "error": null
+    },
+    {
+      "id": "tier-variants-supported",
+      "question": "Does tiered pricing work for individual product variants?",
+      "tags": [
+        "tiered-pricing"
+      ],
+      "relevant_documents": [
+        "faq/tiered-pricing-guide.md"
+      ],
+      "retrieved_documents": [
+        "faq/add-on-tier-pricing.md",
+        "faq/priority-of-the-offers.md",
+        "faq/tiered-pricing-guide.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.3333333333333333,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.042606916977092624,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "929a66c1ac7a47e3",
+      "error": null
+    },
+    {
+      "id": "tier-shopify-admin-order",
+      "question": "If I create an order myself from the Shopify admin, does the tier price still apply?",
+      "tags": [
+        "tiered-pricing"
+      ],
+      "relevant_documents": [
+        "faq/tiered-pricing-guide.md"
+      ],
+      "retrieved_documents": [
+        "faq/tiered-pricing-guide.md",
+        "faq/priority-of-the-offers.md",
+        "faq/combined-collection-quantity-discount-slabs.md",
+        "faq/add-on-tier-pricing.md",
+        "faq/draft-order.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.046912417048588395,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "d0b54654762444cf",
+      "error": null
+    },
+    {
+      "id": "priority-variant-wins",
+      "question": "I have offers at variant, product and collection level on the same item. Which one wins?",
+      "tags": [
+        "priority"
+      ],
+      "relevant_documents": [
+        "faq/priority-of-the-offers.md"
+      ],
+      "retrieved_documents": [
+        "faq/priority-of-the-offers.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.04134004202205688,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "2b75b32c0af44987",
+      "error": null
+    },
+    {
+      "id": "priority-two-collections",
+      "question": "A product sits in two collections that both have discount rules. Which discount shows?",
+      "tags": [
+        "priority"
+      ],
+      "relevant_documents": [
+        "faq/priority-of-the-offers.md"
+      ],
+      "retrieved_documents": [
+        "faq/priority-of-the-offers.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "faq/combined-collection-quantity-discount-slabs.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04463208396919072,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "3af7e4ae882f4149",
+      "error": null
+    },
+    {
+      "id": "priority-one-variant-only",
+      "question": "Why is my offer only showing on one variant instead of all of them?",
+      "tags": [
+        "priority",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/priority-of-the-offers.md"
+      ],
+      "retrieved_documents": [
+        "faq/priority-of-the-offers.md",
+        "faq/market.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04462237504776567,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "89091aaac9b44888",
+      "error": null
+    },
+    {
+      "id": "integration-buy-now",
+      "question": "Is the Buy Now button supported by the app?",
+      "tags": [
+        "integration"
+      ],
+      "relevant_documents": [
+        "faq/product-and-collection-page-integration.md"
+      ],
+      "retrieved_documents": [
+        "faq/product-and-collection-page-integration.md",
+        "faq/theme-compatibility.md",
+        "faq/draft-order.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.045528165996074677,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "6e10f05d986447df",
+      "error": null
+    },
+    {
+      "id": "integration-no-grid",
+      "question": "Instead of a pricing table, can I just show the discounted price next to the normal price?",
+      "tags": [
+        "integration"
+      ],
+      "relevant_documents": [
+        "faq/product-and-collection-page-integration.md",
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md",
+        "faq/row-level-discount.md"
+      ],
+      "recall": 0.5,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04380637488793582,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "4b0d3b5bf9204286",
+      "error": null
+    },
+    {
+      "id": "integration-payment-gateways",
+      "question": "Will this work with my payment gateway?",
+      "tags": [
+        "integration"
+      ],
+      "relevant_documents": [
+        "faq/product-and-collection-page-integration.md"
+      ],
+      "retrieved_documents": [
+        "faq/product-and-collection-page-integration.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04691037500742823,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "116f9ebfc0f34bb5",
+      "error": null
+    },
+    {
+      "id": "integration-collection-limit",
+      "question": "What is the maximum number of collections I can put in one offer?",
+      "tags": [
+        "integration",
+        "limits"
+      ],
+      "relevant_documents": [
+        "faq/product-and-collection-page-integration.md"
+      ],
+      "retrieved_documents": [
+        "faq/priority-of-the-offers.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.04557858395855874,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "d605b34388544996",
+      "error": null
+    },
+    {
+      "id": "theme-grid-colour",
+      "question": "How do I change the colours of the discount grid to match my theme?",
+      "tags": [
+        "theme"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md",
+        "faq/combined-collection-quantity-discount-slabs.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.0463199169607833,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "5ddab546ca824930",
+      "error": null
+    },
+    {
+      "id": "theme-variant-offer-setup",
+      "question": "Where in the dashboard do I create a variant offer based on customer tags?",
+      "tags": [
+        "theme",
+        "setup"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04998200002592057,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "58a66a6a434f4636",
+      "error": null
+    },
+    {
+      "id": "theme-customer-groups",
+      "question": "Which customer groups can I assign a discount to?",
+      "tags": [
+        "theme",
+        "setup"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.04394870903342962,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "78a4e4d030a94176",
+      "error": null
+    },
+    {
+      "id": "theme-table-missing",
+      "question": "The discount table is not showing up on my product page. What should I check?",
+      "tags": [
+        "theme",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md",
+        "faq/combined-collection-quantity-discount-slabs.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.0475800420390442,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "14bc08a86d294aea",
+      "error": null
+    },
+    {
+      "id": "theme-cart-price-missing",
+      "question": "The discounted price is not appearing on the cart page.",
+      "tags": [
+        "theme",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md",
+        "faq/combined-collection-quantity-discount-slabs.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.043462916975840926,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "23ae9340c9e841b7",
+      "error": null
+    },
+    {
+      "id": "theme-mini-cart",
+      "question": "My mini cart is still showing the full price.",
+      "tags": [
+        "theme",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "faq/theme-compatibility.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "faq/draft-order.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.3333333333333333,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04381337505765259,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "ae632f263d7a4ca9",
+      "error": null
+    },
+    {
+      "id": "theme-checkout-button",
+      "question": "The price is wrong when I click checkout from the cart drawer. How do I fix it?",
+      "tags": [
+        "theme",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.044606042094528675,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "1682d012f6fb4fe8",
+      "error": null
+    },
+    {
+      "id": "theme-add-to-cart",
+      "question": "What do I configure so the discount applies when Add to Cart is clicked?",
+      "tags": [
+        "theme",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/cart-discount.md",
+        "faq/theme-compatibility.md",
+        "faq/row-level-discount.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.5,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.06319220794830471,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "8a533705e90b4e8c",
+      "error": null
+    },
+    {
+      "id": "theme-single-quantity-price",
+      "question": "How can I display a discounted price for a single unit on the product page?",
+      "tags": [
+        "theme"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.0472387500340119,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "a51f99add3ec4f9e",
+      "error": null
+    },
+    {
+      "id": "theme-grid-customisation",
+      "question": "My price grid does not appear at all. Could my theme customisations be the cause?",
+      "tags": [
+        "theme",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "retrieved_documents": [
+        "faq/theme-compatibility.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04400620807427913,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "a3f515a54b88406a",
+      "error": null
+    },
+    {
+      "id": "registration-create-form",
+      "question": "How do I build a wholesale signup form?",
+      "tags": [
+        "registration"
+      ],
+      "relevant_documents": [
+        "faq/registration-form.md"
+      ],
+      "retrieved_documents": [
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "faq/theme-compatibility.md"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.042127416003495455,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "a2880db4bb93486a",
+      "error": null
+    },
+    {
+      "id": "registration-show-frontend",
+      "question": "How do customers actually reach the registration form on my storefront?",
+      "tags": [
+        "registration"
+      ],
+      "relevant_documents": [
+        "faq/registration-form.md"
+      ],
+      "retrieved_documents": [
+        "faq/registration-form.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.04781629203353077,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "f54d3e12346c472c",
+      "error": null
+    },
+    {
+      "id": "registration-no-emails",
+      "question": "My customers are not getting approval emails. What is wrong?",
+      "tags": [
+        "registration",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/registration-form.md"
+      ],
+      "retrieved_documents": [
+        "faq/registration-form.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.04410679102875292,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "92ae019cebda4b0e",
+      "error": null
+    },
+    {
+      "id": "export-metafields-csv",
+      "question": "How do I export my pricing data to a CSV?",
+      "tags": [
+        "export"
+      ],
+      "relevant_documents": [
+        "faq/export.md"
+      ],
+      "retrieved_documents": [
+        "faq/export.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.0425095830578357,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "37bc3c8302a34c8d",
+      "error": null
+    },
+    {
+      "id": "export-bulk-edit-variants",
+      "question": "Is there a way to edit lots of variant rules at once instead of one by one?",
+      "tags": [
+        "export"
+      ],
+      "relevant_documents": [
+        "faq/export.md"
+      ],
+      "retrieved_documents": [
+        "faq/export.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.04322241595946252,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "96e6edf13d24409f",
+      "error": null
+    },
+    {
+      "id": "export-pricing-in-csv",
+      "question": "Can the CSV include the discount rules for each variant?",
+      "tags": [
+        "export"
+      ],
+      "relevant_documents": [
+        "faq/export.md"
+      ],
+      "retrieved_documents": [
+        "faq/export.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04241420794278383,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "8147d42c7414467c",
+      "error": null
+    },
+    {
+      "id": "quick-order-styling",
+      "question": "Can the quick order form be restyled to match my shop?",
+      "tags": [
+        "quick-order"
+      ],
+      "relevant_documents": [
+        "faq/quick-order-form.md"
+      ],
+      "retrieved_documents": [
+        "faq/quick-order-form.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04192858294118196,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "0bfcce6ced0e4a22",
+      "error": null
+    },
+    {
+      "id": "quick-order-bulk-sku",
+      "question": "Can I paste in a list of SKUs rather than typing them one at a time?",
+      "tags": [
+        "quick-order",
+        "limitations"
+      ],
+      "relevant_documents": [
+        "faq/quick-order-form.md"
+      ],
+      "retrieved_documents": [
+        "faq/quick-order-form.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.04026779194828123,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "4e0b1424db2143a1",
+      "error": null
+    },
+    {
+      "id": "quick-order-variants",
+      "question": "Does entering a variant SKU add that exact variant to the cart?",
+      "tags": [
+        "quick-order"
+      ],
+      "relevant_documents": [
+        "faq/quick-order-form.md"
+      ],
+      "retrieved_documents": [
+        "faq/quick-order-form.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.045759249944239855,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "b12e721bbc3345c7",
+      "error": null
+    },
+    {
+      "id": "quick-order-bad-sku",
+      "question": "What happens if a customer types an SKU that does not exist?",
+      "tags": [
+        "quick-order"
+      ],
+      "relevant_documents": [
+        "faq/quick-order-form.md"
+      ],
+      "retrieved_documents": [
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "faq/quick-order-form.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.3333333333333333,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04375229193829,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "c40480134133448d",
+      "error": null
+    },
+    {
+      "id": "quick-order-tier-pricing",
+      "question": "Will quantity discounts show inside the quick order form?",
+      "tags": [
+        "quick-order",
+        "tiered-pricing"
+      ],
+      "relevant_documents": [
+        "faq/quick-order-form.md"
+      ],
+      "retrieved_documents": [
+        "faq/quick-order-form.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "faq/row-level-discount.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.041170667042024434,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "da08a524b0f14f2f",
+      "error": null
+    },
+    {
+      "id": "cart-discount-testing",
+      "question": "How can I check that my cart discount is actually working?",
+      "tags": [
+        "cart-discount"
+      ],
+      "relevant_documents": [
+        "faq/cart-discount.md"
+      ],
+      "retrieved_documents": [
+        "faq/cart-discount.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "faq/row-level-discount.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.03620608407072723,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "748e42ac478c4da1",
+      "error": null
+    },
+    {
+      "id": "cart-discount-scheduling",
+      "question": "Can I schedule a cart discount to run only over a weekend?",
+      "tags": [
+        "cart-discount",
+        "limitations"
+      ],
+      "relevant_documents": [
+        "faq/cart-discount.md"
+      ],
+      "retrieved_documents": [
+        "faq/cart-discount.md",
+        "faq/row-level-discount.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.03678829094860703,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "b6cf2d76c62b4b52",
+      "error": null
+    },
+    {
+      "id": "cart-discount-customer-tags",
+      "question": "Can cart discounts be limited to customers with a particular tag?",
+      "tags": [
+        "cart-discount",
+        "limitations"
+      ],
+      "relevant_documents": [
+        "faq/cart-discount.md"
+      ],
+      "retrieved_documents": [
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "faq/cart-discount.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.3333333333333333,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.03645758400671184,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "5e6e408d6b5c4401",
+      "error": null
+    },
+    {
+      "id": "cart-discount-tiers",
+      "question": "Can I make a cart discount get bigger as the customer spends more?",
+      "tags": [
+        "cart-discount"
+      ],
+      "relevant_documents": [
+        "faq/cart-discount.md"
+      ],
+      "retrieved_documents": [
+        "faq/cart-discount.md",
+        "faq/row-level-discount.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.03789379098452628,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "071a6b82a3fc4087",
+      "error": null
+    },
+    {
+      "id": "market-testing",
+      "question": "How do I test that customers in another country see the right offer?",
+      "tags": [
+        "market"
+      ],
+      "relevant_documents": [
+        "faq/market.md"
+      ],
+      "retrieved_documents": [
+        "faq/market.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.038786749937571585,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "433e4e8387cf499c",
+      "error": null
+    },
+    {
+      "id": "market-conflicting-offers",
+      "question": "Two offers target the same country with different discounts. Which applies?",
+      "tags": [
+        "market",
+        "priority"
+      ],
+      "relevant_documents": [
+        "faq/market.md"
+      ],
+      "retrieved_documents": [
+        "faq/market.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "faq/priority-of-the-offers.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04149233305361122,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "1b0f87b96cd746d8",
+      "error": null
+    },
+    {
+      "id": "market-all-vs-specific",
+      "question": "I have an All Markets offer and a USA offer. What does a US customer see?",
+      "tags": [
+        "market",
+        "priority"
+      ],
+      "relevant_documents": [
+        "faq/market.md"
+      ],
+      "retrieved_documents": [
+        "faq/market.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "faq/priority-of-the-offers.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.04135420802049339,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "79e8eed066054ab5",
+      "error": null
+    },
+    {
+      "id": "tax-what-it-does",
+      "question": "What is the tax display feature for?",
+      "tags": [
+        "tax"
+      ],
+      "relevant_documents": [
+        "faq/tax-display.md"
+      ],
+      "retrieved_documents": [
+        "faq/tax-display.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.03704454202670604,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "2e516ec1982644a3",
+      "error": null
+    },
+    {
+      "id": "tax-enable",
+      "question": "Where do I turn on tax display?",
+      "tags": [
+        "tax"
+      ],
+      "relevant_documents": [
+        "faq/tax-display.md"
+      ],
+      "retrieved_documents": [
+        "faq/tax-display.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.03615787497255951,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "f039d682aac54a3c",
+      "error": null
+    },
+    {
+      "id": "tax-per-country-rates",
+      "question": "Can I use a different tax rate for each country I sell to?",
+      "tags": [
+        "tax"
+      ],
+      "relevant_documents": [
+        "faq/tax-display.md"
+      ],
+      "retrieved_documents": [
+        "faq/tax-display.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.036249333061277866,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "a4c7d1d4a8b343a1",
+      "error": null
+    },
+    {
+      "id": "tax-global-vs-country",
+      "question": "If I set a global tax rate and a country rate, which one is used?",
+      "tags": [
+        "tax",
+        "priority"
+      ],
+      "relevant_documents": [
+        "faq/tax-display.md"
+      ],
+      "retrieved_documents": [
+        "faq/tax-display.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.037831374909728765,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "5012ed8ddeec4e25",
+      "error": null
+    },
+    {
+      "id": "tax-shopify-prerequisite",
+      "question": "Do I need to set anything up in Shopify before tax display works?",
+      "tags": [
+        "tax",
+        "setup"
+      ],
+      "relevant_documents": [
+        "faq/tax-display.md"
+      ],
+      "retrieved_documents": [
+        "faq/tax-display.md",
+        "faq/theme-compatibility.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.04027374996803701,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "02619f4c2f8b4c45",
+      "error": null
+    },
+    {
+      "id": "tax-affects-checkout",
+      "question": "Does the tax display setting change what the customer is actually charged?",
+      "tags": [
+        "tax",
+        "limitations"
+      ],
+      "relevant_documents": [
+        "faq/tax-display.md"
+      ],
+      "retrieved_documents": [
+        "faq/tax-display.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.043546708999201655,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "0fa0cde9b4c54ac0",
+      "error": null
+    },
+    {
+      "id": "tax-per-product",
+      "question": "Can I switch tax display on for only some products?",
+      "tags": [
+        "tax",
+        "limitations"
+      ],
+      "relevant_documents": [
+        "faq/tax-display.md"
+      ],
+      "retrieved_documents": [
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "faq/tax-display.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.5,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.036749167018570006,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "ea1b8c2877f64660",
+      "error": null
+    },
+    {
+      "id": "combined-deleted-label",
+      "question": "I deleted the discount label the app created. What happens now?",
+      "tags": [
+        "combined-collections",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md"
+      ],
+      "retrieved_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md",
+        "faq/theme-compatibility.md",
+        "faq/row-level-discount.md",
+        "faq/draft-order.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.035749916918575764,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "4a42ad75a26d471b",
+      "error": null
+    },
+    {
+      "id": "combined-not-applying",
+      "question": "My combined collection discounts are not applying. What should I check?",
+      "tags": [
+        "combined-collections",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md"
+      ],
+      "retrieved_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md",
+        "faq/theme-compatibility.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "faq/cart-discount.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.03746329201385379,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "a12d8556ee2d4932",
+      "error": null
+    },
+    {
+      "id": "combined-multiple-collections",
+      "question": "If a product is in more than one registered collection, which discount does it get?",
+      "tags": [
+        "combined-collections",
+        "priority"
+      ],
+      "relevant_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md"
+      ],
+      "retrieved_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md",
+        "faq/priority-of-the-offers.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.038924750057049096,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "d09a748e45d94806",
+      "error": null
+    },
+    {
+      "id": "combined-update-collection",
+      "question": "What happens to discounts when I add products to a registered collection?",
+      "tags": [
+        "combined-collections"
+      ],
+      "relevant_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md"
+      ],
+      "retrieved_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md",
+        "faq/theme-compatibility.md",
+        "faq/row-level-discount.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.03914645896293223,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "bf20e5f4f869492a",
+      "error": null
+    },
+    {
+      "id": "combined-restrict-groups",
+      "question": "Can I limit combined collection discounts to my VIP customers?",
+      "tags": [
+        "combined-collections"
+      ],
+      "relevant_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md"
+      ],
+      "retrieved_documents": [
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04108270804863423,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "ff0374a7916a43a7",
+      "error": null
+    },
+    {
+      "id": "limits-combine-row-and-order",
+      "question": "Can a row-level discount and an order-level discount both apply to one order?",
+      "tags": [
+        "order-limits",
+        "row-level"
+      ],
+      "relevant_documents": [
+        "faq/order-limits.md",
+        "faq/row-level-discount.md"
+      ],
+      "retrieved_documents": [
+        "faq/order-limits.md",
+        "faq/row-level-discount.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.4,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.0404103749897331,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "cd8fb3250f4945e2",
+      "error": null
+    },
+    {
+      "id": "limits-conditions",
+      "question": "If I set several conditions on an order limit, do they all have to be met?",
+      "tags": [
+        "order-limits"
+      ],
+      "relevant_documents": [
+        "faq/order-limits.md"
+      ],
+      "retrieved_documents": [
+        "faq/order-limits.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.039723958005197346,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "3b72aa866c624f1a",
+      "error": null
+    },
+    {
+      "id": "limits-scope",
+      "question": "Can I apply an order limit to just one product rather than the whole cart?",
+      "tags": [
+        "order-limits",
+        "limitations"
+      ],
+      "relevant_documents": [
+        "faq/order-limits.md"
+      ],
+      "retrieved_documents": [
+        "faq/order-limits.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.042994917021133006,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "7199a03625c34026",
+      "error": null
+    },
+    {
+      "id": "row-before-tax",
+      "question": "Is a row-level discount taken off before or after tax and shipping?",
+      "tags": [
+        "row-level"
+      ],
+      "relevant_documents": [
+        "faq/row-level-discount.md"
+      ],
+      "retrieved_documents": [
+        "faq/row-level-discount.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.04205837508197874,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "815178c94a7a4918",
+      "error": null
+    },
+    {
+      "id": "row-tiered",
+      "question": "How do I set 10% off over $100 and 15% off over $500 at row level?",
+      "tags": [
+        "row-level"
+      ],
+      "relevant_documents": [
+        "faq/row-level-discount.md"
+      ],
+      "retrieved_documents": [
+        "faq/row-level-discount.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.041812999988906085,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "7021887d4a6e420f",
+      "error": null
+    },
+    {
+      "id": "row-threshold-drop",
+      "question": "What happens to the discount if the customer removes an item and drops below the minimum?",
+      "tags": [
+        "row-level"
+      ],
+      "relevant_documents": [
+        "faq/row-level-discount.md"
+      ],
+      "retrieved_documents": [
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "faq/row-level-discount.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.3333333333333333,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.03604420798365027,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "99a46cde24734886",
+      "error": null
+    },
+    {
+      "id": "row-selected-products",
+      "question": "Can row-level discounts apply to only some products in the cart?",
+      "tags": [
+        "row-level",
+        "limitations"
+      ],
+      "relevant_documents": [
+        "faq/row-level-discount.md"
+      ],
+      "retrieved_documents": [
+        "faq/row-level-discount.md",
+        "faq/order-limits.md",
+        "faq/cart-discount.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.03870808403007686,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "a396ae94227a4211",
+      "error": null
+    },
+    {
+      "id": "fee-what-is-it",
+      "question": "What can I use the extra fee feature for?",
+      "tags": [
+        "extra-fee"
+      ],
+      "relevant_documents": [
+        "faq/extra-fee.md"
+      ],
+      "retrieved_documents": [
+        "faq/extra-fee.md",
+        "faq/export.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.037093917024321854,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "f5c39bd6da994314",
+      "error": null
+    },
+    {
+      "id": "fee-specific-products",
+      "question": "I want a packaging charge on fragile items only. How do I set that up?",
+      "tags": [
+        "extra-fee"
+      ],
+      "relevant_documents": [
+        "faq/extra-fee.md"
+      ],
+      "retrieved_documents": [
+        "faq/extra-fee.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.03802741691470146,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "825540a263e1418f",
+      "error": null
+    },
+    {
+      "id": "fee-flat-handling",
+      "question": "How do I add the same handling charge to every order?",
+      "tags": [
+        "extra-fee"
+      ],
+      "relevant_documents": [
+        "faq/extra-fee.md"
+      ],
+      "retrieved_documents": [
+        "faq/extra-fee.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.040829709032550454,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "c215f38d38b54acb",
+      "error": null
+    },
+    {
+      "id": "fee-multiple-rules",
+      "question": "Can I have several extra fees running at once?",
+      "tags": [
+        "extra-fee"
+      ],
+      "relevant_documents": [
+        "faq/extra-fee.md"
+      ],
+      "retrieved_documents": [
+        "faq/extra-fee.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx",
+        "faq/add-on-tier-pricing.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04497912502847612,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "73bde2dc206a4e99",
+      "error": null
+    },
+    {
+      "id": "fee-requires-code",
+      "question": "Do I need a developer to set up an extra fee?",
+      "tags": [
+        "extra-fee"
+      ],
+      "relevant_documents": [
+        "faq/extra-fee.md"
+      ],
+      "retrieved_documents": [
+        "faq/extra-fee.md",
+        "faq/export.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04436179099138826,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "6aeb238cfc55482f",
+      "error": null
+    },
+    {
+      "id": "addon-single-cost",
+      "question": "I only have one unit cost and one margin. Can I still use add-on tier pricing?",
+      "tags": [
+        "add-on-pricing"
+      ],
+      "relevant_documents": [
+        "faq/add-on-tier-pricing.md"
+      ],
+      "retrieved_documents": [
+        "faq/add-on-tier-pricing.md",
+        "faq/tiered-pricing-guide.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.045557582983747125,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "4035a1410c444c8b",
+      "error": null
+    },
+    {
+      "id": "addon-mixed-cart",
+      "question": "If a customer orders several different products and variants together, is each priced correctly?",
+      "tags": [
+        "add-on-pricing"
+      ],
+      "relevant_documents": [
+        "faq/add-on-tier-pricing.md"
+      ],
+      "retrieved_documents": [
+        "faq/add-on-tier-pricing.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.05031129205599427,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "a01b3720f7a54a23",
+      "error": null
+    },
+    {
+      "id": "addon-all-sizes",
+      "question": "Can one tier structure cover every size of a product?",
+      "tags": [
+        "add-on-pricing"
+      ],
+      "relevant_documents": [
+        "faq/add-on-tier-pricing.md"
+      ],
+      "retrieved_documents": [
+        "faq/add-on-tier-pricing.md",
+        "faq/priority-of-the-offers.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04827133298385888,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "3d7354b0acaf43cd",
+      "error": null
+    },
+    {
+      "id": "addon-cost-components",
+      "question": "How many cost parameters and profit margins can I define for a variant?",
+      "tags": [
+        "add-on-pricing",
+        "limits"
+      ],
+      "relevant_documents": [
+        "faq/add-on-tier-pricing.md"
+      ],
+      "retrieved_documents": [
+        "faq/add-on-tier-pricing.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 2,
+      "faithful": null,
+      "latency_seconds": 0.046254374901764095,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "03feeb47fd41446a",
+      "error": null
+    },
+    {
+      "id": "gift-what-is-it",
+      "question": "How does the free gift feature work?",
+      "tags": [
+        "free-gift"
+      ],
+      "relevant_documents": [
+        "faq/free-gift.md"
+      ],
+      "retrieved_documents": [
+        "faq/free-gift.md",
+        "faq/priority-of-the-offers.md",
+        "faq/theme-compatibility.md",
+        "faq/row-level-discount.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04698954208288342,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "592152f77d5f4a26",
+      "error": null
+    },
+    {
+      "id": "gift-shows-as-free",
+      "question": "Will the customer see the gift as costing nothing in their cart?",
+      "tags": [
+        "free-gift"
+      ],
+      "relevant_documents": [
+        "faq/free-gift.md"
+      ],
+      "retrieved_documents": [
+        "faq/free-gift.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "faq/row-level-discount.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.044747209060005844,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "002464cebfbc4c09",
+      "error": null
+    },
+    {
+      "id": "gift-multiple",
+      "question": "Can one rule hand out more than one gift product?",
+      "tags": [
+        "free-gift"
+      ],
+      "relevant_documents": [
+        "faq/free-gift.md"
+      ],
+      "retrieved_documents": [
+        "faq/free-gift.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.044399083009921014,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "80f701554dbc4ca8",
+      "error": null
+    },
+    {
+      "id": "gift-triggers",
+      "question": "What conditions can I use to trigger a free gift?",
+      "tags": [
+        "free-gift"
+      ],
+      "relevant_documents": [
+        "faq/free-gift.md"
+      ],
+      "retrieved_documents": [
+        "faq/free-gift.md",
+        "faq/extra-fee.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.044438375043682754,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "8693fb4c64b94467",
+      "error": null
+    },
+    {
+      "id": "gift-audience",
+      "question": "Can I restrict free gifts to logged-in or VIP customers only?",
+      "tags": [
+        "free-gift"
+      ],
+      "relevant_documents": [
+        "faq/free-gift.md"
+      ],
+      "retrieved_documents": [
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx",
+        "faq/free-gift.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.5,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.047197457985021174,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "fc2770045b524009",
+      "error": null
+    },
+    {
+      "id": "gift-discount-code",
+      "question": "Does the customer have to enter a coupon code to get the gift?",
+      "tags": [
+        "free-gift"
+      ],
+      "relevant_documents": [
+        "faq/free-gift.md"
+      ],
+      "retrieved_documents": [
+        "faq/free-gift.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "faq/theme-compatibility.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04387199995107949,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "9a58ce9de53f411f",
+      "error": null
+    },
+    {
+      "id": "draft-how-pricing-applied",
+      "question": "How does the app apply wholesale prices at checkout using draft orders?",
+      "tags": [
+        "draft-order"
+      ],
+      "relevant_documents": [
+        "faq/draft-order.md"
+      ],
+      "retrieved_documents": [
+        "faq/draft-order.md",
+        "faq/theme-compatibility.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.04453570896293968,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "b3b135ed85c44f1c",
+      "error": null
+    },
+    {
+      "id": "draft-coupon-stacking",
+      "question": "If a customer uses a Shopify discount code on top of tier pricing, what do they pay?",
+      "tags": [
+        "draft-order",
+        "priority"
+      ],
+      "relevant_documents": [
+        "faq/draft-order.md"
+      ],
+      "retrieved_documents": [
+        "faq/tiered-pricing-guide.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "faq/draft-order.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.25,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.04547149990685284,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "1149148076644d0a",
+      "error": null
+    },
+    {
+      "id": "draft-order-tag",
+      "question": "How can I tell which of my orders were created by the app?",
+      "tags": [
+        "draft-order"
+      ],
+      "relevant_documents": [
+        "faq/draft-order.md"
+      ],
+      "retrieved_documents": [
+        "faq/draft-order.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.04460537503473461,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "f949756f947243cd",
+      "error": null
+    },
+    {
+      "id": "draft-supported-features",
+      "question": "Which wholesale pricing features work with draft orders right now?",
+      "tags": [
+        "draft-order",
+        "limitations"
+      ],
+      "relevant_documents": [
+        "faq/draft-order.md"
+      ],
+      "retrieved_documents": [
+        "faq/draft-order.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.0434052919736132,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "6bc0b09aa4434b85",
+      "error": null
+    },
+    {
+      "id": "draft-cart-page-price",
+      "question": "Why does my cart page still show the full price in draft order mode?",
+      "tags": [
+        "draft-order",
+        "troubleshooting"
+      ],
+      "relevant_documents": [
+        "faq/draft-order.md"
+      ],
+      "retrieved_documents": [
+        "faq/draft-order.md",
+        "faq/theme-compatibility.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.04681154200807214,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "6fbdae864d3345ad",
+      "error": null
+    },
+    {
+      "id": "draft-plan-downgrade",
+      "question": "I downgraded my plan. Do I need to do anything about the draft order setting?",
+      "tags": [
+        "draft-order"
+      ],
+      "relevant_documents": [
+        "faq/draft-order.md"
+      ],
+      "retrieved_documents": [
+        "faq/draft-order.md",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.045825709006749094,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "2f63664d1f474887",
+      "error": null
+    },
+    {
+      "id": "draft-price-security",
+      "question": "Can a customer tamper with the wholesale price before checkout?",
+      "tags": [
+        "draft-order",
+        "security"
+      ],
+      "relevant_documents": [
+        "faq/draft-order.md"
+      ],
+      "retrieved_documents": [
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "faq/draft-order.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.25,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.04789066698867828,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "8b44874089f6408f",
+      "error": null
+    },
+    {
+      "id": "draft-double-click",
+      "question": "What stops duplicate draft orders if someone clicks checkout twice?",
+      "tags": [
+        "draft-order"
+      ],
+      "relevant_documents": [
+        "faq/draft-order.md"
+      ],
+      "retrieved_documents": [
+        "faq/draft-order.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.04594820807687938,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "3b56dcb42dff4164",
+      "error": null
+    },
+    {
+      "id": "abstain-pricing-plans",
+      "question": "How much does the OSCP Wholesale B2B app cost per month?",
+      "tags": [
+        "abstention"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04327683406881988,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "6b8862183c18494a",
+      "error": null
+    },
+    {
+      "id": "abstain-refund-policy",
+      "question": "What is OSC's refund policy for annual subscriptions?",
+      "tags": [
+        "abstention"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "faq/combined-collection-quantity-discount-slabs.md",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.03820279100909829,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "76a00276f483461b",
+      "error": null
+    },
+    {
+      "id": "abstain-woocommerce",
+      "question": "Does this app work with WooCommerce or BigCommerce?",
+      "tags": [
+        "abstention"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx",
+        "faq/theme-compatibility.md",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx",
+        "faq/combined-collection-quantity-discount-slabs.md"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.0369930419838056,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "804d0af7d16e4999",
+      "error": null
+    },
+    {
+      "id": "abstain-api-rate-limits",
+      "question": "What are the API rate limits for the wholesale pricing endpoints?",
+      "tags": [
+        "abstention"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04017158295027912,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "e6d664724822486d",
+      "error": null
+    },
+    {
+      "id": "abstain-employee-leave",
+      "question": "How many days of annual leave does an OSC employee get?",
+      "tags": [
+        "abstention"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "faq/combined-collection-quantity-discount-slabs.md",
+        "scenarios/OSCP_Wholesale_B2B_Scenario_Templates.xlsx",
+        "scenarios/Use Cases _ OSCP Wholesale B2B App - Quantity Clubbed for Product Asset 2025.xlsx",
+        "scenarios/OSCP_B2B_Scenario_Document.docx",
+        "scenarios/OSCP_B2B_Scenario_Document-1.docx"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "hit": false,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.04136562498752028,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "97b16bc30a1f41ef",
+      "error": null
+    }
+  ]
+}

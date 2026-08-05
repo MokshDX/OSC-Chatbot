@@ -256,6 +256,7 @@ questions have answers that cannot go stale.
 ./osc traces                 # what has run recently  (--failed, --name, --slower-than)
 ./osc trace [id]             # expand one trace, or the most recent, into a waterfall
 ./osc documents / document / chunk    # what is in the index, down to the exact text
+./osc eval                   # is it any GOOD?  (--retrieval-only is fast and free)
 make help                    # every target
 ```
 
@@ -277,6 +278,42 @@ In this order, because each step narrows the next:
 
 A failing command prints its trace automatically; `--explain` is for when it
 succeeded and you still want to know how.
+
+## Measurement rules
+
+**A retrieval change ships with a measured improvement.** This is now enforceable
+rather than aspirational: `make eval-retrieval` takes seconds and costs nothing.
+Chunk size, `top_k`, `rrf_k`, the chunking strategy, the reranker and query rewriting
+are all knobs whose current values are educated guesses — moving one without a
+before/after number is how the guesses became permanent in the first place.
+
+```bash
+make eval-retrieval          # recall@k, MRR, precision@k — no model calls
+make eval                    # adds citation, grounding, fact and abstention metrics
+make eval-gate               # what CI runs; fails on a regression
+```
+
+* **Deterministic metrics gate CI; the LLM judge is opt-in.** A gate that can change
+  its mind between two runs of the same commit is not a gate.
+* **Compare with `--baseline`, never by eye.** The comparison prints every
+  configuration key that differs, which is the only defence against comparing two
+  different systems and calling it a result.
+* **`--reindex` after a chunker change.** Chunk ids derive from chunk boundaries while
+  document hashes do not, so an ordinary sync reports `skipped` and silently measures
+  the old index under the new label.
+* **A metric that is absent is not a metric that is zero.** A retrieval-only run
+  reports no generation metrics, deliberately.
+
+## Knowledge corpus rules
+
+* **`docs/company/` is the corpus. `docs/engineering/` is not, and must never be
+  indexed.** An answer sourced from an ADR would retrieve cleanly, ground correctly and
+  cite accurately while being from the wrong universe — nothing downstream catches it.
+* **Never modify company documentation unless explicitly instructed.** Preserve
+  metadata, hierarchy, source attribution and update history.
+* **Tests use isolated fixtures, never the production corpus.** A test asserting
+  against a real FAQ answer starts failing the day someone edits it.
+* Adding a corpus category is creating a directory. There is no registry to update.
 
 ## Observability rules for new code
 
@@ -307,9 +344,15 @@ Before implementing any feature:
 
 1. Read PROJECT_STATUS.md — the engineering report and handover document.
 2. Read README.md — how to run it and what the commands are.
-3. Read graphify-out/ — the generated architectural map. Use it to navigate to the
+3. Read docs/engineering/ — the knowledge base. `architecture/overview.md` first;
+   the relevant ADR in `decisions/` before changing anything it covers.
+4. Read graphify-out/ — the generated architectural map. Use it to navigate to the
    files a change touches rather than reading the repository recursively.
-4. Run `./osc doctor` — confirm the environment before suspecting the code. Most
+5. Run `./osc doctor` — confirm the environment before suspecting the code. Most
    surprises here come from outside the process.
-5. Understand the current milestone (PROJECT_STATUS.md §15).
-6. Confirm the implementation plan before modifying code.
+6. Understand the current milestone (PROJECT_STATUS.md §15).
+7. Confirm the implementation plan before modifying code.
+
+When the change is done: update the affected knowledge base page in the same commit,
+write an ADR if a significant decision was made, and re-run `make eval` if anything
+in the retrieval or generation path moved.

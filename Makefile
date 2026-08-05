@@ -1,6 +1,6 @@
 .PHONY: help install test test-integration test-e2e lint typecheck check format \
         serve ingest reindex doctor status config providers documents document \
-        chunk ask search traces trace version clean
+        chunk ask search traces trace version clean eval eval-retrieval eval-gate
 
 # Every target below goes through ./osc or $(VENV), so no command in this file —
 # and none in the documentation — asks anyone to type a path into .venv.
@@ -12,8 +12,11 @@ OSC  := ./osc
 # PostgreSQL with pgvector for storage. No API credential is required.
 DSN ?= postgresql://mokshdutt@localhost:5432/osc
 
-# Corpus directory for `make ingest`.
-DOCS ?= ./docs
+# Corpus directory for `make ingest`. This is `docs/company`, not `docs`: the
+# company knowledge corpus and this repository's own engineering documentation both
+# live under docs/, and only the first of them belongs in the answer index. See
+# docs/engineering/architecture/knowledge-corpus.md.
+DOCS ?= ./docs/company
 
 # Free-form argument for the commands that take one:
 #   make ask Q="how many leave days?"
@@ -52,6 +55,23 @@ E2E_DSN ?= postgresql://mokshdutt@localhost:5432/osc_e2e
 test-e2e:  ## End-to-end smoke test against a live Ollama and PostgreSQL
 	@createdb $(notdir $(E2E_DSN)) 2>/dev/null || true
 	OSC_E2E=1 OSC_TEST_DSN=$(E2E_DSN) $(VENV)/bin/pytest tests/test_e2e.py -q
+
+# Measurement, not testing: `make test` asks "is it correct?", `make eval` asks
+# "is it any good?". The golden set needs the corpus indexed first (`make ingest`).
+GOLDEN ?= evaluation/golden-set.yaml
+
+eval:  ## Score the golden set with generation — the full quality picture
+	$(OSC) eval --golden-set $(GOLDEN)
+
+eval-retrieval:  ## Score retrieval only — fast and free, enough to compare chunkers
+	$(OSC) eval --golden-set $(GOLDEN) --retrieval-only
+
+# The CI gate. Thresholds are the committed baseline rounded down, so an ordinary
+# run passes and a regression does not. Raise them when a change earns it.
+eval-gate:  ## Fail if retrieval quality has regressed below the committed baseline
+	$(OSC) eval --golden-set $(GOLDEN) --retrieval-only \
+	  --baseline evaluation/baselines/retrieval-default.json \
+	  --fail-under recall@5=0.90 --fail-under mrr=0.82
 
 lint:  ## ruff
 	$(VENV)/bin/ruff check .

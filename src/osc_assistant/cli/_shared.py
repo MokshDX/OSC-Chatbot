@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import asyncio
 import os
-from collections.abc import Coroutine
+from collections.abc import Coroutine, Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -17,8 +18,9 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from ..errors import AssistantError
 from ..logging import configure_logging
-from ..observability import configure_observability
+from ..observability import RECORDER, configure_observability, render_waterfall
 from ..settings import Settings, load_settings
 
 console = Console()
@@ -97,3 +99,50 @@ def fail(message: str) -> None:
     """Report an operator-facing error and exit non-zero."""
     error_console.print(f"[red]error:[/red] {message}")
     raise typer.Exit(code=1)
+
+
+def print_trace(explain: bool) -> None:
+    """Render the trace the command just produced, if one was asked for."""
+    if not explain:
+        return
+    recent = RECORDER.recent(limit=1)
+    if not recent:
+        console.print(
+            "[yellow]no trace recorded — is observability.enabled set to false?[/yellow]"
+        )
+        return
+    console.print()
+    console.print(render_waterfall(recent[0]), highlight=False)
+
+
+@contextmanager
+def traced_command() -> Iterator[None]:
+    """Report a failed command usefully instead of as a stack trace.
+
+    Two things happen on the way out of an exception.
+
+    **The trace is printed, if there is a failed one.** `--explain` is only useful
+    to someone who anticipated needing it, and nobody anticipates a failure. The
+    trace names the stage that raised and shows what every stage before it had
+    already done, which is strictly more than the exception says on its own.
+
+    **`AssistantError` is reported as a message, not a traceback.** That hierarchy
+    is the project's vocabulary for problems an operator must fix — an unknown
+    provider, a missing credential, an unreachable database — and each one already
+    carries an actionable message. A traceback buries it under frames that describe
+    our call stack rather than their problem. Anything *else* is a bug in this
+    codebase and keeps its traceback, because for a bug the frames are the point.
+    """
+    try:
+        yield
+    except typer.Exit:
+        raise
+    except Exception as exc:
+        recent = RECORDER.recent(limit=1)
+        if recent and recent[0].failed:
+            error_console.print()
+            error_console.print(render_waterfall(recent[0]), highlight=False)
+        if isinstance(exc, AssistantError):
+            error_console.print(f"\n[red]{type(exc).__name__}:[/red] {exc}\n")
+            raise typer.Exit(code=1) from exc
+        raise

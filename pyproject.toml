@@ -36,7 +36,7 @@ gemini = ["google-genai>=0.3"]
 local = ["sentence-transformers>=3.0"]
 # Text extraction for binary corpus formats. Markdown, text, reStructuredText and
 # HTML need nothing beyond the standard library.
-documents = ["pypdf>=4.0", "python-docx>=1.1"]
+documents = ["pypdf>=4.0", "python-docx>=1.1", "openpyxl>=3.1"]
 dev = [
     "pytest>=8.2",
     "pytest-asyncio>=0.23",

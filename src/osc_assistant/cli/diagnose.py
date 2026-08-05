@@ -100,7 +100,7 @@ def doctor(
     ] = True,
     corpus: Annotated[
         Path | None, typer.Option(help="Corpus directory to check for readable files.")
-    ] = Path("docs"),
+    ] = Path("docs/company"),
     verbose: VerboseOption = False,
 ) -> None:
     """Check that every configured component is reachable and consistent.
@@ -207,7 +207,7 @@ async def _check_store(container: Container, settings: Settings) -> list[Check]:
 
     if stats.documents == 0:
         checks.append(
-            Check("index", "warn", "empty — run `osc-assistant ingest ./docs`")
+            Check("index", "warn", "empty — run `osc-assistant ingest ./docs/company`")
         )
     elif stats.chunks == 0:
         checks.append(
@@ -298,7 +298,10 @@ def _check_corpus(corpus: Path) -> Check:
     readable = 0
     ignored: dict[str, int] = {}
     for path in corpus.rglob("*"):
-        if not path.is_file():
+        # Dotfiles are never corpus content — `.DS_Store` and `.gitkeep` are the
+        # ones actually seen — and reporting them as unparseable trains an operator
+        # to ignore the one warning that names a format they do care about.
+        if not path.is_file() or path.name.startswith("."):
             continue
         if path.suffix.lower() in supported:
             readable += 1

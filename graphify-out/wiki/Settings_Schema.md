@@ -1,42 +1,64 @@
 # Settings Schema
 
-> 10 nodes · cohesion 0.33
+> 30 nodes
 
 ## Key Concepts
 
-- **settings.py** (20 connections) — `src/osc_assistant/settings.py`
-- **RetrievalSettings** (11 connections) — `src/osc_assistant/settings.py`
-- **GenerationSettings** (7 connections) — `src/osc_assistant/settings.py`
-- **_settings()** (7 connections) — `tests/test_api.py`
-- **BaseModel** (5 connections)
-- **ChunkingSettings** (4 connections) — `src/osc_assistant/settings.py`
-- **DatabaseSettings** (3 connections) — `src/osc_assistant/settings.py`
+- **Settings** (38 connections) — `src/osc_assistant/settings.py`
+- **settings.py** (31 connections) — `src/osc_assistant/settings.py`
+- **_SyncClosableReranker** (23 connections) — `tests/test_server_lifecycle.py`
+- **RetrievalSettings** (22 connections) — `src/osc_assistant/settings.py`
+- **_ClosableEmbedding** (21 connections) — `tests/test_server_lifecycle.py`
+- **GenerationSettings** (12 connections) — `src/osc_assistant/settings.py`
+- **_settings()** (10 connections) — `tests/test_e2e.py`
+- **ChunkingSettings** (9 connections) — `src/osc_assistant/settings.py`
+- **_settings()** (8 connections) — `tests/test_api.py`
+- **osc_assistant/__init__.py** (6 connections) — `src/osc_assistant/__init__.py`
+- **BaseModel** (6 connections)
+- **ObservabilitySettings** (5 connections) — `src/osc_assistant/settings.py`
+- **DatabaseSettings** (4 connections) — `src/osc_assistant/settings.py`
 - **ServerSettings** (3 connections) — `src/osc_assistant/settings.py`
+- **.__init__()** (2 connections) — `src/osc_assistant/container.py`
+- **.traces_are_exposed()** (2 connections) — `src/osc_assistant/settings.py`
+- **.__init__()** (2 connections) — `tests/test_server_lifecycle.py`
+- **.__init__()** (2 connections) — `tests/test_server_lifecycle.py`
+- **OSC internal knowledge assistant. A provider-agnostic retrieval-augmented…** (1 connections) — `src/osc_assistant/__init__.py`
 - **Configuration. Layered, highest precedence first: process environment, then…** (1 connections) — `src/osc_assistant/settings.py`
 - **Tuning for the retrieval stage. Every value here is an experiment knob.** (1 connections) — `src/osc_assistant/settings.py`
+- **How much the system records about its own execution. Defaults are chosen for a…** (1 connections) — `src/osc_assistant/settings.py`
+- **Root configuration object. Nested values are addressable from the environment…** (1 connections) — `src/osc_assistant/settings.py`
+- **Whether the HTTP trace endpoints should be registered. Two conditions, not one.…** (1 connections) — `src/osc_assistant/settings.py`
+- **.aclose()** (1 connections) — `tests/test_server_lifecycle.py`
+- *... and 5 more nodes in this community*
 
 ## Relationships
 
-- [Component Config & Registry Tests](Component_Config_%26_Registry_Tests.md) (7 shared connections)
-- [In-Memory Store & Noop Reranker](In-Memory_Store_%26_Noop_Reranker.md) (7 shared connections)
-- [Settings Loading & YAML Profiles](Settings_Loading_%26_YAML_Profiles.md) (5 shared connections)
-- [Answer Generation & Abstention](Answer_Generation_%26_Abstention.md) (4 shared connections)
-- [HTTP Layer Tests](HTTP_Layer_Tests.md) (3 shared connections)
-- [Error Hierarchy](Error_Hierarchy.md) (2 shared connections)
-- [HTTP API Layer](HTTP_API_Layer.md) (1 shared connections)
-- [Command Line Interface](Command_Line_Interface.md) (1 shared connections)
-- [Structured Logging](Structured_Logging.md) (1 shared connections)
-- [Reranker Interface & Registries](Reranker_Interface_%26_Registries.md) (1 shared connections)
+- [Server Lifecycle & Startup Notes](Server_Lifecycle_%26_Startup_Notes.md) (14 shared connections)
+- [Error Hierarchy & Protocol Seams](Error_Hierarchy_%26_Protocol_Seams.md) (13 shared connections)
+- [Container Lifecycle](Container_Lifecycle.md) (9 shared connections)
+- [Settings Loading & YAML Profiles](Settings_Loading_%26_YAML_Profiles.md) (9 shared connections)
+- [CLI Commands — ask, ingest, search](CLI_Commands_%E2%80%94_ask%2C_ingest%2C_search.md) (8 shared connections)
+- [Startup Banner & Composition Root](Startup_Banner_%26_Composition_Root.md) (6 shared connections)
+- [Evaluation CLI Command](Evaluation_CLI_Command.md) (6 shared connections)
+- [Stub Embedding Model](Stub_Embedding_Model.md) (6 shared connections)
+- [Chat Request & Response Types](Chat_Request_%26_Response_Types.md) (6 shared connections)
+- [Stub Chat Model & Answerer Tests](Stub_Chat_Model_%26_Answerer_Tests.md) (5 shared connections)
+- [HTTP Layer Tests](HTTP_Layer_Tests.md) (4 shared connections)
+- [Evaluator & Answerer Composition](Evaluator_%26_Answerer_Composition.md) (4 shared connections)
 
 ## Source Files
 
+- `src/osc_assistant/__init__.py`
+- `src/osc_assistant/container.py`
 - `src/osc_assistant/settings.py`
 - `tests/test_api.py`
+- `tests/test_e2e.py`
+- `tests/test_server_lifecycle.py`
 
 ## Audit Trail
 
-- EXTRACTED: 57 (92%)
-- INFERRED: 5 (8%)
+- EXTRACTED: 165 (76%)
+- INFERRED: 53 (24%)
 - AMBIGUOUS: 0 (0%)
 
 ---
