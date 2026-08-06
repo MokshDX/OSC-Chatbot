@@ -1,29 +1,28 @@
 # Voyage Embeddings
 
-> 12 nodes
+> 12 nodes · cohesion 0.23
 
 ## Key Concepts
 
 - **VoyageEmbeddingModel** (13 connections) — `src/osc_assistant/providers/embeddings/voyage.py`
 - **._embed()** (5 connections) — `src/osc_assistant/providers/embeddings/voyage.py`
-- **VoyageOptions** (3 connections) — `src/osc_assistant/providers/embeddings/voyage.py`
-- **.__init__()** (3 connections) — `src/osc_assistant/providers/embeddings/voyage.py`
-- **.embed_documents()** (3 connections) — `src/osc_assistant/providers/embeddings/voyage.py`
 - **Vector** (3 connections)
+- **.embed_documents()** (3 connections) — `src/osc_assistant/providers/embeddings/voyage.py`
 - **.embed_query()** (3 connections) — `src/osc_assistant/providers/embeddings/voyage.py`
+- **.__init__()** (3 connections) — `src/osc_assistant/providers/embeddings/voyage.py`
+- **VoyageOptions** (3 connections) — `src/osc_assistant/providers/embeddings/voyage.py`
 - **BaseModel** (1 connections)
-- **.model_id()** (1 connections) — `src/osc_assistant/providers/embeddings/voyage.py`
-- **.dimensions()** (1 connections) — `src/osc_assistant/providers/embeddings/voyage.py`
-- **.aclose()** (1 connections) — `src/osc_assistant/providers/embeddings/voyage.py`
 - **Adapter over the Voyage AI embeddings endpoint.** (1 connections) — `src/osc_assistant/providers/embeddings/voyage.py`
+- **.aclose()** (1 connections) — `src/osc_assistant/providers/embeddings/voyage.py`
+- **.dimensions()** (1 connections) — `src/osc_assistant/providers/embeddings/voyage.py`
+- **.model_id()** (1 connections) — `src/osc_assistant/providers/embeddings/voyage.py`
 
 ## Relationships
 
-- [Error Hierarchy & Protocol Seams](Error_Hierarchy_%26_Protocol_Seams.md) (3 shared connections)
-- [Settings Schema](Settings_Schema.md) (2 shared connections)
-- [Server Lifecycle & Startup Notes](Server_Lifecycle_%26_Startup_Notes.md) (1 shared connections)
-- [Configuration Errors & Gemini Embeddings](Configuration_Errors_%26_Gemini_Embeddings.md) (1 shared connections)
-- [Citation Parsing & Gemini Chat](Citation_Parsing_%26_Gemini_Chat.md) (1 shared connections)
+- [Protocol Seams & Embedding Errors](Protocol_Seams_%26_Embedding_Errors.md) (3 shared connections)
+- [Composition Root & Settings Models](Composition_Root_%26_Settings_Models.md) (2 shared connections)
+- [Provider Errors & ChatModel Protocol](Provider_Errors_%26_ChatModel_Protocol.md) (2 shared connections)
+- [Error Hierarchy & Embedding Providers](Error_Hierarchy_%26_Embedding_Providers.md) (1 shared connections)
 
 ## Source Files
 

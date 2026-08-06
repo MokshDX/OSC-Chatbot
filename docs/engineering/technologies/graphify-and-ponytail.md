@@ -33,11 +33,12 @@ outside observer, and when it disagrees with the intended design it is usually r
 
 ## What it has actually told us
 
-Latest build (2026-08-05, full rebuild): **1981 nodes, 4624 edges, 114
-communities**; 89% EXTRACTED / 11% INFERRED at 0.72 average confidence.
+Latest build (2026-08-06, incremental update after the logging work): **2124 nodes,
+4952 edges, 105 communities**; 90% EXTRACTED / 10% INFERRED at 0.71 average
+confidence.
 
 Betweenness identifies `MemoryVectorStore` (72 edges), `Document` (70),
-`StubEmbeddingModel` (69), `ComponentConfig` (64) and `Container` (60) as the
+`StubEmbeddingModel` (69), `ComponentConfig` (65) and `Container` (60) as the
 architectural hubs — configuration, the corpus record and the composition root are what
 the system routes through, which matches the intended design.
 
@@ -50,12 +51,12 @@ layer is proven. But real components now lead.
 
 No architecture document would have surfaced that. It came from measuring the graph.
 
-**The second finding: fewer nodes, more edges.** The previous build was 2086/4572;
-this one is 1981/4624 — density 2.19 → 2.33. That build derived document nodes
-structurally (heading stubs); this one extracted them semantically, replacing 429
-stubs with 324 concepts carrying rationale, citations and hyperedges. When a rebuild
-shrinks, check the edge count before assuming loss — `to_json`'s shrink guard exists
-to force exactly that check.
+**The second finding: fewer nodes, more edges.** An earlier build was 2086/4572; the
+2026-08-05 rebuild was 1981/4624 — density 2.19 → 2.33. The earlier build derived
+document nodes structurally (heading stubs); the rebuild extracted them semantically,
+replacing 429 stubs with 324 concepts carrying rationale, citations and hyperedges.
+When a rebuild shrinks, check the edge count before assuming loss — `to_json`'s
+shrink guard exists to force exactly that check.
 
 **The third finding came from the corpus, not the code.** The graph surfaced that
 `OSCP_B2B_Scenario_Document.docx` and `OSCP_B2B_Scenario_Document-1.docx` extract to
@@ -67,12 +68,15 @@ byte-identical text — 34 duplicate chunks in the production index. See ADR 000
   `office`, the four scenario documents are reported as `skipped_sensitive` and
   silently dropped — that hid ~42% of the real corpus from the graph for two phases.
   Without `sql`, `migrations/001_init.sql` contributes nothing.
-- **Dangling-endpoint edges are mostly not a defect.** The diagnostic counts 273; 245
-  are `imports`/`imports_from` pointing at third-party packages and stdlib
-  (`pkg_pydantic`, `pathlib`, `typing`). The graph is declining to invent nodes for
-  things outside the corpus. Only ~17 are genuine unresolved cross-chunk references.
-- **Community labels are hand-written for the 70 largest communities**, hub-derived for
-  the rest. `graphify label --backend=ollama` needs the `openai` package.
+- **Dangling-endpoint edges are mostly not a defect.** A full rebuild's diagnostic
+  counted 273; 245 were `imports`/`imports_from` pointing at third-party packages and
+  stdlib (`pkg_pydantic`, `pathlib`, `typing`). The graph is declining to invent nodes
+  for things outside the corpus, not losing them. Only ~17 were genuine unresolved
+  cross-chunk references. The current build reports **0**, because `build_merge`
+  resolves against the graph it is merging into rather than against one chunk.
+- **Community labels are hand-written for every community in the current build**,
+  hub-derived only when a rebuild changes the community set and a label has not yet
+  been rewritten. `graphify label --backend=ollama` needs the `openai` package.
 - **`docs/company/` is a corpus**, so a graph query can return an OSCP FAQ answer rather
   than code.
 

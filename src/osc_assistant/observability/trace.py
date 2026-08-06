@@ -52,7 +52,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
-from ..logging import get_logger
+from ..logging import TRACE, get_logger
 
 log = get_logger(__name__)
 
@@ -72,6 +72,19 @@ class TraceConfig:
     enabled: bool = True
     capacity: int = 50
     log_traces: bool = True
+    log_spans: bool = True
+    """Emit one TRACE-level log record as each span completes.
+
+    This is the whole of the logging system's pipeline coverage. Every stage of
+    ingestion and question answering is already a span carrying structured
+    attributes, so subscribing to span completion gives retrieval, reranking,
+    embedding, generation, parsing and chunking their log lines without a single
+    new call site in any of those modules — and without a second, drifting set of
+    instrumentation to keep in step with the first.
+
+    At TRACE it costs nothing unless someone asks for it: the record is built only
+    after the level check passes.
+    """
     capture_text: bool = True
     max_spans: int = 500
     """Hard cap per trace, so one long operation cannot grow without bound.
@@ -92,6 +105,7 @@ def configure_tracing(
     enabled: bool = True,
     capacity: int = 50,
     log_traces: bool = True,
+    log_spans: bool = True,
     capture_text: bool = True,
     max_spans: int = 500,
 ) -> None:
@@ -101,6 +115,7 @@ def configure_tracing(
         enabled=enabled,
         capacity=capacity,
         log_traces=log_traces,
+        log_spans=log_spans,
         capture_text=capture_text,
         max_spans=max_spans,
     )
@@ -349,6 +364,7 @@ def span(name: str, **attributes: Any) -> Iterator[Span]:
         raise
     finally:
         entry.duration_ms = (time.perf_counter() - started) * 1000
+        _log_span(entry, current.trace_id)
         _reset(_current_span, token)
 
 
@@ -393,6 +409,40 @@ def annotate_text(key: str, value: str) -> None:
     active = _current_span.get()
     if active is not None:
         active.set_text(key, value)
+
+
+def _log_span(entry: Span, trace_id: str) -> None:
+    """Emit one completed span as a TRACE record.
+
+    Guarded by `isEnabledFor` before anything is built, so a run at the default
+    INFO level pays one integer comparison per span and constructs no dictionary.
+
+    Never raises. Instrumentation that can break the thing it observes is a
+    liability precisely because it is trusted — and this runs inside a `finally`,
+    where an exception would replace whatever the stage was actually failing with.
+    """
+    if not _config.log_spans:
+        return
+    try:
+        if not log.isEnabledFor(TRACE):
+            return
+        log.log(
+            TRACE,
+            "span.complete",
+            extra={
+                "trace_id": trace_id,
+                "span": entry.name,
+                "span_id": entry.span_id,
+                "parent_id": entry.parent_id,
+                "depth": entry.depth,
+                "duration_ms": round(entry.duration_ms, 2),
+                "offset_ms": round(entry.offset_ms, 2),
+                "error": entry.error,
+                **entry.attributes,
+            },
+        )
+    except Exception:  # pragma: no cover - logging must never break a traced stage
+        pass
 
 
 def _log_trace(current: Trace) -> None:

@@ -1,6 +1,6 @@
 # Cart Discount & Order Limits
 
-> 12 nodes
+> 12 nodes · cohesion 0.21
 
 ## Key Concepts
 
@@ -19,12 +19,12 @@
 
 ## Relationships
 
-- [FEAT-02 Customer Tag Tier Pricing (SCN-003, SCN-004)](FEAT-02_Customer_Tag_Tier_Pricing_%28SCN-003%2C_SCN-004%29.md) (3 shared connections)
-- [FEAT-06 B2B Registration Form (SCN-010)](FEAT-06_B2B_Registration_Form_%28SCN-010%29.md) (3 shared connections)
-- [Offer Priority & Theme Integration](Offer_Priority_%26_Theme_Integration.md) (2 shared connections)
-- [FEAT-03 Markets-Based Pricing (SCN-005)](FEAT-03_Markets-Based_Pricing_%28SCN-005%29.md) (2 shared connections)
+- [Extra Fee, Free Gift & Customer Tags](Extra_Fee%2C_Free_Gift_%26_Customer_Tags.md) (3 shared connections)
+- [B2B Registration, Export & Notifications](B2B_Registration%2C_Export_%26_Notifications.md) (3 shared connections)
 - [Draft Order Processing](Draft_Order_Processing.md) (2 shared connections)
-- [OSCP Wholesale B2B — Scenario Master (SCN-001..SCN-010)](OSCP_Wholesale_B2B_%E2%80%94_Scenario_Master_%28SCN-001..SCN-010%29.md) (1 shared connections)
+- [Offer Priority & Storefront Integration](Offer_Priority_%26_Storefront_Integration.md) (2 shared connections)
+- [Markets Pricing & Tax Display](Markets_Pricing_%26_Tax_Display.md) (2 shared connections)
+- [Scenario Acceptance Criteria Bank](Scenario_Acceptance_Criteria_Bank.md) (1 shared connections)
 
 ## Source Files
 

@@ -12,8 +12,39 @@
 
 workspace_id: default
 environment: development
+# TRACE adds one record per pipeline stage — the firehose for `tail -f` debugging.
+# DEBUG adds component construction and config resolution. INFO is the operational
+# default: startup, requests, ingestion, generation, warnings and failures.
 log_level: INFO
 log_format: json
+
+# Persistent logging. Tracing explains one execution; logging records everything
+# that happened, survives the process, and is what you grep next week.
+#
+#   .osc/logs/osc.log     operational stream, rotates at max_bytes
+#   .osc/logs/audit.log   one record per answered question, kept far longer
+#
+# Watch a request move through the pipeline live:
+#   OSC_LOG_LEVEL=TRACE ./osc ask "..."  &  tail -f .osc/logs/osc.log
+logging:
+  directory: .osc/logs
+  # Disk ceiling is max_bytes * (backup_count + 1) — roughly 60 MB here. The oldest
+  # rotated file is deleted, not archived, so the log cannot grow without bound.
+  max_bytes: 10000000
+  backup_count: 5
+  # Audit keeps more history than the operational stream, deliberately: a debug
+  # firehose rotates in hours and "what did we answer in March" must outlive it.
+  audit: true
+  audit_max_bytes: 10000000
+  audit_backup_count: 20
+  # Off by default. Question, answer and chunk text are reduced to a character
+  # count, which keeps every timing and count an investigation needs while keeping
+  # corpus content out of a file that tends to get shipped elsewhere. Credentials
+  # are redacted regardless and this flag cannot re-enable them.
+  capture_payloads: false
+  # One TRACE record per pipeline stage. Free at INFO — the record is built only
+  # after the level check passes.
+  log_spans: true
 
 # Answer model: Qwen3 served by the local Ollama daemon, reached through the
 # OpenAI-compatible adapter.

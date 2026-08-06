@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import sys
 from collections.abc import Coroutine, Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -19,9 +20,9 @@ from rich.console import Console
 from rich.table import Table
 
 from ..errors import AssistantError
-from ..logging import configure_logging
+from ..logging import configure_logging, get_logger
 from ..observability import RECORDER, configure_observability, render_waterfall
-from ..settings import Settings, load_settings
+from ..settings import Settings, load_settings, log_resolved_settings
 
 console = Console()
 error_console = Console(stderr=True)
@@ -63,10 +64,23 @@ def load(profile: Path | None, *, verbose: bool = False, quiet_logs: bool = True
         os.environ["OSC_PROFILE"] = str(profile)
     settings = load_settings()
 
-    if verbose or not quiet_logs:
-        configure_logging(settings.log_level, settings.log_format)
-    else:
-        configure_logging("WARNING", "text")
+    # The terminal is quietened, the file is not. An interactive command should
+    # print its answer rather than a JSON stream, but the whole point of a
+    # persistent log is that the record survives whether or not anyone was
+    # watching — so `console_level` raises the bar for stdout only and the file
+    # keeps recording at the configured level.
+    configure_logging(
+        settings.log_level,
+        settings.log_format if (verbose or not quiet_logs) else "text",
+        console_level=None if (verbose or not quiet_logs) else "WARNING",
+        directory=settings.logging.directory,
+        max_bytes=settings.logging.max_bytes,
+        backup_count=settings.logging.backup_count,
+        audit=settings.logging.audit,
+        audit_max_bytes=settings.logging.audit_max_bytes,
+        audit_backup_count=settings.logging.audit_backup_count,
+        capture_payloads=settings.logging.capture_payloads,
+    )
 
     configure_observability(
         enabled=settings.observability.enabled,
@@ -75,12 +89,46 @@ def load(profile: Path | None, *, verbose: bool = False, quiet_logs: bool = True
         # Already rendered by --explain or shown by --verbose; logging it as well
         # would print the same trace twice.
         log_traces=verbose and settings.observability.log_traces,
+        log_spans=settings.logging.log_spans,
         capture_text=settings.observability.capture_text,
         persist=settings.observability.persist_traces,
         trace_dir=settings.observability.trace_dir,
         max_trace_bytes=settings.observability.max_trace_file_bytes,
     )
+    log_command(capture_payloads=settings.logging.capture_payloads)
+    log_resolved_settings(settings)
     return settings
+
+
+def log_command(*, capture_payloads: bool) -> None:
+    """Name the command that is about to run.
+
+    Without it a day of history is a stream of `settings.resolved` and
+    `component.built` records with no way to tell an `ask` from an `ingest` from a
+    `doctor`: every command initialises identically, so the startup records look
+    identical too. The command name is the single field that makes the log
+    readable top-down.
+
+    Read from `sys.argv` rather than from the click context, because typer invokes
+    a command's callback *outside* the context click's `get_current_context` reads
+    — it injects `typer.Context` as a parameter instead, which would mean editing
+    the signature of every command to obtain a fact `argv` already has.
+
+    **Positional arguments are payload.** `osc ask "<a real question>"` puts user
+    text in `argv`, so the tail is emitted only under `capture_payloads`, on the
+    same terms as every other piece of corpus text. The option *flags* are always
+    safe and always useful — they say how the command was invoked — while option
+    *values* that change behaviour are already in `settings.resolved`.
+    """
+    argv = sys.argv[1:]
+    command = next((token for token in argv if not token.startswith("-")), "")
+    fields: dict[str, Any] = {
+        "command": command,
+        "flags": [token for token in argv if token.startswith("-")],
+    }
+    if capture_payloads:
+        fields["argv"] = argv
+    get_logger(__name__).info("cli.command", extra=fields)
 
 
 def run[T](coroutine: Coroutine[Any, Any, T]) -> T:

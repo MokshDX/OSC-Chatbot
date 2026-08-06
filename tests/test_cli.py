@@ -44,8 +44,12 @@ def _stub_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Iterat
             monkeypatch.delenv(name, raising=False)
 
     # Re-applied after the purge above, which would otherwise remove the isolation
-    # conftest installed and let these commands write traces into the repository.
+    # conftest installed and let these commands write traces and logs into the
+    # repository. Both, not just traces: these commands go through `load()`, which
+    # configures file logging from settings, so a missing override sends every
+    # record of a test run into the developer's real `.osc/logs`.
     monkeypatch.setenv("OSC_OBSERVABILITY__TRACE_DIR", str(tmp_path / "traces"))
+    monkeypatch.setenv("OSC_LOGGING__DIRECTORY", str(tmp_path / "logs"))
 
     profile = tmp_path / "profile.yaml"
     profile.write_text("{}\n", encoding="utf-8")

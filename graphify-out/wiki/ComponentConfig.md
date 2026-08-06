@@ -2,12 +2,11 @@
 
 > God node · 64 connections · `src/osc_assistant/registry.py`
 
-**Community:** [Error Hierarchy & Protocol Seams](Error_Hierarchy_%26_Protocol_Seams.md)
+**Community:** [Chunker Factories & Pipeline Wiring](Chunker_Factories_%26_Pipeline_Wiring.md)
 
 ## Connections by Relation
 
 ### calls
-- _settings() `EXTRACTED`
 - _settings() `EXTRACTED`
 - _settings() `EXTRACTED`
 - test_shutdown_releases_every_component_that_was_built() `EXTRACTED`
@@ -27,8 +26,8 @@
 
 ### imports
 - llm/langchain_bridge.py `EXTRACTED`
-- container.py `EXTRACTED`
 - settings.py `EXTRACTED`
+- container.py `EXTRACTED`
 - memory.py `EXTRACTED`
 - pgvector.py `EXTRACTED`
 - llm/openai_compatible.py `EXTRACTED`
@@ -77,11 +76,12 @@
 - RetrievalSettings `INFERRED`
 - _ClosableEmbedding `INFERRED`
 - GenerationSettings `INFERRED`
-- ChunkingSettings `INFERRED`
 - UnknownComponentError `INFERRED`
+- ChunkingSettings `INFERRED`
 - _YamlProfileSource `INFERRED`
 - ObservabilitySettings `INFERRED`
 - DatabaseSettings `INFERRED`
+- LoggingSettings `INFERRED`
 - ServerSettings `INFERRED`
 
 ---

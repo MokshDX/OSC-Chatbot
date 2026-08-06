@@ -15,6 +15,7 @@ from pathlib import Path
 
 import pytest
 
+from osc_assistant.logging import shutdown_logging
 from osc_assistant.observability import configure_observability
 from osc_assistant.providers.vectorstores.memory import MemoryVectorStore
 from osc_assistant.types import (
@@ -35,21 +36,24 @@ _TOKEN_PATTERN = re.compile(r"\w+")
 
 @pytest.fixture(autouse=True)
 def _isolate_observability(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """Keep persisted traces out of the working directory, and out of each other.
+    """Keep persisted traces and logs out of the working directory, and apart.
 
-    Trace persistence defaults to on and writes to `.osc/` relative to the process
-    working directory, which during a test run is the repository. Redirecting it
-    per test also stops one test's traces from being visible to the next, which
-    would make the CLI trace assertions order-dependent.
+    Both default to on and write under `.osc/` relative to the process working
+    directory, which during a test run is the repository. Redirecting them per test
+    also stops one test's records from being visible to the next, which would make
+    the CLI trace assertions order-dependent.
 
     Applied in `conftest` rather than in each suite because it is a property of
     running the tests at all, not of any one of them.
     """
     monkeypatch.setenv("OSC_OBSERVABILITY__TRACE_DIR", str(tmp_path / "traces"))
+    monkeypatch.setenv("OSC_LOGGING__DIRECTORY", str(tmp_path / "logs"))
     yield
-    # Every test leaves the module-level tracer as it found it: the sink is global
-    # state, and a leaked one writes a later test's traces into a deleted tmp_path.
+    # Every test leaves the module-level tracer and log listener as it found them:
+    # both are global state, and a leaked one writes a later test's records into a
+    # deleted tmp_path — or keeps a background thread alive past the run.
     configure_observability(enabled=True, log_traces=False, persist=False)
+    shutdown_logging()
 
 
 class StubEmbeddingModel:

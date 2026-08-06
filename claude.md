@@ -257,6 +257,7 @@ questions have answers that cannot go stale.
 ./osc trace [id]             # expand one trace, or the most recent, into a waterfall
 ./osc documents / document / chunk    # what is in the index, down to the exact text
 ./osc eval                   # is it any GOOD?  (--retrieval-only is fast and free)
+./osc logs [--audit] [-f]    # where the persistent logs are; tail -f them live
 make help                    # every target
 ```
 
@@ -325,6 +326,25 @@ make eval-gate               # what CI runs; fails on a regression
   `set`. That is the seam `observability.capture_text: false` switches off.
 * **Never let instrumentation raise.** A tracer that can break the thing it observes
   is a liability, because it is trusted.
+
+## Logging rules for new code
+
+* **A significant operation gets a log line; a pipeline stage gets a span.** The two
+  are not alternatives — spans feed the log at TRACE, so instrumenting a stage as a
+  span gives you both. Do not write a log statement that duplicates a span.
+* **Event names are `noun.verb_past`** — `ingestion.document_removed`,
+  `component.built`, `http.response`. They are grepped and counted, so they are
+  identifiers, not sentences.
+* **Structure goes in `extra`, never in the message.** `log.info("x.done",
+  extra={"count": 3})`, not `log.info(f"x done with 3")`. A message with a value
+  interpolated into it cannot be aggregated.
+* **Anything auditable goes through `audit()`**, not `log.info`. It has its own file
+  and its own retention.
+* **Never log a credential, and never assume the filter caught it.** The redaction
+  filter matches on field *name*; a secret stashed inside a dict under an innocuous
+  key will be written out in full.
+* **A field whose name contains a secret hint but is not one** goes in
+  `NEVER_REDACT`. `input_tokens` contains "token" and is a cost measurement.
 
 ## Output rules
 

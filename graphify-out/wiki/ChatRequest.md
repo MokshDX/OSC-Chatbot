@@ -2,7 +2,7 @@
 
 > God node · 59 connections · `src/osc_assistant/types.py`
 
-**Community:** [Chat Request & Response Types](Chat_Request_%26_Response_Types.md)
+**Community:** [Citation Parsing & Gemini Chat](Citation_Parsing_%26_Gemini_Chat.md)
 
 ## Connections by Relation
 
@@ -63,12 +63,12 @@
 - VectorStore `INFERRED`
 - Chunker `INFERRED`
 - Reranker `INFERRED`
-- FailingChatModel `INFERRED`
 - _FakeEmbeddings `INFERRED`
 - _ExplodingChatModel `INFERRED`
 - _SyncClosableReranker `INFERRED`
 - StoreInspector `INFERRED`
 - _ClosableEmbedding `INFERRED`
+- FailingChatModel `INFERRED`
 - NativeCitationChatModel `INFERRED`
 
 ---

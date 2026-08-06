@@ -2,7 +2,7 @@
 
 > God node · 40 connections · `src/osc_assistant/types.py`
 
-**Community:** [Outbound LangChain Retriever](Outbound_LangChain_Retriever.md)
+**Community:** [Search Strategies & Reranking](Search_Strategies_%26_Reranking.md)
 
 ## Connections by Relation
 

@@ -1,7 +1,7 @@
 # PROJECT_STATUS.md
 
 **Project:** OSC Internal Knowledge Assistant
-**Status:** Phase 4 — a **measured**, observable, operable knowledge engine; not yet production-ready
+**Status:** Phase 5 — a measured, observable, **durably logged**, operable knowledge engine; not yet production-ready
 **Last updated:** 2026-08-05
 **Audience:** a senior engineer, or a future Claude session, joining with zero context
 
@@ -32,7 +32,8 @@ with no new file at all.
 
 **Observability.** Every significant stage of ingestion and question answering is a
 timed span, one request produces one trace, and that trace survives the process that
-made it. A developer can ask what happened during any recent request — where the
+made it. Alongside it, a persistent structured log records what happened across
+*every* execution — rotating, retained, and joined to the traces by `trace_id`. A developer can ask what happened during any recent request — where the
 time went, how the data changed between stages, which stage failed — without adding
 a log line, attaching a debugger, or reproducing the request.
 
@@ -44,7 +45,7 @@ Baselines are committed to `evaluation/baselines/` and a regression fails CI.
 documents, spreadsheets, HTML, Markdown and text into `./docs/company`, ingest them,
 and they are parsed, chunked, embedded and stored in PostgreSQL with pgvector.
 Questions retrieve by hybrid search and are answered by Qwen3 through Ollama, with
-citations back to the source file. **277 tests**: all run with no network, database or
+citations back to the source file. **320 tests**: all run with no network, database or
 credential; 18 more against real PostgreSQL; 9 more end to end against live Ollama
 *and* PostgreSQL. `ruff` and `mypy --strict` clean across 63 source files.
 
@@ -60,12 +61,13 @@ credential; 18 more against real PostgreSQL; 9 more end to end against live Olla
 | `latency_p50` | 12.6 s | `abstention_accuracy` | 0.80 |
 | `latency_p95` | 92.9 s | tokens in/out | 126k / 4.6k |
 
-**What changed in the last three iterations.** Iteration 2 added the observability
+**What changed in the last four iterations.** Iteration 2 added the observability
 layer, the operational CLI, `StoreInspector`, and a deliberately scoped LangChain
 integration (§4). Iteration 3 completed the observability story for one-shot commands,
-made the CLI coherent, and closed four architectural gaps. Iteration 4 — this one —
-**built the evaluation framework**, restructured the knowledge corpus around the real
-company documents, and wrote the engineering knowledge base (§5).
+made the CLI coherent, and closed four architectural gaps. Iteration 4 built the
+evaluation framework, restructured the knowledge corpus around the real company
+documents, and wrote the engineering knowledge base. Iteration 5 — this one — added
+**persistent structured logging and an audit trail** (§5.4).
 
 **Where it does not stand.** There is still no authentication, no per-document access
 control, no rate limiting, and no conversation persistence. Answer quality is bounded
@@ -372,6 +374,65 @@ Mermaid diagrams and authoritative references. It exists because `PROJECT_STATUS
 answers *what the system is* and the code answers *what it does*, and neither answers
 *why it is built this way* — the question that actually costs time on handover.
 
+### 5.4 Persistent logging and audit (Phase 5)
+
+`logging.py` grew from a 68-line formatter into the logging system: rotating file
+persistence, retention, an audit stream, TRACE-level pipeline detail, trace
+correlation and redaction. Full design in
+`docs/engineering/architecture/logging.md` and ADR 0009.
+
+**The load-bearing decision is that coverage came from the span stream, not from new
+call sites.** Every stage of OSC is already a `span()` with structured attributes, so
+one hook in `trace.py`'s span-exit path emits a TRACE record per stage — giving
+`retrieve`, `embed_query`, `search`, `threshold`, `rerank`, `generate`, `finalise`,
+`load_hashes`, `document`, `chunk`, `embed`, `store` and `prune` their log lines with
+**no modification to any pipeline, provider, chunker, store, or the evaluation and
+LangChain layers**. The alternative would have been a second set of instrumentation
+drifting from the first.
+
+What the span stream cannot supply is *which command produced it* — every command
+initialises identically, so a day of history is a run of indistinguishable
+`settings.resolved` records. `load()` emits one `cli.command` record naming the
+command and its flags; the positional tail is payload and appears only under
+`capture_payloads`, because `osc ask "<a real question>"` puts user text on the
+command line.
+
+| Concern | Mechanism | Why |
+|---|---|---|
+| Persistence, rotation, retention | stdlib `RotatingFileHandler` | Disk bounded by `max_bytes * (backup_count + 1)`; oldest deleted, not archived |
+| Non-blocking writes | stdlib `QueueHandler`/`QueueListener` | A log call enqueues; disk I/O is on a background thread |
+| Trace correlation | a `logging.Filter` on the tracer's context var | Any log line expands into a waterfall with `./osc trace <id>` |
+| Redaction | a `logging.Filter` on the queue entry | Applies identically to console and file |
+| TRACE level | `addLevelName(5, ...)` | Somewhere to put per-stage detail that would be unbearable at DEBUG |
+
+Two streams: `.osc/logs/osc.log` (operational) and `.osc/logs/audit.log` (one record
+per answered question, longer retention, pinned at INFO so a coarser root level
+cannot silence it). New command: `./osc logs [--audit] [-f]`.
+
+**Four defects found by running it, all silent, none caught by construction:**
+
+- **`QueueHandler.prepare()` strips `exc_info`** to make records picklable across a
+  process boundary. Our queue is thread-local, so the stripping bought nothing and
+  silently deleted every traceback. Fixed with a `prepare()` override.
+- **The redaction heuristic redacted token counts.** `input_tokens` contains
+  "token", so every cost measurement became `[redacted]` — found by reading a real
+  audit record, not by a test. Fixed with a `NEVER_REDACT` allowlist.
+- **The test suite wrote into the developer's real log.** `test_cli.py` purges every
+  `OSC_*` variable to prove the commands retarget through configuration alone, which
+  also purged the isolation `conftest` installed; it re-applied the trace directory
+  and not the log directory. Found by watching `.osc/logs/osc.log` grow during
+  `make check`. Both overrides now sit adjacent under a comment naming both.
+- **File logging could not be disabled from the environment.** An environment
+  variable is always a string, so `OSC_LOGGING__DIRECTORY=null` created a directory
+  named `null` and an empty value wrote `osc.log` into the working directory. That is
+  the documented setting for a containerised deployment, and a container configures
+  through the environment. Fixed with a `field_validator` mapping empty/`null`/`none`
+  to `None`.
+
+All four now have regression tests. The lesson recorded in ADR 0009: the failure
+modes of a logging system are silent, and the only way to find them is to read the
+output of a real run.
+
 ---
 
 ## 5b. What changed in the previous iteration (Phase 3)
@@ -426,10 +487,10 @@ src/osc_assistant/
 ├── registry.py             generic Registry[T] + ComponentConfig
 ├── settings.py             layered config: env > .env > YAML profile
 ├── errors.py               AssistantError hierarchy
-├── logging.py              JSON formatter on stdlib logging
 ├── fusion.py               Reciprocal Rank Fusion (reference implementation)
 ├── grounding.py            source rendering, citation parsing, reasoning-model hygiene
 ├── container.py            composition root + lifecycle
+├── logging.py              the logging system: rotation, audit, redaction, queue
 ├── observability/          trace.py · store.py · render.py
 ├── cli/                    __init__ · _shared · core · diagnose
 ├── providers/
@@ -445,7 +506,7 @@ src/osc_assistant/
 ├── integrations/           langchain.py — OSC exposed outward
 └── api/                    app.py · schemas.py · sse.py · banner.py · static/index.html
 
-tests/                      277 tests across 19 files
+tests/                      320 tests across 20 files
 migrations/001_init.sql     schema, with a dimension-conditional HNSW index
 docs/company/               THE CORPUS — company knowledge, 21 documents, 6 formats
 docs/engineering/           the engineering knowledge base — NOT ingested
@@ -470,23 +531,25 @@ adapter from becoming a dependency of the platform.
 
 ### What the knowledge graph says about this structure
 
-Rebuilt in full on 2026-08-05 (not an incremental update): **1981 nodes, 4624
-edges, 114 communities**, with 89% of edges EXTRACTED and 11% INFERRED at an average
-confidence of 0.72. The evaluation subsystem is visible as its own cluster —
-`runner.py`, `evaluate.py`, `test_evaluation.py` and `Evaluation` all appear as
-community hubs, which is what a genuinely new subsystem should look like rather than
-code smeared across existing ones.
+Current build, 2026-08-06, an incremental update after the logging work: **2124
+nodes, 4952 edges, 105 communities**, with 90% of edges EXTRACTED and 10% INFERRED
+at an average confidence of 0.71. The logging subsystem is visible as its own
+cluster — `logging.py`, `test_logging.py`, `logging.md` and ADR 0009 form the
+largest community in the graph (93 nodes), which is what a genuinely new subsystem
+should look like rather than code smeared across existing ones. The same was true of
+the evaluation subsystem when it was added.
 
-**Node count went down and edge count went up**, which is the interesting part. The
-previous build reported 2086/4572; this one reports 1981/4624 — density 2.19 → 2.33
-edges per node. The earlier build derived its document nodes structurally (heading
-stubs); this one extracted them semantically, so 429 stubs were replaced by 324
-concepts that carry rationale attributes, external citations and hyperedges. A
-smaller, denser, more meaningful graph. `to_json`'s shrink guard correctly refused
-the write until the reduction was verified.
+**Node count went down and edge count went up** in the preceding full rebuild, which
+is the finding worth keeping. The build before it reported 2086/4572; the 2026-08-05
+rebuild reported 1981/4624 — density 2.19 → 2.33 edges per node. The earlier build
+derived its document nodes structurally (heading stubs); the rebuild extracted them
+semantically, so 429 stubs were replaced by 324 concepts that carry rationale
+attributes, external citations and hyperedges. A smaller, denser, more meaningful
+graph. `to_json`'s shrink guard correctly refused the write until the reduction was
+verified.
 
 `MemoryVectorStore` (72 edges), `Document` (70), `StubEmbeddingModel` (69),
-`ComponentConfig` (64) and `Container` (60) are the architectural hubs —
+`ComponentConfig` (65) and `Container` (60) are the architectural hubs —
 configuration, the corpus record and the composition root are what the system routes
 through, which matches the intended design. An *earlier* build reported
 `StubEmbeddingModel`, a **test double**, as the single most connected node in the
@@ -495,7 +558,8 @@ suite, not production wiring, was what exercised every seam. Real components lea
 now. The doubles are still central and should be — they are how the protocol layer is
 proven.
 
-**Two gaps closed in this rebuild**, both previously invisible rather than known:
+**Two gaps closed in the 2026-08-05 rebuild**, both previously invisible rather than
+known:
 
 - `graphifyy[office]` — the four `.docx`/`.xlsx` scenario documents were being
   reported as `skipped_sensitive` and silently dropped. They are 82 of the production
@@ -503,19 +567,26 @@ proven.
 - `graphifyy[sql]` — `migrations/001_init.sql` now contributes nodes, so the storage
   schema no longer has to be read from raw SQL.
 
-**On graph health.** The diagnostic reports 273 dangling-endpoint edges, and 245 of
-them (90%) are `imports`/`imports_from` edges pointing at third-party packages and
-stdlib modules — `pkg_pydantic`, `pathlib`, `typing`, `json`. Those are the graph
-correctly declining to invent nodes for things outside the scanned corpus, not
-information loss. Roughly 17 edges (0.3%) are genuine cross-chunk semantic references
-that failed to resolve, which is the real and small cost of parallel extraction. The
-202/232 "collapsed" edges are an undirected simple `Graph` merging multi-edges such
-as `evaluate_eval → typer.Option ×8` at one source line — expected, not corruption.
+**On graph health.** The current diagnostic is clean: **0 dangling-endpoint edges, 0
+missing endpoints, 0 self-loops, 0 collapsed edges** across 4952 edges. That is the
+incremental path resolving every new endpoint against the graph it merges into.
 
-**One caveat stands.** Community *labels* are hand-written for the 70 largest
-communities and hub-derived for the remaining 44; `graphify label --backend=ollama`
-requires the `openai` package, which is not installed. Hub names are arguably the
-more honest label anyway.
+The full-rebuild path does not report zero, and the difference is worth knowing
+rather than treating as a regression. That build's diagnostic reported 273
+dangling-endpoint edges, of which 245 (90%) were `imports`/`imports_from` edges
+pointing at third-party packages and stdlib modules — `pkg_pydantic`, `pathlib`,
+`typing`, `json`. Those are the graph correctly declining to invent nodes for things
+outside the scanned corpus, not information loss. Roughly 17 edges (0.3%) were
+genuine cross-chunk semantic references that failed to resolve, which is the real and
+small cost of parallel extraction. The "collapsed" edges an undirected simple `Graph`
+reports are multi-edges such as `evaluate_eval → typer.Option ×8` at one source line
+merging — expected, not corruption.
+
+**One caveat stands.** Community *labels* are hand-written, and a rebuild that changes
+the community set silently renames every changed community by its hub until they are
+rewritten. `graphify label --backend=ollama` would automate it but requires the
+`openai` package, which is not installed. All 105 labels in the current build were
+written by hand after the merge.
 
 ---
 
@@ -549,7 +620,9 @@ more honest label anyway.
 | 24 | **Evaluation framework** | 4 modules, 86-case golden set, 11 metrics, `./osc eval`, committed baselines, CI gate |
 | 25 | **Measured quality baseline** | recall@5 0.932 · mrr 0.860 · groundedness 1.00 · fact_match 0.90 |
 | 26 | **Knowledge corpus restructure** | real company documents; corpus/engineering split; 17-file FAQ; `.xlsx` support |
-| 27 | **Engineering knowledge base** | 8 architecture pages, 6 technology pages, 8 ADRs |
+| 27 | **Engineering knowledge base** | 9 architecture pages, 6 technology pages, 9 ADRs |
+| 28 | **Persistent logging** | rotating files, retention, async writes, TRACE level, trace correlation, redaction |
+| 29 | **Audit trail** | one record per answered question, separate stream and retention |
 
 ---
 
@@ -672,6 +745,17 @@ same `top_k = 5` slots, which is a plausible contributor to the recall failures 
 store already exposes `list_document_hashes()`. Deleting the duplicate file is the
 corpus owner's call, not ours.
 
+**Logs are process-local and unshipped.** Same limitation the trace store has and
+the same answer: an exporter, once more than one host matters. The queue is also
+unbounded, so a pathological burst grows memory rather than dropping records —
+deliberate, since dropping a diagnostic to bound memory trades away the thing you
+are reading, and the rotating file already bounds disk. Records queued at a
+`SIGKILL` are lost; that is the price of not blocking on `fsync`.
+
+**Rotation is size-based, so retention windows are not predictable.** Disk is
+bounded (~60 MB operational, ~210 MB audit at defaults) but "exactly the last 30
+days" is not a guarantee this policy can make. See ADR 0009.
+
 **The integration suite shares the application database.** Isolation is by
 `workspace_id` and it is honoured, but a run against a production DSN would write to
 production. The new e2e suite takes a separate database, which is the right pattern;
@@ -779,8 +863,8 @@ the start of a sync and deletes anything absent at the end.
 ## 11. Testing status
 
 ```
-279 tests collected
-  279 pass with no network, no database, no credentials     make test    ✅ verified
+320 tests collected
+  320 pass with no network, no database, no credentials     make test    ✅ verified
   +18 pgvector integration tests against a real database    make test-integration  ✅
    +9 end-to-end tests against live Ollama and PostgreSQL   make test-e2e  ✅ 21.8s
 
@@ -798,6 +882,7 @@ file.
 
 | File | Covers |
 |---|---|
+| `test_logging.py` | **New.** Creation, rotation, retention and the disk ceiling; console/file level separation; trace-id correlation; the span bridge on and off; credential and payload redaction; audit isolation and its own retention; unwritable directories; tracebacks surviving the queue; token counts not read as credentials |
 | `test_evaluation.py` | **New.** Metrics against worked examples; golden-set validation and its five rejection cases; failed cases excluded from quality means; retrieval-only omits generation metrics; concurrency does not change results; judge verdict parsing and failure handling |
 | `test_cli.py` | Every operational command; doctor's pass/warn/fail behaviour; trace commands across process boundaries; operator-error reporting; help grouping |
 | `test_langchain_integration.py` | Both chunkers (id stability, content preservation, size budget, heading metadata); the chat and embedding bridges; the outbound retriever |

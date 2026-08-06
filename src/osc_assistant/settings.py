@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -95,6 +95,97 @@ class ServerSettings(BaseModel):
     host: str = "127.0.0.1"
     port: int = 8000
     cors_origins: list[str] = Field(default_factory=list)
+
+
+class LoggingSettings(BaseModel):
+    """Where logs are written, how long they are kept, and what may appear in them.
+
+    Verbosity and console format stay on `Settings` as `log_level` / `log_format`
+    because they predate this block and are addressed by name in profiles, the CLI
+    and the tests. This model owns only what persistence added, so there is exactly
+    one place to look for each setting rather than two that can disagree.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    directory: Path | None = Field(
+        default=Path(".osc/logs"),
+        description=(
+            "Where log files are written. Set to null — or an empty/`null`/`none` "
+            "environment value — to disable file logging entirely. That is the right "
+            "setting for a container that ships stdout to a collector, and what the "
+            "test suite uses."
+        ),
+    )
+
+    @field_validator("directory", mode="before")
+    @classmethod
+    def _disable_on_empty(cls, value: Any) -> Any:
+        """Let the environment express "no directory", which it otherwise cannot.
+
+        An environment variable is always a string, so `Path | None` reads
+        `OSC_LOGGING__DIRECTORY=null` as a *relative directory named `null`* and an
+        empty value as the working directory — both of which silently create log
+        files rather than disabling them. Both were observed: a `null/` directory
+        and a stray `osc.log`, in a repository checkout.
+
+        This matters more here than for other optional paths because disabling file
+        logging is the documented setting for a containerised deployment, and a
+        container configures through the environment. A setting that is reachable
+        only from YAML is not reachable where it is needed.
+        """
+        if isinstance(value, str) and value.strip().lower() in ("", "null", "none"):
+            return None
+        return value
+
+    max_bytes: int = Field(
+        default=10_000_000,
+        ge=1024,
+        description=(
+            "Rotate the operational log at this size. Disk is bounded by "
+            "max_bytes * (backup_count + 1) — a ceiling by construction, which a "
+            "time-based policy would not give."
+        ),
+    )
+    backup_count: int = Field(
+        default=5,
+        ge=0,
+        description="Rotated operational files kept. The oldest is deleted, not archived.",
+    )
+
+    audit: bool = Field(
+        default=True,
+        description=(
+            "Write one record per answered question to audit.log. Separate from the "
+            "operational stream because 'which passages did we show this user' has to "
+            "outlive a debug firehose that rotates in hours."
+        ),
+    )
+    audit_max_bytes: int = Field(default=10_000_000, ge=1024)
+    audit_backup_count: int = Field(
+        default=20,
+        ge=0,
+        description="Higher than backup_count: audit history is the one worth keeping.",
+    )
+
+    capture_payloads: bool = Field(
+        default=False,
+        description=(
+            "Include question, answer and chunk text in logs. Off by default: those "
+            "fields are reduced to a character count, which keeps every timing and "
+            "count a latency investigation needs while keeping corpus content out of "
+            "a file that gets shipped elsewhere. Credentials are redacted regardless "
+            "and this flag cannot re-enable them."
+        ),
+    )
+    log_spans: bool = Field(
+        default=True,
+        description=(
+            "Emit one TRACE record as each pipeline stage completes. Costs nothing at "
+            "the default INFO level; set log_level to TRACE to watch a request move "
+            "through the pipeline under `tail -f`."
+        ),
+    )
 
 
 class ObservabilitySettings(BaseModel):
@@ -192,7 +283,11 @@ class Settings(BaseSettings):
         ),
     )
     environment: str = "development"
-    log_level: str = "INFO"
+    log_level: str = Field(
+        default="INFO",
+        pattern="^(?i:TRACE|DEBUG|INFO|WARNING|ERROR|CRITICAL)$",
+        description="TRACE adds one record per pipeline stage; see LoggingSettings.log_spans.",
+    )
     log_format: str = Field(default="json", pattern="^(json|text)$")
 
     llm: ComponentConfig = ComponentConfig(provider="anthropic", model="claude-opus-5")
@@ -210,6 +305,7 @@ class Settings(BaseSettings):
     generation: GenerationSettings = GenerationSettings()
     database: DatabaseSettings = DatabaseSettings()
     server: ServerSettings = ServerSettings()
+    logging: LoggingSettings = LoggingSettings()
     observability: ObservabilitySettings = ObservabilitySettings()
 
     @property
@@ -262,3 +358,41 @@ class _YamlProfileSource(PydanticBaseSettingsSource):
 def load_settings(**overrides: Any) -> Settings:
     """Build settings, applying `overrides` at the highest precedence."""
     return Settings(**overrides)
+
+
+def log_resolved_settings(settings: Settings) -> None:
+    """Record what the configuration layers actually resolved to.
+
+    Called from the composition roots *after* logging is configured rather than
+    from `load_settings`, because settings are loaded first — anything logged
+    during loading would go to an unconfigured root logger and be lost, which is
+    the one time you most want the record.
+
+    Only the values that change behaviour are emitted, for the same reason the
+    evaluation harness snapshots the same subset: a record that included the whole
+    configuration would differ between two machines over the log level and give a
+    reader no way to tell an irrelevant difference from a relevant one. The DSN is
+    redacted by the logging filter on the way out — its key contains `dsn`.
+    """
+    from .logging import get_logger
+
+    get_logger(__name__).info(
+        "settings.resolved",
+        extra={
+            "profile": os.environ.get(PROFILE_ENV_VAR, str(DEFAULT_PROFILE)),
+            "environment": settings.environment,
+            "workspace_id": settings.workspace_id,
+            "log_level": settings.log_level,
+            "llm": f"{settings.llm.provider}/{settings.llm.model}",
+            "embeddings": f"{settings.embeddings.provider}/{settings.embeddings.model}",
+            "reranker": settings.reranker.provider,
+            "vector_store": settings.vector_store.provider,
+            "chunking": settings.chunking.strategy,
+            "chunk_size": settings.chunking.chunk_size,
+            "retrieval_strategy": settings.retrieval.strategy,
+            "top_k": settings.retrieval.top_k,
+            "tracing": settings.observability.enabled,
+            "log_dir": str(settings.logging.directory) if settings.logging.directory else None,
+            "capture_payloads": settings.logging.capture_payloads,
+        },
+    )

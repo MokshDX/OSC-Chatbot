@@ -92,7 +92,7 @@ class Container:
     @cached_property
     def chunker(self) -> Chunker:
         chunking = self.settings.chunking
-        return chunker_registry.create(
+        built = chunker_registry.create(
             ComponentConfig(
                 provider=chunking.strategy,
                 options={
@@ -101,6 +101,16 @@ class Container:
                 },
             )
         )
+        log.info(
+            "component.built",
+            extra={
+                "component": "chunker",
+                "provider": chunking.strategy,
+                "chunk_size": chunking.chunk_size,
+                "chunk_overlap": chunking.chunk_overlap,
+            },
+        )
+        return built
 
     @cached_property
     def llm(self) -> ChatModel:
@@ -119,11 +129,29 @@ class Container:
     @cached_property
     def fast_llm(self) -> ChatModel:
         """A cheaper model for auxiliary steps such as query rewriting."""
-        return llm_registry.create(self.settings.fast_llm)
+        model = llm_registry.create(self.settings.fast_llm)
+        log.info(
+            "component.built",
+            extra={
+                "component": "fast_llm",
+                "provider": self.settings.fast_llm.provider,
+                "model": model.model_id,
+            },
+        )
+        return model
 
     @cached_property
     def reranker(self) -> Reranker:
-        return reranker_registry.create(self.settings.reranker)
+        model = reranker_registry.create(self.settings.reranker)
+        log.info(
+            "component.built",
+            extra={
+                "component": "reranker",
+                "provider": self.settings.reranker.provider,
+                "model": model.model_id,
+            },
+        )
+        return model
 
     # -------------------------------------------------------------- pipelines
 
@@ -131,6 +159,16 @@ class Container:
     def retrieval(self) -> RetrievalPipeline:
         rewriter = (
             QueryRewriter(self.fast_llm) if self.settings.retrieval.rewrite_queries else None
+        )
+        log.debug(
+            "pipeline.built",
+            extra={
+                "component": "retrieval",
+                "strategy": self.settings.retrieval.strategy,
+                "candidates": self.settings.retrieval.candidates,
+                "top_k": self.settings.retrieval.top_k,
+                "rewriter": rewriter is not None,
+            },
         )
         return RetrievalPipeline(
             store=self.vector_store,
@@ -142,6 +180,14 @@ class Container:
 
     @cached_property
     def answerer(self) -> Answerer:
+        log.debug(
+            "pipeline.built",
+            extra={
+                "component": "answerer",
+                "max_tokens": self.settings.generation.max_tokens,
+                "require_citations": self.settings.generation.require_citations,
+            },
+        )
         return Answerer(
             retrieval=self.retrieval,
             model=self.llm,
@@ -150,6 +196,7 @@ class Container:
 
     @cached_property
     def ingestion(self) -> IngestionPipeline:
+        log.debug("pipeline.built", extra={"component": "ingestion"})
         return IngestionPipeline(
             chunker=self.chunker,
             embeddings=self.embeddings,
@@ -176,10 +223,14 @@ class Container:
         harmless at process exit, a leak in tests and in any future in-process
         reload.
         """
-        for name in ("vector_store", "llm", "fast_llm", "embeddings", "reranker"):
-            component = self.__dict__.get(name)
-            if component is not None:
-                await _release(component)
+        built = [
+            name
+            for name in ("vector_store", "llm", "fast_llm", "embeddings", "reranker")
+            if self.__dict__.get(name) is not None
+        ]
+        log.info("container.shutdown", extra={"components": built})
+        for name in built:
+            await _release(self.__dict__[name])
 
 
     async def __aenter__(self) -> Self:

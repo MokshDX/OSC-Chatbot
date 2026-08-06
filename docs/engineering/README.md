@@ -23,6 +23,7 @@ mindmap
       Provider architecture
       Retrieval
       Observability
+      Logging
       Evaluation
       Knowledge corpus
       Testing
@@ -41,6 +42,7 @@ mindmap
       ADR 0006 Chunking strategy
       ADR 0007 Corpus layout
       ADR 0008 Content dedup
+      ADR 0009 Persistent logging
 ```
 
 **If you are new**, read in this order:
@@ -51,7 +53,9 @@ mindmap
 3. [`architecture/retrieval.md`](architecture/retrieval.md) — how a question becomes
    passages.
 4. [`architecture/observability.md`](architecture/observability.md) — how to find out
-   what happened.
+   what happened during one request, and
+   [`architecture/logging.md`](architecture/logging.md) — how to find out what
+   happened at all.
 5. [`architecture/evaluation.md`](architecture/evaluation.md) — how we know whether a
    change helped.
 
@@ -76,6 +80,7 @@ rejected, with reasons.
 | [retrieval.md](architecture/retrieval.md) | Hybrid search, RRF, reranking, the six retrieval stages |
 | [chunking-and-embeddings.md](architecture/chunking-and-embeddings.md) | Why chunk size is the highest-leverage knob, and what an embedding actually is |
 | [observability.md](architecture/observability.md) | Tracing, persistent traces, the debugging workflow |
+| [logging.md](architecture/logging.md) | Persistent logs, rotation, retention, the audit stream, redaction |
 | [evaluation.md](architecture/evaluation.md) | Every metric, how to run a comparison, how to gate CI |
 | [knowledge-corpus.md](architecture/knowledge-corpus.md) | How `docs/company/` is organised and how to grow it |
 | [testing.md](architecture/testing.md) | The four test tiers and what each is for |

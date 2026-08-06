@@ -11,9 +11,12 @@ proxy until OIDC lands.
 
 from __future__ import annotations
 
+import time
+import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Any
 
 from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,7 +28,7 @@ from ..generation import AnswerComplete, RetrievalReady
 from ..logging import configure_logging, get_logger
 from ..observability import RECORDER, configure_observability
 from ..protocols import StoreInspector
-from ..settings import Settings, load_settings
+from ..settings import Settings, load_settings, log_resolved_settings
 from ..types import CitationDelta, TextDelta
 from .banner import describe_shutdown, describe_startup, startup_notes
 from .schemas import (
@@ -69,17 +72,29 @@ def create_app(settings: Settings | None = None, *, banner: bool = False) -> Fas
     on, which is the case where a person is watching.
     """
     settings = settings or load_settings()
-    configure_logging(settings.log_level, settings.log_format)
+    configure_logging(
+        settings.log_level,
+        settings.log_format,
+        directory=settings.logging.directory,
+        max_bytes=settings.logging.max_bytes,
+        backup_count=settings.logging.backup_count,
+        audit=settings.logging.audit,
+        audit_max_bytes=settings.logging.audit_max_bytes,
+        audit_backup_count=settings.logging.audit_backup_count,
+        capture_payloads=settings.logging.capture_payloads,
+    )
     configure_observability(
         enabled=settings.observability.enabled,
         capacity=settings.observability.trace_buffer_size,
         max_spans=settings.observability.max_spans_per_trace,
         log_traces=settings.observability.log_traces,
+        log_spans=settings.logging.log_spans,
         capture_text=settings.observability.capture_text,
         persist=settings.observability.persist_traces,
         trace_dir=settings.observability.trace_dir,
         max_trace_bytes=settings.observability.max_trace_file_bytes,
     )
+    log_resolved_settings(settings)
     container = Container(settings)
 
     @asynccontextmanager
@@ -117,6 +132,52 @@ def create_app(settings: Settings | None = None, *, banner: bool = False) -> Fas
         lifespan=lifespan,
     )
     app.state.container = container
+
+    @app.middleware("http")
+    async def _log_requests(request: Request, call_next: Any) -> Any:
+        """One record per HTTP request, with a correlation id.
+
+        `request_id` is generated here rather than taken from the client, because a
+        client-supplied id can collide or be forged. It is stamped on the response
+        as `X-Request-Id` so an operator holding a failing response can find the
+        exact line in the log, and it sits alongside `trace_id` — request id spans
+        the whole HTTP exchange, trace id covers the pipeline work inside it.
+
+        Streaming responses complete when the *headers* are sent, not when the body
+        finishes, so `duration_ms` here is time-to-first-byte for `/api/chat` in
+        streaming mode. The full generation time is on the trace.
+        """
+        request_id = uuid.uuid4().hex[:12]
+        started = time.perf_counter()
+        context = {
+            "request_id": request_id,
+            "method": request.method,
+            "path": request.url.path,
+            "client": request.client.host if request.client else None,
+        }
+        log.info("http.request", extra=context)
+        try:
+            response = await call_next(request)
+        except Exception as exc:
+            log.exception(
+                "http.request_failed",
+                extra={
+                    **context,
+                    "duration_ms": round((time.perf_counter() - started) * 1000, 2),
+                    "error": f"{type(exc).__name__}: {exc}",
+                },
+            )
+            raise
+        response.headers["X-Request-Id"] = request_id
+        log.info(
+            "http.response",
+            extra={
+                **context,
+                "status": response.status_code,
+                "duration_ms": round((time.perf_counter() - started) * 1000, 2),
+            },
+        )
+        return response
 
     if settings.server.cors_origins:
         app.add_middleware(

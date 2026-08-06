@@ -1,6 +1,6 @@
 # Document
 
-> God node · 70 connections · `src/osc_assistant/types.py`
+> God node · 66 connections · `src/osc_assistant/types.py`
 
 **Community:** [Ingestion Pipeline & Loaders](Ingestion_Pipeline_%26_Loaders.md)
 
@@ -42,7 +42,6 @@
 - indexed() `EXTRACTED`
 - indexed() `EXTRACTED`
 - test_a_populated_index_produces_no_note() `EXTRACTED`
-- _development_client() `EXTRACTED`
 - test_genuinely_removed_documents_are_still_pruned_alongside_failures() `EXTRACTED`
 - test_one_bad_document_does_not_abort_the_sync() `EXTRACTED`
 - test_unreadable_documents_are_not_pruned() `EXTRACTED`
@@ -52,9 +51,10 @@
 - .split() `EXTRACTED`
 - .replace_document() `EXTRACTED`
 - .replace_document() `EXTRACTED`
-- client() `EXTRACTED`
 - test_a_sync_reports_the_trace_that_produced_it() `EXTRACTED`
 - test_prune_disabled_leaves_other_documents_alone() `EXTRACTED`
+- test_reindex_forces_work_the_content_hash_says_is_unnecessary() `EXTRACTED`
+- .split() `EXTRACTED`
 
 ### uses
 - [StubEmbeddingModel](StubEmbeddingModel.md) `INFERRED`
@@ -64,12 +64,12 @@
 - VectorStore `INFERRED`
 - Chunker `INFERRED`
 - Reranker `INFERRED`
-- FailingChatModel `INFERRED`
 - _FakeEmbeddings `INFERRED`
 - _ExplodingChatModel `INFERRED`
 - _SyncClosableReranker `INFERRED`
 - StoreInspector `INFERRED`
 - _ClosableEmbedding `INFERRED`
+- FailingChatModel `INFERRED`
 - NativeCitationChatModel `INFERRED`
 
 ---

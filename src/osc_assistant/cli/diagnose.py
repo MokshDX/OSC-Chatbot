@@ -11,6 +11,7 @@ Python REPL or the codebase itself:
     document    everything about one document, including its chunks
     chunk       the exact text a citation points at
     trace       what a running service did on a recent request
+    logs        where the persistent logs are, and the last few lines
 
 The organising principle is that a question an operator asks weekly should be a
 command, not a procedure. Each one is read-only.
@@ -31,6 +32,7 @@ import yaml
 
 from ..container import Container
 from ..ingestion.parsers import SUPPORTED_EXTENSIONS
+from ..logging import AUDIT_LOG, OPERATIONAL_LOG
 from ..observability import (
     Trace,
     active_trace_store,
@@ -56,6 +58,7 @@ from ._shared import (
     ProfileOption,
     VerboseOption,
     console,
+    error_console,
     fail,
     load,
     run,
@@ -837,6 +840,75 @@ def trace(
         console.print_json(json.dumps(found[0].to_dict()))
         return
     console.print(render_waterfall(found[0]), highlight=False)
+
+
+@app.command(rich_help_panel=LOOKING)
+def logs(
+    profile: ProfileOption = None,
+    follow: Annotated[
+        bool, typer.Option("--follow", "-f", help="Print the tail -f command and exit.")
+    ] = False,
+    audit_stream: Annotated[
+        bool, typer.Option("--audit", help="Show the audit log rather than the operational one.")
+    ] = False,
+    lines: Annotated[int, typer.Option("-n", min=1, help="Lines to show.")] = 20,
+    as_json: JsonOption = False,
+) -> None:
+    """Show where logs are written, how much history exists, and the last few lines.
+
+    A discovery command, not a log viewer: `tail`, `grep` and `jq` already read
+    JSONL better than anything worth writing here, and the hard part is knowing
+    which file to point them at once rotation has produced six of them.
+    """
+    settings = load(profile)
+    directory = settings.logging.directory
+    if directory is None:
+        fail("File logging is disabled (logging.directory is null).")
+        return
+
+    name = AUDIT_LOG if audit_stream else OPERATIONAL_LOG
+    active = Path(directory) / name
+    rotated = sorted(Path(directory).glob(f"{name}.*"))
+    total = sum(path.stat().st_size for path in [active, *rotated] if path.exists())
+
+    if as_json:
+        console.print_json(
+            json.dumps(
+                {
+                    "directory": str(directory),
+                    "active": str(active),
+                    "rotated": [str(path) for path in rotated],
+                    "total_bytes": total,
+                    "exists": active.exists(),
+                }
+            )
+        )
+        return
+
+    if follow:
+        console.print(f"tail -f {active}")
+        return
+
+    report = table("field", "value")
+    report.add_row("directory", str(directory))
+    report.add_row("stream", "audit" if audit_stream else "operational")
+    report.add_row("active", str(active))
+    report.add_row("rotated files", str(len(rotated)))
+    report.add_row("total size", f"{total / 1_000_000:.2f} MB")
+    limit = settings.logging.audit_max_bytes if audit_stream else settings.logging.max_bytes
+    keep = settings.logging.audit_backup_count if audit_stream else settings.logging.backup_count
+    report.add_row("ceiling", f"{limit * (keep + 1) / 1_000_000:.0f} MB ({keep} kept)")
+    console.print(report)
+
+    if not active.exists():
+        error_console.print(f"\n[yellow]{active} does not exist yet[/yellow]")
+        return
+
+    tail = active.read_text(encoding="utf-8", errors="replace").splitlines()[-lines:]
+    console.print()
+    for line in tail:
+        console.print(line, highlight=False, markup=False)
+    error_console.print(f"\n[dim]follow with: tail -f {active}[/dim]")
 
 
 @app.command(rich_help_panel=UNDERSTANDING)

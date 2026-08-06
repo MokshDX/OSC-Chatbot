@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from collections.abc import Iterator
 
 import pytest
@@ -303,3 +304,34 @@ def test_traces_are_listable_and_expandable_in_development(
 def test_an_unknown_trace_id_is_a_404(documents: list[Document]) -> None:
     with _development_client(documents) as client:
         assert client.get("/api/traces/nonexistent").status_code == 404
+
+
+# ------------------------------------------------------------------- logging
+
+
+def test_every_response_carries_a_correlation_id(client: TestClient) -> None:
+    """The handle an operator holding a failing response uses to find the log line.
+
+    Generated server-side rather than taken from the client, because a
+    client-supplied id can collide or be forged.
+    """
+    first = client.get("/api/health")
+    second = client.get("/api/health")
+
+    assert first.headers["X-Request-Id"]
+    assert first.headers["X-Request-Id"] != second.headers["X-Request-Id"]
+
+
+def test_a_request_is_logged_with_its_outcome(client: TestClient, caplog) -> None:
+    with caplog.at_level(logging.INFO, logger="osc_assistant.api.app"):
+        response = client.post("/api/search", json={"query": "how many vacation days"})
+
+    events = {record.msg: record for record in caplog.records}
+
+    assert "http.request" in events
+    assert events["http.response"].status == response.status_code
+    assert events["http.response"].path == "/api/search"
+    # Same id on both halves and on the response, or the two lines cannot be joined.
+    assert events["http.request"].request_id == events["http.response"].request_id
+    assert events["http.response"].request_id == response.headers["X-Request-Id"]
+    assert events["http.response"].duration_ms >= 0

@@ -1,23 +1,19 @@
 # StubEmbeddingModel
 
-> God node · 69 connections · `tests/conftest.py`
+> God node · 65 connections · `tests/conftest.py`
 
-**Community:** [Stub Embedding Model](Stub_Embedding_Model.md)
+**Community:** [Shared Test Fixtures & Retrieval Tests](Shared_Test_Fixtures_%26_Retrieval_Tests.md)
 
 ## Connections by Relation
 
 ### calls
-- [_stub_environment()](_stub_environment%28%29.md) `EXTRACTED`
-- _register_stub_providers() `EXTRACTED`
-- [_stub_providers()](_stub_providers%28%29.md) `EXTRACTED`
+- _stub_providers() `EXTRACTED`
 
 ### contains
-- [conftest.py](conftest.py.md) `EXTRACTED`
+- conftest.py `EXTRACTED`
 
 ### imports
 - test_evaluation.py `EXTRACTED`
-- test_cli.py `EXTRACTED`
-- test_api.py `EXTRACTED`
 - test_server_lifecycle.py `EXTRACTED`
 - test_retrieval.py `EXTRACTED`
 - test_answerer.py `EXTRACTED`

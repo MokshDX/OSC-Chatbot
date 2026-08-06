@@ -7,7 +7,7 @@
 ## The tiers
 
 ```bash
-make test              # 279 tests · no network, no database, no credentials · ~2s
+make test              # 320 tests · no network, no database, no credentials · ~2s
 make test-integration  # + 18 pgvector tests against a real database
 make test-e2e          # + 9 tests against live Ollama AND PostgreSQL
 make eval              # not a test — measurement. See evaluation.md
@@ -28,7 +28,7 @@ and answer every question badly.
 
 ## What makes the fast tier meaningful
 
-279 tests run with no network, no database and no credential — and they still exercise
+320 tests run with no network, no database and no credential — and they still exercise
 the *real* pipelines.
 
 The trick is the protocol layer. `conftest.py` holds in-process implementations of the
@@ -53,12 +53,13 @@ code path.
 
 | File | Covers |
 |---|---|
+| `test_logging.py` | Log creation, rotation, retention and the disk ceiling; level separation between console and file; **trace-id correlation**; the span bridge on/off; redaction of credentials and payloads; the invoked command and its flags, with the positional tail gated on `capture_payloads`; audit-stream isolation and its independent retention; unwritable directories; **tracebacks surviving the queue**; **token counts not read as credentials** |
 | `test_evaluation.py` | Metrics against worked examples; golden-set validation; failed cases excluded from means; retrieval-only omits generation metrics; judge verdict parsing and failure handling |
 | `test_cli.py` | Every operational command; doctor's pass/warn/fail; trace commands across process boundaries; operator-error reporting; help grouping |
 | `test_langchain_integration.py` | Both chunkers (id stability, content preservation, size budget, heading metadata); chat and embedding bridges; the outbound retriever |
 | `test_pgvector_integration.py` | Migrations, tsvector, SQL fusion, cascade delete, JSONB, workspace isolation, transaction rollback, inspection SQL |
 | `test_fusion_and_grounding.py` | RRF ordering and dedup; citation marker parsing; **prompt-injection containment** |
-| `test_api.py` | Health, status, search, chat (both modes), SSE ordering, trace endpoints and their environment gate |
+| `test_api.py` | Health, status, search, chat (both modes), SSE ordering, trace endpoints and their environment gate; per-request correlation ids and the request/response log pair |
 | `test_trace_store.py` | Cross-process readability, rotation, malformed lines, unwritable directories, round-trip fidelity |
 | `test_observability.py` | Span tree shape, nested-trace merging, error capture, span cap, text redaction |
 | `test_retrieval.py` | Store contract, all three strategies, top_k, reranking, rewriting, **min_score applied pre-rerank** |
@@ -95,10 +96,20 @@ documents, *and* it swept `docs/engineering/` into its index, retrieving the kno
 base. `test_ingestion.py` now asserts the Makefile and CLI corpus roots agree and that
 the knowledge base is not reachable from the corpus root.
 
-**Tests never write into the working directory.** Trace persistence defaults to on and
-writes to `.osc/`. `conftest` redirects it per test via `tmp_path`, which also stops one
-test's traces from being visible to the next and making CLI assertions
-order-dependent.
+**Tests never write into the working directory.** Trace *and log* persistence both
+default to on and write under `.osc/`. `conftest` redirects both per test via
+`tmp_path`, which also stops one test's records from being visible to the next and
+making CLI assertions order-dependent. It additionally calls `shutdown_logging()` on
+teardown, because the log listener is a background thread and a leaked one writes a
+later test's records into a deleted `tmp_path`.
+
+The redirection has to be re-applied wherever a suite purges the environment.
+`test_cli.py` deletes every `OSC_*` variable to prove the commands can be retargeted
+through configuration alone — which also deletes the isolation `conftest` installed.
+It had re-applied `OSC_OBSERVABILITY__TRACE_DIR` and not `OSC_LOGGING__DIRECTORY`, so
+every CLI test wrote into the developer's real `.osc/logs`. Caught by watching the
+file grow during a run, and the reason the two overrides now sit adjacent with a
+comment naming both.
 
 **A test asserts a behaviour, not an implementation.** `test_store_contract` is
 parametrised over store implementations; a new store is added to the parametrisation

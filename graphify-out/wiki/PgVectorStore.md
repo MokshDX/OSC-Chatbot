@@ -2,7 +2,7 @@
 
 > God node · 43 connections · `src/osc_assistant/providers/vectorstores/pgvector.py`
 
-**Community:** [pgvector Store Interface](pgvector_Store_Interface.md)
+**Community:** [pgvector Store & Integration Tests](pgvector_Store_%26_Integration_Tests.md)
 
 ## Connections by Relation
 

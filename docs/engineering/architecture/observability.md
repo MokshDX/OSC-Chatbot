@@ -131,7 +131,12 @@ liability precisely because it is trusted.
 
 ## Structured logging
 
-`logging.py` is a JSON formatter on stdlib `logging` — no third-party logging
+Now its own subsystem — see [logging.md](logging.md). The short version: tracing
+explains one execution, logging records everything that happened, and the two are
+joined because **every log record carries the active `trace_id`**. Spans feed the
+log at TRACE level, so the pipeline coverage below is also the logging coverage.
+
+`logging.py` is still built on stdlib `logging` — no third-party logging
 dependency, because a formatter is thirty lines and a dependency is forever.
 
 The output split is load-bearing: **machine-readable output goes to stdout,

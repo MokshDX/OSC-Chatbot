@@ -43,3 +43,4 @@ considered** · **Consequences** (what it costs, honestly).
 | [0006](0006-chunking-strategy.md) | Keep `recursive` as the default until measured | Accepted |
 | [0007](0007-knowledge-corpus-layout.md) | Corpus root is `docs/company/`; split the FAQ by topic | Accepted |
 | [0008](0008-content-level-deduplication.md) | Deduplicate by source, not by content — and detect, don't collapse | Accepted, with a known cost |
+| [0009](0009-persistent-logging.md) | Persistent logging on the stdlib, fed by the span stream | Accepted |

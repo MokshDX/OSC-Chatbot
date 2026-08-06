@@ -1,13 +1,12 @@
 # Settings
 
-> God node · 38 connections · `src/osc_assistant/settings.py`
+> God node · 36 connections · `src/osc_assistant/settings.py`
 
-**Community:** [Settings Schema](Settings_Schema.md)
+**Community:** [Doctor Health Checks](Doctor_Health_Checks.md)
 
 ## Connections by Relation
 
 ### calls
-- _settings() `EXTRACTED`
 - _settings() `EXTRACTED`
 - _settings() `EXTRACTED`
 - _settings() `EXTRACTED`
@@ -18,12 +17,11 @@
 - settings.py `EXTRACTED`
 
 ### imports
-- app.py `EXTRACTED`
 - diagnose.py `EXTRACTED`
+- app.py `EXTRACTED`
 - evaluate.py `EXTRACTED`
 - container.py `EXTRACTED`
 - runner.py `EXTRACTED`
-- _shared.py `EXTRACTED`
 - banner.py `EXTRACTED`
 - osc_assistant/__init__.py `EXTRACTED`
 
@@ -38,7 +36,6 @@
 - Root configuration object. Nested values are addressable from the environment… `EXTRACTED`
 
 ### references
-- load() `EXTRACTED`
 - create_app() `EXTRACTED`
 - load_settings() `EXTRACTED`
 - _run_checks() `EXTRACTED`
@@ -47,6 +44,7 @@
 - describe_startup() `EXTRACTED`
 - _check_llm() `EXTRACTED`
 - configuration_snapshot() `EXTRACTED`
+- log_resolved_settings() `EXTRACTED`
 - _check_store() `EXTRACTED`
 - _check_chunker() `EXTRACTED`
 - _check_reranker() `EXTRACTED`

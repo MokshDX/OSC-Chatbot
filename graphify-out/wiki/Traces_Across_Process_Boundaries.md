@@ -1,0 +1,26 @@
+# Traces Across Process Boundaries
+
+> 2 nodes · cohesion 1.00
+
+## Key Concepts
+
+- **test_traces_are_readable_after_the_command_that_made_them_exited()** (2 connections) — `tests/test_cli.py`
+- **Each `runner.invoke` is a separate command; the trace outlives it.** (1 connections) — `tests/test_cli.py`
+
+## Relationships
+
+- [CLI Command Tests](CLI_Command_Tests.md) (1 shared connections)
+
+## Source Files
+
+- `tests/test_cli.py`
+
+## Audit Trail
+
+- EXTRACTED: 3 (100%)
+- INFERRED: 0 (0%)
+- AMBIGUOUS: 0 (0%)
+
+---
+
+*Part of the graphify knowledge wiki. See [index](index.md) to navigate.*

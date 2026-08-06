@@ -2,7 +2,7 @@
 
 > God node · 60 connections · `src/osc_assistant/container.py`
 
-**Community:** [Container Lifecycle](Container_Lifecycle.md)
+**Community:** [Container Lifecycle & E2E](Container_Lifecycle_%26_E2E.md)
 
 ## Connections by Relation
 
@@ -23,8 +23,8 @@
 - container.py `EXTRACTED`
 
 ### imports
-- app.py `EXTRACTED`
 - diagnose.py `EXTRACTED`
+- app.py `EXTRACTED`
 - evaluate.py `EXTRACTED`
 - core.py `EXTRACTED`
 - banner.py `EXTRACTED`

@@ -38,6 +38,7 @@ def configure_observability(
     enabled: bool = True,
     capacity: int = 50,
     log_traces: bool = True,
+    log_spans: bool = True,
     capture_text: bool = True,
     max_spans: int = 500,
     persist: bool = True,
@@ -57,6 +58,7 @@ def configure_observability(
         enabled=enabled,
         capacity=capacity,
         log_traces=log_traces,
+        log_spans=log_spans,
         capture_text=capture_text,
         max_spans=max_spans,
     )

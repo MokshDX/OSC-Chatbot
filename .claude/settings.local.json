@@ -107,7 +107,27 @@
       "Bash(git rm *)",
       "Bash(xargs -0 du -ch)",
       "Bash(graphify query *)",
-      "Bash(grep *)"
+      "Bash(grep *)",
+      "Bash(awk -F: '{print $1}')",
+      "Bash(./osc logs *)",
+      "Bash(.venv/bin/pytest tests/test_logging.py -q)",
+      "Bash(.venv/bin/pytest tests/test_logging.py::test_the_console_can_be_quieter_than_the_file -q)",
+      "Bash(OSC_LOG_LEVEL=TRACE ./osc search \"how do I set up tiered pricing\")",
+      "Bash(OSC_LOG_LEVEL=TRACE ./osc ask \"Can I apply tiered pricing at collection level?\")",
+      "Bash(OSC_LOGGING__DIRECTORY=/tmp/osc-audit OSC_LOG_LEVEL=TRACE ./osc doctor)",
+      "Bash(OSC_LOGGING__DIRECTORY=/tmp/osc-audit OSC_LOG_LEVEL=TRACE ./osc ask \"how much annual leave do employees get?\")",
+      "Bash(OSC_LOGGING__DIRECTORY=/tmp/osc-audit OSC_LOG_LEVEL=TRACE OSC_VECTOR_STORE__PROVIDER=memory ./osc ingest /tmp/corp)",
+      "Bash(OSC_LOGGING__DIRECTORY=/tmp/osc-audit ./osc ask \"how much annual leave do employees get?\")",
+      "Bash(OSC_LOGGING__DIRECTORY=/tmp/osc-audit ./osc status)",
+      "Bash(OSC_LOGGING__DIRECTORY=/tmp/osc-audit ./osc status --json)",
+      "Bash(OSC_LOGGING__DIRECTORY=/tmp/osc-audit OSC_LOGGING__CAPTURE_PAYLOADS=true ./osc search \"annual leave\")",
+      "Bash(.venv/bin/pytest -q tests/test_logging.py tests/test_api.py)",
+      "Bash(md5 -q CLAUDE.md AGENTS.md claude.md)",
+      "Bash(md5 -q)",
+      "Bash(OSC_LOGGING__DIRECTORY= ./osc version)",
+      "Bash(OSC_LOGGING__DIRECTORY=null ./osc logs)",
+      "Bash(OSC_LOGGING__DIRECTORY= ./osc logs)",
+      "Bash(make format *)"
     ]
   }
 }

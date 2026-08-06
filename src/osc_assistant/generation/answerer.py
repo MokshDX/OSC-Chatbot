@@ -20,7 +20,7 @@ import time
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
-from ..logging import get_logger
+from ..logging import audit, get_logger
 from ..observability import annotate, current_trace_id, span, trace
 from ..protocols import ChatModel
 from ..retrieval import RetrievalPipeline, RetrievalResult
@@ -196,7 +196,7 @@ class Answerer:
         # distinguishable at a glance from a model that answered badly.
         _annotate_abstention("no_sources")
         log.info("generation.abstained", extra={"reason": "no_sources", "query": retrieval.query})
-        return Answer(
+        answer = Answer(
             text=self._settings.abstention_message,
             citations=[],
             retrieved=[],
@@ -205,6 +205,8 @@ class Answerer:
             abstained=True,
             trace_id=retrieval.trace_id or current_trace_id(),
         )
+        _audit_answer(answer, retrieval)
+        return answer
 
     def _finalise(
         self,
@@ -253,7 +255,7 @@ class Answerer:
             },
         )
 
-        return Answer(
+        answer = Answer(
             text=self._settings.abstention_message if ungrounded else text,
             citations=citations,
             retrieved=retrieval.chunks,
@@ -262,3 +264,39 @@ class Answerer:
             abstained=ungrounded,
             trace_id=retrieval.trace_id or current_trace_id(),
         )
+        _audit_answer(answer, retrieval)
+        return answer
+
+
+def _audit_answer(answer: Answer, retrieval: RetrievalResult) -> None:
+    """Write one durable record of a question this system answered.
+
+    Separate from `generation.complete`, which is operational and rotates with the
+    debug stream. This goes to `audit.log`, whose retention is deliberately longer,
+    because "which passages did we show, and what did we say" is the question asked
+    months later by someone who is not debugging.
+
+    The record carries the *skeleton* by default — retrieved and cited chunk ids,
+    documents, model, tokens, abstention, trace id — and the question and answer
+    text only when `logging.capture_payloads` is on. That default is the security
+    trade: chunk ids make an answer fully reconstructable via `./osc chunk <id>` by
+    someone with access to the index, without putting corpus content in a file that
+    tends to get shipped somewhere else.
+    """
+    audit(
+        "answer",
+        trace_id=answer.trace_id,
+        model=answer.model,
+        abstained=answer.abstained,
+        question=retrieval.original_query,
+        query=retrieval.query,
+        answer=answer.text,
+        answer_chars=len(answer.text),
+        retrieved_chunk_ids=[hit.chunk.id for hit in answer.retrieved],
+        retrieved_documents=sorted({hit.chunk.document_id for hit in answer.retrieved}),
+        cited_chunk_ids=[citation.chunk_id for citation in answer.citations],
+        citations=len(answer.citations),
+        input_tokens=answer.usage.input_tokens,
+        output_tokens=answer.usage.output_tokens,
+        retrieval_ms=round(retrieval.duration_seconds * 1000, 2),
+    )

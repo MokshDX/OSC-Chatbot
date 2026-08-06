@@ -57,12 +57,13 @@ repository's own engineering knowledge base and is deliberately never indexed �
 | `./osc documents [search]` | Indexed documents and their chunk counts |
 | `./osc document <id\|path>` | One document's record and how it chunked |
 | `./osc chunk <chunk-id>` | One chunk in full — the exact text the model saw |
+| `./osc logs [--audit] [-f]` | Where the persistent logs are, their size ceiling, and the last lines |
 | `./osc traces` | Recent traces — filter with `--failed`, `--name`, `--slower-than` |
 | `./osc trace [id]` | Expand one trace, or the most recent, into a waterfall |
 | `./osc version` | Installed version and the versions that shape behaviour |
 
 Every inspection command takes `--json`, so they compose into scripts. `--help`
-groups them by purpose rather than listing fifteen commands flat.
+groups them by purpose rather than listing sixteen commands flat.
 
 ## How it fits together
 
@@ -440,7 +441,7 @@ stores implement it.
 ## Testing
 
 ```bash
-make test              # 279 tests: no network, no database, no credentials
+make test              # 320 tests: no network, no database, no credentials
 make test-integration  # +18 pgvector tests against a real database
 make test-e2e          # +9 end-to-end tests against live Ollama and PostgreSQL
 make check             # lint + typecheck + test
@@ -462,6 +463,41 @@ stack can be retargeted by configuration alone" is asserted, not assumed.
 `make test-integration` needs `OSC_TEST_DIMENSIONS` to match the width the target
 database was migrated with (768 for `nomic-embed-text`), because the `chunks` table
 fixes its vector width at creation.
+
+## Logging
+
+Tracing explains one execution. Logging records everything that happened, survives
+the process, and is what you grep next week. Both are on by default and joined by
+`trace_id` — any log line expands into a full waterfall.
+
+```
+.osc/logs/
+├── osc.log      operational — rotates at 10 MB, 5 kept (~60 MB ceiling)
+└── audit.log    one record per answered question, 20 kept
+```
+
+```bash
+./osc logs                                    # location, sizes, ceiling, last lines
+tail -f .osc/logs/osc.log | jq .              # live
+OSC_LOG_LEVEL=TRACE ./osc ask "..."           # one record per pipeline stage
+jq 'select(.event == "cli.command")' .osc/logs/osc.log   # what has anyone run here
+```
+
+At `TRACE` every stage of the pipeline logs itself, because the logger subscribes to
+the same spans the tracer collects — no pipeline contains a log statement for this:
+
+```
+TRACE embed_query     768.35ms  trace=505cd599
+TRACE search           52.03ms  trace=505cd599
+TRACE rerank            0.01ms  trace=505cd599
+TRACE retrieve        821.06ms  trace=505cd599
+```
+
+**Credentials are redacted unconditionally**, and corpus text is reduced to a
+character count unless `logging.capture_payloads` is enabled. Disk is bounded by
+construction: the oldest rotated file is deleted, not archived.
+
+Full detail: [`docs/engineering/architecture/logging.md`](docs/engineering/architecture/logging.md).
 
 ## Evaluation
 
