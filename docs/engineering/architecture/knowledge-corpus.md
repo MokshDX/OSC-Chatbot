@@ -1,25 +1,45 @@
 # The Knowledge Corpus
 
-*How `docs/company/` is organised, why, and how to grow it without a migration.*
+*How the corpus is organised, why, and how to grow it without a migration.*
 
 ---
 
 ## The one rule
 
-**`docs/company/` is the corpus. Everything the assistant can retrieve lives there,
+**`corpus.root` is the corpus. Everything the assistant can retrieve lives under it,
 and nothing else does.**
 
 ```
 docs/
-├── company/          ← INGESTED. Company knowledge. Authoritative.
-│   ├── faq/
-│   └── scenarios/
+├── company/
+│   ├── schema/       ← INGESTED. The authoritative knowledge source.
+│   ├── faq/          ← not indexed. Merchant-facing; the Phase 5 corpus.
+│   └── scenarios/    ← not indexed.
 └── engineering/      ← NOT ingested. This knowledge base.
 ```
 
-`make ingest` runs `./osc ingest ./docs/company`. `./osc doctor` checks the same
-path. Both are named in one place each (`Makefile`, `cli/diagnose.py`) and they must
-agree.
+`corpus.root` is `docs/company/schema` in the default profile, and **it is named in
+exactly one place**. `./osc ingest` with no argument reads it, `./osc doctor` checks
+it, and the empty-index startup note quotes it.
+
+That was three literals until Phase 6 — one in the `Makefile`, one on the `doctor`
+command, one in the startup banner — kept equal by a rule people had to remember.
+A rule that survives only as long as everyone remembers it is not a boundary, and
+this particular boundary protects the one corpus mistake that produces no error, no
+warning and no failing metric. See [ADR 0010](../decisions/0010-corpus-root-is-configuration.md).
+
+### Why `schema/` and not all of `company/`
+
+The FAQ and the schema documents describe the same product to different readers. The
+FAQ answers *"why is my discount not showing on the cart page?"* for a merchant; the
+schema documents answer *"which namespace and key holds the add-on tier pricing
+payload?"* for an engineer. Indexing both puts them in competition: a developer asking
+for a metafield key would retrieve a merchant-facing answer that does not contain one.
+
+The FAQ is preserved on disk and as a **runnable evaluation suite** — it is the only
+suite over prose documents, which makes it the control when a retrieval change is
+suspected of being specific to the schema corpus's tables and JSON. See
+[ADR 0011](../decisions/0011-schema-first-knowledge-corpus.md).
 
 ### Why the split exists
 
@@ -38,13 +58,19 @@ the boundary is enforced at the only place it can be: what gets indexed.
 
 ## Current contents
 
-| Path | Format | What it is |
-|---|---|---|
-| `faq/*.md` | Markdown, 17 files | The OSCP Wholesale B2B advance FAQ, one file per topic area |
-| `scenarios/*.docx` | Word, 2 files | B2B scenario documents |
-| `scenarios/*.xlsx` | Excel, 2 files | Wholesale scenario templates and quantity-clubbing use cases |
+| Path | Format | Indexed | What it is |
+|---|---|---|---|
+| `schema/*.md` | Markdown, 11 files | **yes** | OSCP module persistence schemas — metafield inventories, metaobject field tables, Prisma models, sample payloads |
+| `faq/*.md` | Markdown, 17 files | no | The OSCP Wholesale B2B advance FAQ, one file per topic area |
+| `scenarios/*.docx` | Word, 2 files | no | B2B scenario documents |
+| `scenarios/*.xlsx` | Excel, 2 files | no | Wholesale scenario templates and quantity-clubbing use cases |
 
-21 documents, 193 chunks as of the last ingest. `./osc status` is authoritative.
+The indexed corpus is 11 documents / 80 chunks under `markdown` chunking. These
+documents are mostly tables and JSON rather than prose, which is why the chunker
+choice matters more here than it did on the FAQ — see
+[ADR 0012](../decisions/0012-markdown-chunking-measured.md).
+
+`./osc status` is authoritative for the live counts.
 
 ---
 

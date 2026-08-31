@@ -1,0 +1,341 @@
+# OSC conversational golden set — multi-turn behaviour.
+#
+# Scored against `docs/company/schema/`, the same corpus as `schema.yaml`. Each case
+# is one session: the turns run in order through the real `Conversation`, against the
+# real `SessionStore` and the real pipelines, and the session is closed afterwards.
+#
+# ## What makes a multi-turn case worth having
+#
+# The interesting question is never "did the follow-up get answered". It is **"could
+# it have been answered without the conversation?"** A follow-up like "what type is
+# it?" that happens to retrieve the right document by keyword luck proves nothing
+# about memory. So every turn marked `requires_context: true` is also run a second
+# time in a **fresh, empty session** — the control — and the harness reports both
+# numbers. The difference between them is the only honest measure of what
+# conversational memory is contributing:
+#
+#     follow_up_resolution              with the conversation
+#     follow_up_resolution_no_context   the identical question, cold
+#     follow_up_lift                    the first minus the second
+#
+# A lift near zero means the follow-ups in this set are not actually context
+# dependent, which is a defect in the *golden set*, not in the system. That is the
+# failure this design is built to expose, because it is invisible otherwise.
+#
+# ## Turn flags
+#
+#   requires_context: true   The question is not answerable standalone — it contains
+#                            a pronoun, an ellipsis or a bare ordinal. Enrolls the
+#                            turn in the control run above.
+#
+#   context_switch: true     The question is standalone and about a *different*
+#                            document from the turns before it. Measures the opposite
+#                            failure: history dragging retrieval back to the previous
+#                            topic. Also control-run, and here the control is the
+#                            benchmark to match rather than beat — a context switch
+#                            should retrieve exactly as well as a cold question.
+#
+#   must_abstain: true       The corpus cannot answer this turn. Inside a
+#                            conversation this is the harder case: the model has
+#                            relevant-looking history in front of it and must still
+#                            decline.
+#
+# ## Writing rules
+#
+# References are written the way people actually type them — "that", "it", "the
+# second one", "and the key?" — rather than as grammatical set pieces. Expected facts
+# stay short and distinctive for the same reason as in the single-turn suite.
+#
+# Turn one of every case is standalone. A case that opened with a reference would be
+# measuring nothing but the abstention policy.
+
+version: 1
+corpus: docs/company/schema
+description: >
+  Multi-turn conversational behaviour over the OSCP schema corpus — 18 sessions
+  covering reference resolution, context retention, context switching, irrelevant
+  history, in-conversation abstention and session isolation.
+
+cases:
+  # ------------------------------------------------------- pronoun resolution
+  - id: convo-addon-pronoun-key
+    description: A bare "it" referring to the module named in the previous turn.
+    tags: [reference-resolution, addons-tier-pricing]
+    turns:
+      - question: What does the AddOnsTierPricing module store on a product variant?
+        relevant_documents: [schema.md]
+        expected_facts: ["adt"]
+      - question: What type is it?
+        relevant_documents: [schema.md]
+        expected_facts: ["json"]
+        requires_context: true
+
+  - id: convo-cart-discount-and-the-key
+    description: Elliptical follow-up — a fragment with no verb.
+    tags: [reference-resolution, cart-discount]
+    turns:
+      - question: Which namespace does the cart discount feature use?
+        relevant_documents: [schema-3.md]
+        expected_facts: ["oscp"]
+      - question: And the key for the offers?
+        relevant_documents: [schema-3.md]
+        expected_facts: ["cartRules"]
+        requires_context: true
+
+  - id: convo-draft-order-that
+    description: A bare "that" referring to a mechanism, not a noun phrase.
+    tags: [reference-resolution, draft-order]
+    turns:
+      - question: How does draft order processing avoid creating duplicate drafts?
+        relevant_documents: [schema-6.md]
+        expected_facts: ["OrderProcessingDraft"]
+      - question: How long does that last?
+        relevant_documents: [schema-6.md]
+        expected_facts: ["15 min"]
+        requires_context: true
+
+  - id: convo-freegift-they
+    description: Plural pronoun referring to a set introduced two turns earlier.
+    tags: [reference-resolution, free-gift]
+    turns:
+      - question: What metaobject type holds free gift rules?
+        relevant_documents: [schema-9.md]
+        expected_facts: ["oscp_freegifts"]
+      - question: Which field decides whether they stack?
+        relevant_documents: [schema-9.md]
+        expected_facts: ["is_stackable"]
+        requires_context: true
+
+  - id: convo-extrafee-ordinal
+    description: An ordinal reference into a list the previous answer produced.
+    tags: [reference-resolution, extra-fee]
+    turns:
+      - question: What are the two fee calculation modes for an extra fee rule?
+        relevant_documents: [schema-8.md]
+        expected_facts: ["per_item"]
+      - question: What field on the rule selects between those?
+        relevant_documents: [schema-8.md]
+        expected_facts: ["fee_calculation"]
+        requires_context: true
+
+  - id: convo-accesslock-its
+    description: Possessive reference across a turn.
+    tags: [reference-resolution, access-lock]
+    turns:
+      - question: What metaobject type defines an access lock rule?
+        relevant_documents: [schema-10.md]
+        expected_facts: ["access_lock_rule"]
+      - question: What do its conditions look like?
+        relevant_documents: [schema-10.md]
+        expected_facts: ["operator"]
+        requires_context: true
+
+  # ------------------------------------------------------- context retention
+  #
+  # Three turns, with the reference in turn three pointing past turn two. This is
+  # where a one-turn history window silently stops working.
+
+  - id: convo-registration-three-turns
+    description: Reference in turn three resolves against turn one, not turn two.
+    tags: [context-retention, customer-registration]
+    turns:
+      - question: Where are the wholesale registration forms stored?
+        relevant_documents: [schema-4.md]
+        expected_facts: ["registractionForm"]
+      - question: Is that spelling a mistake?
+        relevant_documents: [schema-4.md]
+        expected_facts: ["intentional"]
+        requires_context: true
+      - question: Which other module shares that same metafield?
+        relevant_documents: [schema-4.md, schema-5.md]
+        expected_facts: ["Segment"]
+        requires_context: true
+
+  - id: convo-autotag-three-turns
+    description: Sustained topic across three turns with a reference in each.
+    tags: [context-retention, auto-order-tag]
+    turns:
+      - question: How is automatic order tagging switched on?
+        relevant_documents: [schema-1.md]
+        expected_facts: ["autoTagStatus"]
+      - question: What namespace is that in?
+        relevant_documents: [schema-1.md]
+        expected_facts: ["oscpB2B"]
+        requires_context: true
+      - question: Does enabling a plan set it automatically?
+        relevant_documents: [schema-1.md]
+        expected_facts: ["does not"]
+        requires_context: true
+
+  - id: convo-draft-order-deep
+    description: Four turns on one module, the last referring to the first.
+    tags: [context-retention, draft-order]
+    turns:
+      - question: What are the two order processing modes?
+        relevant_documents: [schema-6.md]
+        expected_facts: ["draft_order"]
+      - question: Which is the default?
+        relevant_documents: [schema-6.md]
+        expected_facts: ["shopify_function"]
+        requires_context: true
+      - question: How are the drafts it creates tagged in Shopify?
+        relevant_documents: [schema-6.md]
+        expected_facts: ["oscp-order-processing"]
+        requires_context: true
+      - question: Are add-on lines supported in that mode?
+        relevant_documents: [schema-6.md]
+        expected_facts: ["skipped"]
+        requires_context: true
+
+  # --------------------------------------------------------- context switching
+  #
+  # The opposite failure from the one above. Here the history is *irrelevant* and
+  # the system must not let it pull retrieval back to the previous document.
+
+  - id: convo-switch-cart-to-email
+    description: A clean topic change after two turns on an unrelated module.
+    tags: [context-switch, cart-discount, email-configuration]
+    turns:
+      - question: Where does the cart discount feature keep its offers?
+        relevant_documents: [schema-3.md]
+        expected_facts: ["cartRules"]
+      - question: What is the discount node called?
+        relevant_documents: [schema-3.md]
+        expected_facts: ["OSCP CART DISCOUNT"]
+        requires_context: true
+      - question: Where are the notification email templates stored?
+        relevant_documents: [schema-7.md]
+        expected_facts: ["notifications"]
+        context_switch: true
+
+  - id: convo-switch-freegift-to-bulk
+    description: Switch to a module that shares vocabulary with the previous one.
+    tags: [context-switch, free-gift, bulk-import-export]
+    turns:
+      - question: What handle does the free gift Shopify Function use?
+        relevant_documents: [schema-9.md]
+        expected_facts: ["free-gift-discount"]
+      - question: Which variant metafield holds quantity break tier rules?
+        relevant_documents: [schema-2.md]
+        expected_facts: ["priceRule"]
+        context_switch: true
+
+  - id: convo-switch-back-and-forth
+    description: >
+      A to B and back to A. The final turn is standalone, so it must not be
+      answered from the B context that immediately precedes it.
+    tags: [context-switch, access-lock, extra-fee]
+    turns:
+      - question: How does the app know the access lock theme gate is installed?
+        relevant_documents: [schema-10.md]
+        expected_facts: ["gateInstalled"]
+      - question: What metaobject type backs an extra fee rule?
+        relevant_documents: [schema-8.md]
+        expected_facts: ["extra_fee_rule"]
+        context_switch: true
+      - question: Which optional metafield carries checkout hard-lock tags?
+        relevant_documents: [schema-10.md]
+        expected_facts: ["lockTags"]
+        context_switch: true
+
+  # ------------------------------------------------------- irrelevant history
+  #
+  # Long, entirely unrelated preamble before the question being scored. Measures
+  # whether accumulated context degrades an otherwise ordinary question — the
+  # "pollution" failure, distinct from a single context switch.
+
+  - id: convo-irrelevant-history-then-question
+    description: Three unrelated turns, then a standalone question scored cold.
+    tags: [irrelevant-history, email-configuration, customer-segment]
+    turns:
+      - question: What metaobject type holds free gift rules?
+        relevant_documents: [schema-9.md]
+      - question: How is the hidden extra fee product kept out of pickers?
+        relevant_documents: [schema-8.md]
+        context_switch: true
+      - question: What handle does the free gift Function use?
+        relevant_documents: [schema-9.md]
+        context_switch: true
+      - question: What values can a customer's segment status take?
+        relevant_documents: [schema-5.md]
+        expected_facts: ["pending"]
+        context_switch: true
+
+  # ----------------------------------------------- abstention in conversation
+  #
+  # Harder than a cold abstention: the model has plausible, related history in front
+  # of it and must still decline. A system that abstains correctly on a first turn
+  # and answers from memory on the third has not implemented the policy, it has
+  # implemented a coincidence.
+
+  - id: convo-abstain-after-relevant-history
+    description: Two answerable turns, then a question the corpus does not cover.
+    tags: [abstention, cart-discount]
+    turns:
+      - question: Where does the cart discount feature keep its offers?
+        relevant_documents: [schema-3.md]
+        expected_facts: ["cartRules"]
+      - question: Why are those metafields public rather than private?
+        relevant_documents: [schema-3.md]
+        expected_facts: ["Functions"]
+        requires_context: true
+      - question: What HTTP routes does that module expose?
+        must_abstain: true
+
+  - id: convo-abstain-on-a-reference
+    description: >
+      A follow-up that resolves correctly to a real subject but asks something the
+      corpus does not record. Reference resolution succeeding must not become
+      licence to answer.
+    tags: [abstention, draft-order]
+    turns:
+      - question: What model provides draft order idempotency?
+        relevant_documents: [schema-6.md]
+        expected_facts: ["OrderProcessingDraft"]
+      - question: Which cloud provider is that database hosted on?
+        must_abstain: true
+        requires_context: true
+
+  - id: convo-abstain-then-recover
+    description: >
+      An abstention mid-conversation must not poison the turns after it. The final
+      turn is ordinary and must be answered normally.
+    tags: [abstention, recovery, free-gift]
+    turns:
+      - question: What metaobject type holds free gift rules?
+        relevant_documents: [schema-9.md]
+        expected_facts: ["oscp_freegifts"]
+      - question: How much does the Platinum plan cost?
+        must_abstain: true
+      - question: Where is the free gift progress bar copy configured?
+        relevant_documents: [schema-9.md]
+        expected_facts: ["freegift_global_settings"]
+
+  # -------------------------------------------------------- clarification
+  #
+  # A vague opening turn the corpus cannot resolve, followed by the user supplying
+  # the missing detail. The second turn is the one that matters: it is short,
+  # underspecified on its own, and only answerable because the first turn happened.
+
+  - id: convo-clarification-which-namespace
+    description: Vague first turn, disambiguated by the second.
+    tags: [clarification, auto-order-tag]
+    turns:
+      - question: I need the namespace for order tagging.
+        relevant_documents: [schema-1.md]
+        expected_facts: ["oscpB2B"]
+      - question: And the definitions that go with it?
+        relevant_documents: [schema-1.md]
+        expected_facts: ["warehouse"]
+        requires_context: true
+
+  - id: convo-clarification-fee-tiers
+    description: A follow-up narrowing a broad first question.
+    tags: [clarification, extra-fee]
+    turns:
+      - question: Tell me about extra fee rules.
+        relevant_documents: [schema-8.md]
+      - question: Where are the tier rows kept?
+        relevant_documents: [schema-8.md]
+        expected_facts: ["quantity_ranges"]
+        requires_context: true

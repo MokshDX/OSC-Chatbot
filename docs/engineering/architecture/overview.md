@@ -50,10 +50,15 @@ flowchart LR
     end
 ```
 
+0. **Load session context** — when the request carries a `session_id`, the
+   conversation's history is fetched and travels with the question. See
+   [conversation.md](conversation.md).
 1. **Rewrite** — resolves conversational references ("what about the second one?")
    into a standalone query using the configured *fast* model. Best-effort: any failure
-   falls back to the original question and records why on the span. Off by default
-   until its benefit is measured.
+   falls back to the original question and records why on the span. **On by default**
+   since Phase 6, on a measurement: it is the only path by which history reaches
+   retrieval, and with it off the measured contribution of conversational memory to
+   retrieval was exactly zero (`follow_up_lift` 0.000 → +0.177).
 2. **Search** — vector, keyword, or hybrid. See [retrieval.md](retrieval.md).
 3. **Threshold** — `min_score` applied to *first-stage* scores, before reranking,
    because only those are on a known scale.
@@ -74,7 +79,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    F[(docs/company)] --> L[FilesystemLoader]
+    F[("corpus.root<br/>docs/company/schema")] --> L[FilesystemLoader]
     L --> P[parse]
     P --> C[chunk]
     C --> E[embed]
@@ -105,6 +110,7 @@ graph TD
         GN[generation/]
         IN[ingestion/]
         CH[chunking/]
+        CV[conversation.py]
         EV[evaluation/]
     end
 

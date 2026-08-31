@@ -81,6 +81,71 @@ class ChunkingSettings(BaseModel):
     chunk_overlap: int = Field(default=150, ge=0)
 
 
+class CorpusSettings(BaseModel):
+    """Which directory is the answer corpus.
+
+    This is configuration rather than a constant because the root was previously
+    written out in three places that had to agree — the `Makefile`, the `doctor`
+    command's default and the empty-index startup note — and "they must agree" is a
+    rule that survives only as long as everyone remembers it. Ingesting the wrong
+    root is the one corpus mistake nothing downstream catches: an answer sourced
+    from the wrong universe retrieves cleanly, grounds correctly and cites
+    accurately. See docs/engineering/architecture/knowledge-corpus.md.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    root: Path = Field(
+        default=Path("docs/company/schema"),
+        description=(
+            "The directory `ingest` indexes and `doctor` checks. Everything outside "
+            "it is invisible to the assistant, which is what makes the corpus "
+            "boundary fail safe rather than fail open."
+        ),
+    )
+
+
+class SessionSettings(BaseModel):
+    """Bounds on ephemeral conversational memory.
+
+    Every value here is a ceiling, not a target. Conversation state is held in the
+    answering process and is deliberately not durable (ADR 0010), so each bound
+    exists to stop one unbounded thing: total memory, per-conversation prompt
+    growth, and the lifetime of an abandoned session nobody closed.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    max_messages: int = Field(
+        default=20,
+        ge=2,
+        description=(
+            "Messages retained per session, oldest evicted first. Bounds the prompt "
+            "rather than the storage: history is replayed into every turn, so an "
+            "unbounded session would grow the context window until generation "
+            "truncated. 20 is ten exchanges."
+        ),
+    )
+    max_sessions: int = Field(
+        default=1000,
+        ge=1,
+        description=(
+            "Concurrent sessions held in memory. The least recently used is evicted "
+            "when the limit is reached, so a client that never closes a session "
+            "degrades that session rather than the process."
+        ),
+    )
+    idle_ttl_seconds: float = Field(
+        default=3600.0,
+        gt=0,
+        description=(
+            "How long a session survives without a turn. Reclaims the sessions of "
+            "clients that closed a browser tab instead of calling DELETE, which is "
+            "most of them."
+        ),
+    )
+
+
 class DatabaseSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -300,9 +365,11 @@ class Settings(BaseSettings):
     reranker: ComponentConfig = ComponentConfig(provider="noop")
     vector_store: ComponentConfig = ComponentConfig(provider="pgvector")
 
+    corpus: CorpusSettings = CorpusSettings()
     chunking: ChunkingSettings = ChunkingSettings()
     retrieval: RetrievalSettings = RetrievalSettings()
     generation: GenerationSettings = GenerationSettings()
+    session: SessionSettings = SessionSettings()
     database: DatabaseSettings = DatabaseSettings()
     server: ServerSettings = ServerSettings()
     logging: LoggingSettings = LoggingSettings()

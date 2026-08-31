@@ -335,3 +335,165 @@ def test_a_request_is_logged_with_its_outcome(client: TestClient, caplog) -> Non
     assert events["http.request"].request_id == events["http.response"].request_id
     assert events["http.response"].request_id == response.headers["X-Request-Id"]
     assert events["http.response"].duration_ms >= 0
+
+
+# ------------------------------------------------------------------- sessions
+
+
+def test_a_session_is_opened_and_closed_over_http(client: TestClient) -> None:
+    opened = client.post("/api/sessions")
+
+    assert opened.status_code == 201
+    session_id = opened.json()["session_id"]
+    assert session_id
+
+    assert client.delete(f"/api/sessions/{session_id}").status_code == 204
+
+
+def test_closing_a_session_twice_is_not_an_error(client: TestClient) -> None:
+    """DELETE is idempotent: a browser cleaning up on unload cannot act on a 404."""
+    session_id = client.post("/api/sessions").json()["session_id"]
+
+    assert client.delete(f"/api/sessions/{session_id}").status_code == 204
+    assert client.delete(f"/api/sessions/{session_id}").status_code == 204
+    assert client.delete("/api/sessions/never-existed").status_code == 204
+
+
+def test_a_follow_up_in_a_session_is_answered_with_the_previous_turn(
+    client: TestClient,
+) -> None:
+    """The end-to-end conversational contract over HTTP.
+
+    Asserted through the trace rather than through the answer text, because the
+    stub returns a fixed reply either way — what changes is whether the follow-up
+    was given any context, and that is exactly what `session_context` records.
+    """
+    session_id = client.post("/api/sessions").json()["session_id"]
+
+    first = client.post(
+        "/api/chat",
+        json={"question": "How many vacation days?", "session_id": session_id, "stream": False},
+    )
+    assert first.status_code == 200
+
+    second = client.post(
+        "/api/chat",
+        json={
+            "question": "When do they expire?",
+            "session_id": session_id,
+            "stream": False,
+            "explain": True,
+        },
+    )
+    assert second.status_code == 200
+
+    spans = {
+        span["name"]: span["attributes"] for span in second.json()["trace"]["spans"]
+    }
+    assert spans["session_context"]["is_follow_up"] is True
+    assert spans["session_context"]["turns_in_context"] == 1
+
+
+def test_a_question_with_no_session_carries_no_context(client: TestClient) -> None:
+    """Single-turn behaviour is unchanged: no session, no session_context span."""
+    response = client.post(
+        "/api/chat",
+        json={"question": "How many vacation days?", "stream": False, "explain": True},
+    )
+
+    assert response.status_code == 200
+    names = {span["name"] for span in response.json()["trace"]["spans"]}
+    assert "session_context" not in names
+
+
+def test_two_sessions_do_not_share_memory_over_http(client: TestClient) -> None:
+    first = client.post("/api/sessions").json()["session_id"]
+    second = client.post("/api/sessions").json()["session_id"]
+
+    client.post(
+        "/api/chat",
+        json={"question": "How many vacation days?", "session_id": first, "stream": False},
+    )
+    reply = client.post(
+        "/api/chat",
+        json={
+            "question": "And expenses?",
+            "session_id": second,
+            "stream": False,
+            "explain": True,
+        },
+    )
+
+    spans = {span["name"]: span["attributes"] for span in reply.json()["trace"]["spans"]}
+    # The second session has seen one question — its own — and none of the first's.
+    assert spans["session_context"]["is_follow_up"] is False
+    assert spans["session_context"]["turns_in_context"] == 0
+
+
+def test_a_closed_session_is_a_404_on_the_next_turn(client: TestClient) -> None:
+    """Reported before the response begins, so it is a status code and not an
+    in-band SSE error event."""
+    session_id = client.post("/api/sessions").json()["session_id"]
+    client.delete(f"/api/sessions/{session_id}")
+
+    response = client.post(
+        "/api/chat",
+        json={"question": "still there?", "session_id": session_id, "stream": False},
+    )
+
+    assert response.status_code == 404
+    assert "session" in response.json()["detail"].lower()
+
+
+def test_an_unknown_session_is_a_404_on_the_streaming_path_too(client: TestClient) -> None:
+    """The streaming branch fixes its status at 200 once the body starts, so the
+    check has to happen before it does."""
+    response = client.post(
+        "/api/chat",
+        json={"question": "hello", "session_id": "not-a-session", "stream": True},
+    )
+
+    assert response.status_code == 404
+
+
+def test_supplying_both_a_session_and_a_history_is_rejected(client: TestClient) -> None:
+    """Two sources of truth for the same thing; the server refuses to pick."""
+    session_id = client.post("/api/sessions").json()["session_id"]
+
+    response = client.post(
+        "/api/chat",
+        json={
+            "question": "hello",
+            "session_id": session_id,
+            "history": [{"role": "user", "content": "earlier"}],
+            "stream": False,
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_a_streamed_session_turn_is_remembered(client: TestClient) -> None:
+    """Memory must behave identically in both modes, as the abstention policy does."""
+    session_id = client.post("/api/sessions").json()["session_id"]
+
+    with client.stream(
+        "POST",
+        "/api/chat",
+        json={"question": "How many vacation days?", "session_id": session_id},
+    ) as stream:
+        assert stream.status_code == 200
+        events = [line for line in stream.iter_lines() if line.startswith("event:")]
+    assert "event: complete" in events
+
+    follow_up = client.post(
+        "/api/chat",
+        json={
+            "question": "When do they expire?",
+            "session_id": session_id,
+            "stream": False,
+            "explain": True,
+        },
+    )
+    spans = {span["name"]: span["attributes"] for span in follow_up.json()["trace"]["spans"]}
+    assert spans["session_context"]["turns_in_context"] == 1

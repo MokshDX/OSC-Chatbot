@@ -1,0 +1,2168 @@
+{
+  "started_at": "2026-08-31T17:39:37.666628+00:00",
+  "duration_seconds": 2.036,
+  "golden_set": "schema.yaml",
+  "case_count": 61,
+  "failed_count": 0,
+  "top_k": 5,
+  "concurrency": 1,
+  "generation": false,
+  "configuration": {
+    "profile_environment": "development",
+    "llm": "ollama/qwen3:8b",
+    "embeddings": "ollama/nomic-embed-text",
+    "reranker": "noop",
+    "vector_store": "pgvector",
+    "chunking": {
+      "strategy": "markdown",
+      "chunk_size": 900,
+      "chunk_overlap": 120
+    },
+    "retrieval": {
+      "strategy": "hybrid",
+      "candidates": 30,
+      "top_k": 5,
+      "rrf_k": 60,
+      "min_score": 0.0,
+      "rewrite_queries": true
+    },
+    "generation": {
+      "max_tokens": 1500,
+      "require_citations": true
+    }
+  },
+  "summary": {
+    "cases_scored": 61.0,
+    "recall@5": 0.9818,
+    "precision@5": 0.2,
+    "ndcg@5": 0.9179,
+    "mrr": 0.897,
+    "hit_rate@5": 0.9818,
+    "latency_p50_seconds": 0.029,
+    "latency_p95_seconds": 0.036,
+    "latency_mean_seconds": 0.033,
+    "throughput_per_second": 29.958,
+    "input_tokens_total": 0.0,
+    "output_tokens_total": 0.0
+  },
+  "cases": [
+    {
+      "id": "addon-variant-key",
+      "question": "Where is the add-on tier pricing payload stored on a product variant?",
+      "tags": [
+        "addons-tier-pricing",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema.md"
+      ],
+      "retrieved_documents": [
+        "schema-6.md",
+        "schema-4.md",
+        "schema-8.md",
+        "schema.md",
+        "schema-2.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.25,
+      "ndcg": 0.43067655807339306,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.2911057909950614,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "f13f699750294298",
+      "error": null
+    },
+    {
+      "id": "addon-cart-transform-key",
+      "question": "How does the app remember which CartTransform it already registered?",
+      "tags": [
+        "addons-tier-pricing",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema.md"
+      ],
+      "retrieved_documents": [
+        "schema.md",
+        "schema-3.md",
+        "schema-4.md",
+        "schema-7.md",
+        "schema-5.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.03793329210020602,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "e18e277146574856",
+      "error": null
+    },
+    {
+      "id": "addon-template-catalogue-ownership",
+      "question": "Which add-on pricing metafield is read-only because another module owns it?",
+      "tags": [
+        "addons-tier-pricing",
+        "ownership"
+      ],
+      "relevant_documents": [
+        "schema.md"
+      ],
+      "retrieved_documents": [
+        "schema-3.md",
+        "schema-6.md",
+        "schema.md",
+        "schema-4.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.3333333333333333,
+      "ndcg": 0.5,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.036001750035211444,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "3e1b76d403ab46f2",
+      "error": null
+    },
+    {
+      "id": "addon-domain-type",
+      "question": "What TypeScript contract defines the add-on pricing payload?",
+      "tags": [
+        "addons-tier-pricing",
+        "contracts"
+      ],
+      "relevant_documents": [
+        "schema.md"
+      ],
+      "retrieved_documents": [
+        "schema.md",
+        "schema-8.md",
+        "schema-6.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.03769720788113773,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "e9c8531327984df1",
+      "error": null
+    },
+    {
+      "id": "addon-margin-rule-shape",
+      "question": "What fields make up a margin override rule for add-on pricing?",
+      "tags": [
+        "addons-tier-pricing",
+        "sample-data"
+      ],
+      "relevant_documents": [
+        "schema.md"
+      ],
+      "retrieved_documents": [
+        "schema.md",
+        "schema-8.md",
+        "schema-6.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.03527854080311954,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "36933f14c8f34bc9",
+      "error": null
+    },
+    {
+      "id": "autotag-toggle-key",
+      "question": "What switches automatic order tagging on for a shop?",
+      "tags": [
+        "auto-order-tag",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-1.md"
+      ],
+      "retrieved_documents": [
+        "schema-1.md",
+        "schema-10.md",
+        "schema-6.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.031241875141859055,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "b5d8a95ba87b4699",
+      "error": null
+    },
+    {
+      "id": "autotag-namespace",
+      "question": "Which metafield namespace does automatic order tagging use?",
+      "tags": [
+        "auto-order-tag",
+        "namespace"
+      ],
+      "relevant_documents": [
+        "schema-1.md"
+      ],
+      "retrieved_documents": [
+        "schema-1.md",
+        "schema-8.md",
+        "schema-9.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.027195125119760633,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "24299fa1ce0a4369",
+      "error": null
+    },
+    {
+      "id": "autotag-product-definitions",
+      "question": "Which product metafield definitions get copied onto orders as tags?",
+      "tags": [
+        "auto-order-tag",
+        "definitions"
+      ],
+      "relevant_documents": [
+        "schema-1.md"
+      ],
+      "retrieved_documents": [
+        "schema-1.md",
+        "schema-8.md",
+        "schema-3.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.02742599998600781,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "78fd0da39e8f4576",
+      "error": null
+    },
+    {
+      "id": "autotag-plan-does-not-enable",
+      "question": "Does subscribing to a plan turn order tagging on by itself?",
+      "tags": [
+        "auto-order-tag",
+        "behaviour"
+      ],
+      "relevant_documents": [
+        "schema-1.md"
+      ],
+      "retrieved_documents": [
+        "schema-1.md",
+        "schema-6.md",
+        "schema-8.md",
+        "schema-5.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.02853762498125434,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "b8edbf1a564b4c30",
+      "error": null
+    },
+    {
+      "id": "bulk-variant-rules-key",
+      "question": "Which variant metafield holds quantity-break and currency tier rules?",
+      "tags": [
+        "bulk-import-export",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-2.md"
+      ],
+      "retrieved_documents": [
+        "schema-3.md",
+        "schema-8.md",
+        "schema-9.md",
+        "schema-4.md"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg": 0.0,
+      "hit": false,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.029221083037555218,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "10f3959e1728449b",
+      "error": null
+    },
+    {
+      "id": "bulk-date-range-key",
+      "question": "Where are campaign date-range tier rules kept for a variant?",
+      "tags": [
+        "bulk-import-export",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-2.md"
+      ],
+      "retrieved_documents": [
+        "schema-4.md",
+        "schema-2.md",
+        "schema.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.5,
+      "ndcg": 0.6309297535714575,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.03351304214447737,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "cbf5eea3e9464f1c",
+      "error": null
+    },
+    {
+      "id": "bulk-owns-no-schema",
+      "question": "Does the bulk import and export feature define storage of its own?",
+      "tags": [
+        "bulk-import-export",
+        "ownership"
+      ],
+      "relevant_documents": [
+        "schema-2.md"
+      ],
+      "retrieved_documents": [
+        "schema-2.md",
+        "schema-8.md",
+        "schema-9.md",
+        "schema-10.md",
+        "schema-1.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.03180625010281801,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "34cefb121c8441b9",
+      "error": null
+    },
+    {
+      "id": "bulk-csv-not-metafields",
+      "question": "Are the downloadable sample CSV templates stored as metafields?",
+      "tags": [
+        "bulk-import-export",
+        "csv"
+      ],
+      "relevant_documents": [
+        "schema-2.md"
+      ],
+      "retrieved_documents": [
+        "schema-2.md",
+        "schema-9.md",
+        "schema-3.md",
+        "schema-1.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.030134167056530714,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "bdcd328b2354406f",
+      "error": null
+    },
+    {
+      "id": "bulk-csv-module",
+      "question": "Which module generates the sample CSV downloads in the browser?",
+      "tags": [
+        "bulk-import-export",
+        "csv"
+      ],
+      "relevant_documents": [
+        "schema-2.md"
+      ],
+      "retrieved_documents": [
+        "schema-2.md",
+        "schema-7.md",
+        "schema-6.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.028633583104237914,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "c3e818b6897a41c0",
+      "error": null
+    },
+    {
+      "id": "cart-offers-key",
+      "question": "Where does the cart discount feature keep its list of offers?",
+      "tags": [
+        "cart-discount",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-3.md"
+      ],
+      "retrieved_documents": [
+        "schema-3.md",
+        "schema-6.md",
+        "schema-9.md",
+        "schema-4.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.030039125122129917,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "ea8bd79a997046f9",
+      "error": null
+    },
+    {
+      "id": "cart-function-eligibility-key",
+      "question": "What aggregated data does the cart discount Shopify Function read for eligibility?",
+      "tags": [
+        "cart-discount",
+        "functions"
+      ],
+      "relevant_documents": [
+        "schema-3.md"
+      ],
+      "retrieved_documents": [
+        "schema-3.md",
+        "schema-6.md",
+        "schema-4.md",
+        "schema-9.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.02975874999538064,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "5916613d76314666",
+      "error": null
+    },
+    {
+      "id": "cart-discount-node-title",
+      "question": "What is the automatic discount node behind all cart offers called?",
+      "tags": [
+        "cart-discount",
+        "discount-node"
+      ],
+      "relevant_documents": [
+        "schema-3.md"
+      ],
+      "retrieved_documents": [
+        "schema-4.md",
+        "schema-3.md",
+        "schema-6.md",
+        "schema-9.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.5,
+      "ndcg": 0.6309297535714575,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.029506457969546318,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "f238d017ccd641d0",
+      "error": null
+    },
+    {
+      "id": "cart-why-public-metafields",
+      "question": "Why are the cart discount metafields public rather than private?",
+      "tags": [
+        "cart-discount",
+        "inv-9"
+      ],
+      "relevant_documents": [
+        "schema-3.md"
+      ],
+      "retrieved_documents": [
+        "schema-3.md",
+        "schema-9.md",
+        "schema.md",
+        "schema-6.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.030384874902665615,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "23c5e8f071324554",
+      "error": null
+    },
+    {
+      "id": "cart-deprecated-key",
+      "question": "Which cart discount metafield is deprecated and cleaned up on save?",
+      "tags": [
+        "cart-discount",
+        "deprecation"
+      ],
+      "relevant_documents": [
+        "schema-3.md"
+      ],
+      "retrieved_documents": [
+        "schema-3.md",
+        "schema-6.md",
+        "schema-4.md",
+        "schema-1.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.025776959024369717,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "c3adb163b005476f",
+      "error": null
+    },
+    {
+      "id": "registration-forms-key",
+      "question": "Where are the registration form definitions persisted?",
+      "tags": [
+        "customer-registration",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-4.md"
+      ],
+      "retrieved_documents": [
+        "schema-4.md",
+        "schema-5.md",
+        "schema-2.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.02510454203002155,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "f3ca985d7c2d4bc3",
+      "error": null
+    },
+    {
+      "id": "registration-typo-is-deliberate",
+      "question": "Is the misspelling in the registration form metafield key a bug?",
+      "tags": [
+        "customer-registration",
+        "legacy"
+      ],
+      "relevant_documents": [
+        "schema-4.md"
+      ],
+      "retrieved_documents": [
+        "schema-4.md",
+        "schema-5.md",
+        "schema-9.md",
+        "schema-8.md",
+        "schema-3.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.026302707847207785,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "35e23d788ead4d0c",
+      "error": null
+    },
+    {
+      "id": "registration-auto-approve-key",
+      "question": "What controls whether new customers are approved automatically?",
+      "tags": [
+        "customer-registration",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-4.md"
+      ],
+      "retrieved_documents": [
+        "schema-5.md",
+        "schema-7.md",
+        "schema-10.md",
+        "schema-4.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.25,
+      "ndcg": 0.43067655807339306,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.02560487505979836,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "0517f9080885484a",
+      "error": null
+    },
+    {
+      "id": "registration-member-tags",
+      "question": "How do tier pricing modules find out which registration forms a customer belongs to?",
+      "tags": [
+        "customer-registration",
+        "integration"
+      ],
+      "relevant_documents": [
+        "schema-4.md"
+      ],
+      "retrieved_documents": [
+        "schema-4.md",
+        "schema-5.md",
+        "schema-6.md",
+        "schema-2.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.026281250175088644,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "50088f40de714bb9",
+      "error": null
+    },
+    {
+      "id": "registration-discount-node-cache",
+      "question": "Where is the cached wholesale discount node GID kept?",
+      "tags": [
+        "customer-registration",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-4.md"
+      ],
+      "retrieved_documents": [
+        "schema-4.md",
+        "schema-3.md",
+        "schema-9.md",
+        "schema.md",
+        "schema-8.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.029647374991327524,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "b897ab1259ca4c30",
+      "error": null
+    },
+    {
+      "id": "segment-assigned-key",
+      "question": "Which customer metafield records the segment a customer belongs to?",
+      "tags": [
+        "customer-segment",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-5.md"
+      ],
+      "retrieved_documents": [
+        "schema-5.md",
+        "schema-1.md",
+        "schema-8.md",
+        "schema-3.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.029540040995925665,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "d166d9308bce4ea9",
+      "error": null
+    },
+    {
+      "id": "segment-status-values",
+      "question": "What values can a customer's segment status take?",
+      "tags": [
+        "customer-segment",
+        "enums"
+      ],
+      "relevant_documents": [
+        "schema-5.md"
+      ],
+      "retrieved_documents": [
+        "schema-5.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.03147879196330905,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "c00f495eec25470d",
+      "error": null
+    },
+    {
+      "id": "segment-shared-key",
+      "question": "Which module shares the registration form metafield with customer segments?",
+      "tags": [
+        "customer-segment",
+        "ownership"
+      ],
+      "relevant_documents": [
+        "schema-4.md",
+        "schema-5.md"
+      ],
+      "retrieved_documents": [
+        "schema-5.md",
+        "schema-4.md",
+        "schema-1.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.4,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.032697916962206364,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "9f06e4c999054daf",
+      "error": null
+    },
+    {
+      "id": "draft-mode-key",
+      "question": "What selects between the Shopify Function and draft order processing modes?",
+      "tags": [
+        "draft-order",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-6.md"
+      ],
+      "retrieved_documents": [
+        "schema-6.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.03141779196448624,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "1fc50203732d4f5f",
+      "error": null
+    },
+    {
+      "id": "draft-default-mode",
+      "question": "Which order processing mode is the default?",
+      "tags": [
+        "draft-order",
+        "defaults"
+      ],
+      "relevant_documents": [
+        "schema-6.md"
+      ],
+      "retrieved_documents": [
+        "schema-6.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.029891875106841326,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "0ed2036f5eeb486a",
+      "error": null
+    },
+    {
+      "id": "draft-active-conditions",
+      "question": "What has to be true for order processing to report itself as active?",
+      "tags": [
+        "draft-order",
+        "behaviour"
+      ],
+      "relevant_documents": [
+        "schema-6.md"
+      ],
+      "retrieved_documents": [
+        "schema-6.md",
+        "schema-5.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.028389250161126256,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "7e7a41c28a094d49",
+      "error": null
+    },
+    {
+      "id": "draft-idempotency-model",
+      "question": "What stops the same cart producing two draft orders?",
+      "tags": [
+        "draft-order",
+        "prisma"
+      ],
+      "relevant_documents": [
+        "schema-6.md"
+      ],
+      "retrieved_documents": [
+        "schema-6.md",
+        "schema-3.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.029658917104825377,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "243980dc63844f88",
+      "error": null
+    },
+    {
+      "id": "draft-idempotency-window",
+      "question": "How long is a draft order reused for the same cart?",
+      "tags": [
+        "draft-order",
+        "limits"
+      ],
+      "relevant_documents": [
+        "schema-6.md"
+      ],
+      "retrieved_documents": [
+        "schema-6.md",
+        "schema-3.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.02946150000207126,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "09af882d4fc5471f",
+      "error": null
+    },
+    {
+      "id": "draft-unique-constraint",
+      "question": "What is the uniqueness constraint on the draft order idempotency table?",
+      "tags": [
+        "draft-order",
+        "prisma"
+      ],
+      "relevant_documents": [
+        "schema-6.md"
+      ],
+      "retrieved_documents": [
+        "schema-6.md",
+        "schema-10.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.028994749998673797,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "053ca62c7c8e4ffb",
+      "error": null
+    },
+    {
+      "id": "draft-shopify-tag",
+      "question": "How are draft orders created by this app identified inside Shopify?",
+      "tags": [
+        "draft-order",
+        "tagging"
+      ],
+      "relevant_documents": [
+        "schema-6.md"
+      ],
+      "retrieved_documents": [
+        "schema-6.md",
+        "schema-5.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.027816500049084425,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "f54b0122c5d142d8",
+      "error": null
+    },
+    {
+      "id": "draft-addon-limitation",
+      "question": "Are add-on tier pricing lines supported in draft order mode?",
+      "tags": [
+        "draft-order",
+        "limitations"
+      ],
+      "relevant_documents": [
+        "schema-6.md"
+      ],
+      "retrieved_documents": [
+        "schema-6.md",
+        "schema-8.md",
+        "schema-4.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.028625666862353683,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "2400b3c4bacc465a",
+      "error": null
+    },
+    {
+      "id": "draft-uses-prisma",
+      "question": "Which part of order processing uses a relational database rather than metafields?",
+      "tags": [
+        "draft-order",
+        "storage"
+      ],
+      "relevant_documents": [
+        "schema-6.md"
+      ],
+      "retrieved_documents": [
+        "schema-1.md",
+        "schema-8.md",
+        "schema-3.md",
+        "schema-6.md",
+        "schema-9.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.25,
+      "ndcg": 0.43067655807339306,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.028733458137139678,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "818059a8feba4d98",
+      "error": null
+    },
+    {
+      "id": "email-templates-key",
+      "question": "Where are the notification email templates stored?",
+      "tags": [
+        "email-configuration",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-7.md"
+      ],
+      "retrieved_documents": [
+        "schema-7.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.02580670895986259,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "58efb16828ec43c3",
+      "error": null
+    },
+    {
+      "id": "email-from-address-field",
+      "question": "Which field holds the configured from-address for notifications?",
+      "tags": [
+        "email-configuration",
+        "legacy"
+      ],
+      "relevant_documents": [
+        "schema-7.md"
+      ],
+      "retrieved_documents": [
+        "schema-7.md",
+        "schema-4.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.026872582966461778,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "9b3f409faec24bd7",
+      "error": null
+    },
+    {
+      "id": "email-credentials-location",
+      "question": "Are the SMTP credentials kept in the notifications metafield?",
+      "tags": [
+        "email-configuration",
+        "security"
+      ],
+      "relevant_documents": [
+        "schema-7.md"
+      ],
+      "retrieved_documents": [
+        "schema-7.md",
+        "schema-5.md",
+        "schema-4.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.02815870800986886,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "a6983dbdec0e4918",
+      "error": null
+    },
+    {
+      "id": "extrafee-metaobject-type",
+      "question": "What metaobject type backs an extra fee rule?",
+      "tags": [
+        "extra-fee",
+        "metaobject"
+      ],
+      "relevant_documents": [
+        "schema-8.md"
+      ],
+      "retrieved_documents": [
+        "schema-8.md",
+        "schema-10.md",
+        "schema-9.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.02668320806697011,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "f5d35defba9642ae",
+      "error": null
+    },
+    {
+      "id": "extrafee-product-tag",
+      "question": "How is the hidden fee product kept out of the resource pickers?",
+      "tags": [
+        "extra-fee",
+        "tagging"
+      ],
+      "relevant_documents": [
+        "schema-8.md"
+      ],
+      "retrieved_documents": [
+        "schema-8.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.02874529198743403,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "1fbbb1d1871d427d",
+      "error": null
+    },
+    {
+      "id": "extrafee-tier-fields",
+      "question": "Which field on an extra fee rule holds the tier rows?",
+      "tags": [
+        "extra-fee",
+        "metaobject"
+      ],
+      "relevant_documents": [
+        "schema-8.md"
+      ],
+      "retrieved_documents": [
+        "schema-8.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.024717957945540547,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "7e9da72b92994bb6",
+      "error": null
+    },
+    {
+      "id": "extrafee-calculation-modes",
+      "question": "What are the two ways an extra fee can be calculated?",
+      "tags": [
+        "extra-fee",
+        "enums"
+      ],
+      "relevant_documents": [
+        "schema-8.md"
+      ],
+      "retrieved_documents": [
+        "schema-8.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.024038333911448717,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "1b5baa22d7fc43c7",
+      "error": null
+    },
+    {
+      "id": "extrafee-collection-expansion",
+      "question": "What happens to a collection scope on an extra fee rule when it is saved?",
+      "tags": [
+        "extra-fee",
+        "behaviour"
+      ],
+      "relevant_documents": [
+        "schema-8.md"
+      ],
+      "retrieved_documents": [
+        "schema-8.md",
+        "schema-10.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.02987154107540846,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "403caf27a37a4a9f",
+      "error": null
+    },
+    {
+      "id": "freegift-metaobject-type",
+      "question": "What metaobject type stores a free gift rule?",
+      "tags": [
+        "free-gift",
+        "metaobject"
+      ],
+      "relevant_documents": [
+        "schema-9.md"
+      ],
+      "retrieved_documents": [
+        "schema-9.md",
+        "schema-8.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.025090416893363,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "c41a26190ac8439b",
+      "error": null
+    },
+    {
+      "id": "freegift-function-handle",
+      "question": "What is the handle of the free gift Shopify Function?",
+      "tags": [
+        "free-gift",
+        "functions"
+      ],
+      "relevant_documents": [
+        "schema-9.md"
+      ],
+      "retrieved_documents": [
+        "schema-9.md",
+        "schema-4.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.02341279201209545,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "f28480d0385d4c67",
+      "error": null
+    },
+    {
+      "id": "freegift-widget-copy",
+      "question": "Where is the progress bar and popup copy for free gifts configured?",
+      "tags": [
+        "free-gift",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-9.md"
+      ],
+      "retrieved_documents": [
+        "schema-9.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.026825665961951017,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "ec126e28659e433b",
+      "error": null
+    },
+    {
+      "id": "freegift-readd-behaviour",
+      "question": "Which setting puts a free gift back if the customer removes it from the cart?",
+      "tags": [
+        "free-gift",
+        "behaviour"
+      ],
+      "relevant_documents": [
+        "schema-9.md"
+      ],
+      "retrieved_documents": [
+        "schema-9.md",
+        "schema-4.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.023915499914437532,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "d2f091a131ea4a9e",
+      "error": null
+    },
+    {
+      "id": "freegift-product-link",
+      "question": "How is a product linked to the free gift rules that apply to it?",
+      "tags": [
+        "free-gift",
+        "references"
+      ],
+      "relevant_documents": [
+        "schema-9.md"
+      ],
+      "retrieved_documents": [
+        "schema-9.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.02847054088488221,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "be3a1cb97e8e4552",
+      "error": null
+    },
+    {
+      "id": "accesslock-metaobject-type",
+      "question": "What metaobject type defines an access lock rule?",
+      "tags": [
+        "access-lock",
+        "metaobject"
+      ],
+      "relevant_documents": [
+        "schema-10.md"
+      ],
+      "retrieved_documents": [
+        "schema-10.md",
+        "schema-8.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.030501582892611623,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "7f76365b3b9f4238",
+      "error": null
+    },
+    {
+      "id": "accesslock-gate-installed-key",
+      "question": "How does the app know whether the theme gate has been injected?",
+      "tags": [
+        "access-lock",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-10.md"
+      ],
+      "retrieved_documents": [
+        "schema-10.md",
+        "schema-8.md",
+        "schema-7.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.026606207946315408,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "9a5c142dcd6842ef",
+      "error": null
+    },
+    {
+      "id": "accesslock-legacy-keys",
+      "question": "Why do some older installations use abbreviated access lock field keys?",
+      "tags": [
+        "access-lock",
+        "legacy"
+      ],
+      "relevant_documents": [
+        "schema-10.md"
+      ],
+      "retrieved_documents": [
+        "schema-10.md",
+        "schema-8.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.027038499945774674,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "2fb18783cca04239",
+      "error": null
+    },
+    {
+      "id": "accesslock-condition-shape",
+      "question": "What does an access lock condition entry consist of?",
+      "tags": [
+        "access-lock",
+        "sample-data"
+      ],
+      "relevant_documents": [
+        "schema-10.md"
+      ],
+      "retrieved_documents": [
+        "schema-10.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.029328292002901435,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "696847c731254546",
+      "error": null
+    },
+    {
+      "id": "accesslock-collection-timing",
+      "question": "When is collection membership resolved for an access lock?",
+      "tags": [
+        "access-lock",
+        "behaviour"
+      ],
+      "relevant_documents": [
+        "schema-10.md"
+      ],
+      "retrieved_documents": [
+        "schema-10.md",
+        "schema-5.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.028313458897173405,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "9a592988c7ae4ba7",
+      "error": null
+    },
+    {
+      "id": "accesslock-checkout-lock-key",
+      "question": "Which optional metafield carries checkout hard-lock customer tags?",
+      "tags": [
+        "access-lock",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-10.md"
+      ],
+      "retrieved_documents": [
+        "schema-1.md",
+        "schema-8.md",
+        "schema-3.md",
+        "schema-10.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.25,
+      "ndcg": 0.43067655807339306,
+      "hit": true,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 0.030270999995991588,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "c3f6f510dada4a9a",
+      "error": null
+    },
+    {
+      "id": "abstain-http-routes",
+      "question": "What HTTP routes does the cart discount module expose?",
+      "tags": [
+        "abstention",
+        "out-of-scope"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "schema-6.md",
+        "schema-3.md",
+        "schema.md",
+        "schema-4.md"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg": 0.0,
+      "hit": false,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.029271250125020742,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "1ee97c822e334142",
+      "error": null
+    },
+    {
+      "id": "abstain-pricing-plan-cost",
+      "question": "How much does the Platinum plan cost per month?",
+      "tags": [
+        "abstention",
+        "out-of-scope"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "schema-8.md",
+        "schema-6.md",
+        "schema.md"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg": 0.0,
+      "hit": false,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.026260499842464924,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "224b83bdeea34aa4",
+      "error": null
+    },
+    {
+      "id": "abstain-rate-limits",
+      "question": "What Shopify API rate limits apply when bulk importing tier pricing?",
+      "tags": [
+        "abstention",
+        "out-of-scope"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "schema-8.md",
+        "schema-4.md",
+        "schema-6.md",
+        "schema.md"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg": 0.0,
+      "hit": false,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.02800987521186471,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "b11521c1133d4e06",
+      "error": null
+    },
+    {
+      "id": "abstain-database-hosting",
+      "question": "Which cloud provider hosts the Prisma database in production?",
+      "tags": [
+        "abstention",
+        "out-of-scope"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "schema-6.md",
+        "schema-4.md",
+        "schema-5.md",
+        "schema-3.md",
+        "schema-9.md"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg": 0.0,
+      "hit": false,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.030308834044262767,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "34c62f151acd4447",
+      "error": null
+    },
+    {
+      "id": "abstain-support-sla",
+      "question": "What is the support response time commitment for OSCP customers?",
+      "tags": [
+        "abstention",
+        "out-of-scope"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "schema-2.md",
+        "schema-6.md",
+        "schema-10.md"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg": 0.0,
+      "hit": false,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.02979424991644919,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "823a3467189941b5",
+      "error": null
+    },
+    {
+      "id": "abstain-liquid-snippet-source",
+      "question": "What is the exact Liquid snippet the access lock gate injects into a theme?",
+      "tags": [
+        "abstention",
+        "out-of-scope"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "schema-10.md"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg": 0.0,
+      "hit": false,
+      "answer": "",
+      "abstained": false,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 0.027931499993428588,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "trace_id": "ac1d0e28389c4e09",
+      "error": null
+    }
+  ]
+}

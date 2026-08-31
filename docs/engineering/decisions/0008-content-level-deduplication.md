@@ -21,7 +21,7 @@ This is not merely wasted storage. Retrieval returns `top_k = 5` chunks, and
 duplicate chunks compete for the same slots — a query matching that content can spend
 two of its five slots on identical text, halving the diversity of what the model is
 shown. It is a plausible contributor to a measured finding: four of the six recall
-failures in `evaluation/baselines/full-default.json` retrieved a scenario chunk in
+failures in `evaluation/baselines/faq-full.json` retrieved a scenario chunk in
 place of the FAQ document that answers the question.
 
 **Why the existing machinery does not catch it.** `content_hash()` exists, is
@@ -79,7 +79,7 @@ it is queued rather than rejected.
 
 - The current index carries 34 duplicate chunks (17.6%), with the retrieval-slot
   competition described above. This is live, in the committed baseline, and every
-  number in `evaluation/baselines/full-default.json` was measured against it.
+  number in `evaluation/baselines/faq-full.json` was measured against it.
 - Nothing detects the condition today. It was found by a knowledge-graph rebuild that
   happened to have `graphifyy[office]` installed for the first time. That is not a
   control.

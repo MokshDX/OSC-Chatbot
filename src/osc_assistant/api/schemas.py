@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ..types import (
     Answer,
@@ -36,9 +36,26 @@ class MessageBody(BaseModel):
 
 
 class ChatRequestBody(BaseModel):
+    """One turn.
+
+    `session_id` and `history` are two ways to supply conversational context and
+    they are mutually exclusive. `session_id` is server-held memory: the service
+    knows the conversation and the client sends only the new question. `history` is
+    client-held: the caller owns the transcript and replays it, which is what a
+    stateless programmatic integration wants. Accepting both on one request would
+    mean silently choosing which to believe, so it is rejected instead.
+    """
+
     model_config = ConfigDict(extra="forbid")
 
     question: str = Field(min_length=1, max_length=MAX_QUESTION_LENGTH)
+    session_id: str | None = Field(
+        default=None,
+        description=(
+            "A session opened with POST /api/sessions. The server supplies the "
+            "conversation history and records this turn. Omit for a one-shot question."
+        ),
+    )
     history: list[MessageBody] = Field(default_factory=list, max_length=MAX_HISTORY_MESSAGES)
     stream: bool = Field(
         default=True,
@@ -52,8 +69,23 @@ class ChatRequestBody(BaseModel):
         ),
     )
 
+    @model_validator(mode="after")
+    def _one_source_of_history(self) -> ChatRequestBody:
+        if self.session_id and self.history:
+            raise ValueError(
+                "Supply either session_id (server-held memory) or history "
+                "(client-held), not both."
+            )
+        return self
+
     def domain_history(self) -> list[Message]:
         return [message.to_domain() for message in self.history]
+
+
+class SessionBody(BaseModel):
+    """A session id. The only thing a client needs to keep between turns."""
+
+    session_id: str
 
 
 class SearchRequestBody(BaseModel):

@@ -241,39 +241,38 @@ async def test_a_sync_reports_the_trace_that_produced_it(
     assert recorded.spans[0].attributes["indexed"] == 3
 
 
-def test_the_ingest_root_is_the_company_corpus_and_excludes_the_knowledge_base() -> None:
-    """Regression: the corpus boundary is enforced by two defaults agreeing.
+def test_the_configured_corpus_root_cannot_reach_the_engineering_knowledge_base() -> None:
+    """Regression: the corpus boundary is a directory, and it is defined once.
 
-    `docs/company/` is the answer corpus; `docs/engineering/` is this repository's own
-    knowledge base and must never be retrievable. An answer sourced from an ADR would
-    retrieve cleanly, ground correctly and cite accurately while being from entirely
-    the wrong universe — and nothing downstream catches it.
+    `docs/engineering/` is this repository's own knowledge base and must never be
+    retrievable. An answer sourced from an ADR would retrieve cleanly, ground
+    correctly and cite accurately while being from entirely the wrong universe —
+    and nothing downstream catches it, which is why this is asserted rather than
+    documented.
 
-    The boundary lives in exactly two places, `DOCS` in the Makefile and the `--corpus`
-    default on `doctor`, so the failure mode is that one moves and the other does not.
-    This asserts they agree and that neither has drifted back to a bare `docs`, which
-    would sweep the knowledge base into the index.
+    This previously checked that two hand-maintained defaults agreed: `DOCS` in the
+    Makefile and the `--corpus` default on `doctor`. There is now one definition —
+    `corpus.root` in the profile — and `ingest`, `doctor` and the empty-index
+    startup note all read it, so the drift this guarded against is no longer
+    expressible. What remains worth asserting is the property the two defaults
+    existed to protect: whatever the configured root is, the knowledge base is not
+    inside it, and the root has not drifted up to a bare `docs`.
     """
-    import re
-
     from osc_assistant.cli.diagnose import doctor
+    from osc_assistant.settings import Settings
 
     repository = Path(__file__).resolve().parent.parent
+    configured = Settings().corpus.root
 
-    makefile = (repository / "Makefile").read_text(encoding="utf-8")
-    match = re.search(r"^DOCS \?= (.+)$", makefile, re.MULTILINE)
-    assert match, "Makefile no longer defines a DOCS corpus root"
-    make_root = Path(match.group(1).strip())
-
-    cli_default = doctor.__defaults__[2]  # type: ignore[index]
-    assert cli_default is not None
-
-    assert Path(*make_root.parts[-2:]) == Path(*Path(cli_default).parts[-2:]), (
-        f"Makefile ingests {make_root} but `doctor` checks {cli_default}"
-    )
-    assert make_root.name == "company"
-
-    # And the knowledge base must not be reachable from the corpus root.
-    corpus_root = (repository / "docs" / "company").resolve()
     knowledge_base = (repository / "docs" / "engineering").resolve()
-    assert not knowledge_base.is_relative_to(corpus_root)
+    corpus_root = (repository / configured).resolve()
+    assert not knowledge_base.is_relative_to(corpus_root), (
+        f"the engineering knowledge base is inside the corpus root {configured}"
+    )
+    assert configured.parts[:2] == ("docs", "company"), (
+        f"corpus.root is {configured}; the answer corpus lives under docs/company"
+    )
+
+    # `doctor --corpus` must default to the configured root rather than carrying a
+    # literal of its own, which is the drift this test used to catch.
+    assert doctor.__defaults__[2] is None  # type: ignore[index]

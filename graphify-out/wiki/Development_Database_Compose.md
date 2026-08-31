@@ -1,11 +1,11 @@
 # Development Database Compose
 
-> 2 nodes · cohesion 1.00
+> 2 nodes
 
 ## Key Concepts
 
-- **pgvector Image Tag Pinning Intent** (1 connections) — `docker-compose.yml`
 - **Development PostgreSQL + pgvector Service** (1 connections) — `docker-compose.yml`
+- **pgvector Image Tag Pinning Intent** (1 connections) — `docker-compose.yml`
 
 ## Relationships
 

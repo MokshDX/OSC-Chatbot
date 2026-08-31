@@ -46,6 +46,18 @@ logging:
   # after the level check passes.
   log_spans: true
 
+# The answer corpus. `ingest`, `doctor` and the empty-index startup note all read
+# this one value, so there is no second place for the root to drift to.
+#
+# docs/company/schema is the authoritative knowledge source for this phase. The
+# sibling directories under docs/company — faq/ and scenarios/ — stay on disk and
+# stay out of the index; docs/engineering/ is this repository's own documentation
+# and must never be ingested. An answer sourced from the wrong directory retrieves
+# cleanly, grounds correctly and cites accurately, so nothing downstream catches
+# it: the boundary has to be the directory itself.
+corpus:
+  root: docs/company/schema
+
 # Answer model: Qwen3 served by the local Ollama daemon, reached through the
 # OpenAI-compatible adapter.
 llm:
@@ -99,8 +111,24 @@ reranker:
 # Sized against the answer model's 4096-token context: roughly 225 tokens per
 # chunk, five chunks of sources, leaving room for the system prompt and the answer.
 # Raise both if you serve this model with a larger context.
+#
+# `markdown` (heading-aware: split on structure first, pack to size second) was
+# measured against the other three strategies on the schema suite, all else equal.
+# It won on every retrieval metric, and by the largest margin on exactly the
+# documents `recursive` handled worst — the ones that are mostly tables:
+#
+#   strategy             chunks  recall@5   mrr  ndcg@5  precision@5
+#   recursive                52     0.909  0.855   0.868        0.186
+#   langchain_recursive      71     0.927  0.874   0.888        0.189
+#   fixed                    45     0.946  0.872   0.890        0.193
+#   markdown                 80     0.982  0.897   0.918        0.200
+#
+# `recursive` split this corpus mid-table-row and mid-word — one chunk of schema.md
+# began `ormId` — which is why heading-aware splitting is worth 7 points of recall
+# here and would be worth far less on prose. Supersedes ADR 0006; see ADR 0012.
+# Changing this changes every chunk id, so it requires `./osc ingest --reindex`.
 chunking:
-  strategy: recursive
+  strategy: markdown
   chunk_size: 900
   chunk_overlap: 120
 
@@ -110,16 +138,49 @@ retrieval:
   top_k: 5
   rrf_k: 60
   min_score: 0.0
-  # Off by default. It resolves follow-up references ("what about the second one?")
-  # but costs a second model call on the critical path, and its benefit has never
-  # been measured against a golden set. Enable it together with an evaluation run.
-  rewrite_queries: false
+  # On, and measured. Retrieval sees conversation history through this stage and
+  # nowhere else, so with it off a follow-up is *generated* with full context and
+  # *retrieved for* as if it were standalone — "what type is it?" searches the index
+  # for those literal words.
+  #
+  # The conversational suite runs every context-dependent turn twice, once in the
+  # session and once cold, so the contribution is isolated rather than assumed:
+  #
+  #                                    off      on
+  #   follow_up_resolution           0.765   0.941
+  #   follow_up_resolution_no_context 0.765   0.765   <- the cold control
+  #   follow_up_lift                  0.000  +0.177
+  #   context_pollution               0.000   0.000
+  #
+  # A lift of exactly 0.000 with it off is the whole argument: memory was reaching
+  # generation and contributing nothing to retrieval. Turning it on resolves three
+  # more of the seventeen context-dependent turns and does not pull standalone
+  # questions back toward the previous topic (`context_pollution` stays at 0).
+  #
+  # Single-turn quality is unaffected *by construction* — the rewriter returns the
+  # question untouched when there is no history, making no model call — and that was
+  # confirmed rather than assumed: recall@5, mrr, ndcg@5 and precision@5 on the
+  # schema suite are bit-identical with it on and off.
+  #
+  # The cost is one `fast_llm` call per follow-up turn, on the critical path.
+  rewrite_queries: true
 
 generation:
   # Must cover the answer plus any thinking the model does. 1500 keeps the whole
   # request inside a 4096-token context alongside five chunks of sources.
   max_tokens: 1500
   require_citations: true
+
+# Ephemeral conversational memory. Sessions live in the answering process and are
+# destroyed on close, on idle expiry and on restart — see ADR 0010. Every value is
+# a ceiling on something that would otherwise be unbounded.
+session:
+  # Ten exchanges. Bounds the prompt, not the disk: history is replayed into every
+  # turn, so an unbounded session grows the context window until generation
+  # truncates. Against a 4096-token context this is already generous.
+  max_messages: 20
+  max_sessions: 1000
+  idle_ttl_seconds: 3600
 
 database:
   dsn: postgresql://mokshdutt@localhost:5432/osc

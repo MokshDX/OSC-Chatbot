@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -41,6 +41,7 @@ from ..types import Answer, ScoredChunk
 from . import metrics
 from .dataset import GoldenCase, GoldenSet, document_key
 from .judge import FaithfulnessJudge
+from .metrics import mean_of
 
 log = get_logger(__name__)
 
@@ -64,6 +65,7 @@ class CaseResult:
     recall: float = 0.0
     precision: float = 0.0
     reciprocal_rank: float = 0.0
+    ndcg: float = 0.0
     hit: bool = False
 
     # ---- generation. Left at defaults by a retrieval-only run.
@@ -292,6 +294,7 @@ class Evaluator:
             recall=metrics.recall_at_k(relevant, ranked, top_k),
             precision=metrics.precision_at_k(relevant, ranked, top_k),
             reciprocal_rank=metrics.reciprocal_rank(relevant, ranked),
+            ndcg=metrics.ndcg_at_k(relevant, ranked, top_k),
             hit=metrics.hit_at_k(relevant, ranked, top_k),
             must_abstain=case.must_abstain,
             expected_facts=len(case.expected_facts),
@@ -378,6 +381,7 @@ def summarise(
         # ---- retrieval
         f"recall@{top_k}": mean_of(retrieval_cases, lambda r: r.recall),
         f"precision@{top_k}": mean_of(retrieval_cases, lambda r: r.precision),
+        f"ndcg@{top_k}": mean_of(retrieval_cases, lambda r: r.ndcg),
         "mrr": mean_of(retrieval_cases, lambda r: r.reciprocal_rank),
         f"hit_rate@{top_k}": mean_of(retrieval_cases, lambda r: float(r.hit)),
     }
@@ -395,8 +399,8 @@ def summarise(
         summary.update(
             {
                 "citation_coverage": mean_of(answered, lambda r: float(r.citations > 0)),
-                "groundedness": _ratio(grounded_total, citations_total),
-                "citation_precision": _ratio(relevant_citations, citations_total),
+                "groundedness": metrics.ratio(grounded_total, citations_total),
+                "citation_precision": metrics.ratio(relevant_citations, citations_total),
                 "fact_match": mean_of(with_facts, lambda r: float(not r.missing_facts)),
                 "abstention_accuracy": mean_of(abstention_cases, lambda r: float(r.abstained)),
             }
@@ -415,15 +419,6 @@ def summarise(
         }
     )
     return summary
-
-
-def mean_of[T](items: Sequence[T], extract: Callable[[T], float]) -> float:
-    """Mean of `extract` over `items`, rounded, and 0.0 when there are none."""
-    return round(metrics.mean([extract(item) for item in items]), 4)
-
-
-def _ratio(numerator: int, denominator: int) -> float:
-    return round(numerator / denominator, 4) if denominator else 0.0
 
 
 def compare(baseline: dict[str, Any], current: dict[str, Any]) -> list[tuple[str, float, float]]:

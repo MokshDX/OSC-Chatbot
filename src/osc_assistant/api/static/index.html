@@ -12,9 +12,15 @@
   replaced by swapping this file — which is the expected path, since a richer
   client is planned.
 
-  The one rule worth preserving on a rewrite: the `complete` event is
-  authoritative. When it reports an abstention the client must discard the text it
-  already rendered, because the assistant declined to answer.
+  Two rules worth preserving on a rewrite:
+
+  1. The `complete` event is authoritative. When it reports an abstention the
+     client must discard the text it already rendered, because the assistant
+     declined to answer.
+  2. The conversation is server-held. This page keeps a `session_id`, never a
+     transcript, and deletes the session on `pagehide`. A client that accumulates
+     its own history and replays it should send `history` instead and omit
+     `session_id` — the API takes one or the other, never both.
 -->
 <style>
   :root {
@@ -120,6 +126,23 @@ fetch("/api/health").then(r => r.json()).then(h => {
     `${h.llm.provider}:${h.llm.model} · ${h.embeddings.model} · ${h.vector_store.provider} · ${h.retrieval_strategy}`;
 }).catch(() => { document.getElementById("meta").textContent = "health check failed"; });
 
+// One server-held session per page load. The client keeps an id, not a transcript:
+// history lives on the server, so a reload starts a clean conversation and closing
+// the tab releases the memory. `keepalive` is what makes that last part work — an
+// ordinary fetch is cancelled when the page goes away, and the session would then
+// wait out its idle TTL instead.
+let sessionId = null;
+const sessionReady = fetch("/api/sessions", { method: "POST" })
+  .then(r => r.ok ? r.json() : null)
+  .then(body => { sessionId = body && body.session_id; })
+  .catch(() => { sessionId = null; });
+
+// `sendBeacon` cannot issue a DELETE, so this is fetch with `keepalive`, which is
+// the same guarantee: the request outlives the document.
+window.addEventListener("pagehide", () => {
+  if (sessionId) fetch(`/api/sessions/${sessionId}`, { method: "DELETE", keepalive: true });
+});
+
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
   if (cls) n.className = cls;
@@ -163,12 +186,18 @@ form.addEventListener("submit", async (event) => {
   const citedIds = new Set();
 
   try {
+    // Wait for the session before the first turn, so question one is already part
+    // of the conversation rather than an orphan the second turn cannot refer to.
+    await sessionReady;
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      // History is deliberately not sent: query rewriting is disabled by default,
-      // so a follow-up would retrieve against an unresolved reference.
-      body: JSON.stringify({ question, stream: true }),
+      // Only the new question goes on the wire. The server holds the history under
+      // `session_id`, which is what makes a follow-up resolvable — and, when the
+      // session could not be opened, degrades to the previous single-turn
+      // behaviour rather than failing the request.
+      body: JSON.stringify(sessionId ? { question, session_id: sessionId, stream: true }
+                                     : { question, stream: true }),
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 

@@ -6,7 +6,8 @@ does*, and neither answers **why it is built this way** — which is the questio
 actually costs time when a new engineer, or a new AI session, picks the project up.
 
 > **This directory is not part of the answer corpus.** The ingest root is
-> `docs/company/` (see [`architecture/knowledge-corpus.md`](architecture/knowledge-corpus.md)).
+> `corpus.root` — `docs/company/schema/` by default (see
+> [`architecture/knowledge-corpus.md`](architecture/knowledge-corpus.md)).
 > Nothing written here is retrievable by the assistant, which is deliberate: an
 > employee asking "how do I set up tiered pricing?" must not be answered with our
 > tracing design.
@@ -24,7 +25,9 @@ mindmap
       Retrieval
       Observability
       Logging
+      Conversation
       Evaluation
+      Evaluation methodology
       Knowledge corpus
       Testing
     Technologies
@@ -43,6 +46,11 @@ mindmap
       ADR 0007 Corpus layout
       ADR 0008 Content dedup
       ADR 0009 Persistent logging
+      ADR 0010 Corpus root is config
+      ADR 0011 Schema-first corpus
+      ADR 0012 Markdown chunking
+      ADR 0013 Ephemeral sessions
+      ADR 0014 Derived tolerances
 ```
 
 **If you are new**, read in this order:
@@ -56,7 +64,9 @@ mindmap
    what happened during one request, and
    [`architecture/logging.md`](architecture/logging.md) — how to find out what
    happened at all.
-5. [`architecture/evaluation.md`](architecture/evaluation.md) — how we know whether a
+5. [`architecture/conversation.md`](architecture/conversation.md) — how a follow-up
+   resolves against what was said before, and what is deliberately not remembered.
+6. [`architecture/evaluation.md`](architecture/evaluation.md) — how we know whether a
    change helped.
 
 **If you are about to change retrieval**, read `architecture/evaluation.md` first.
@@ -81,8 +91,10 @@ rejected, with reasons.
 | [chunking-and-embeddings.md](architecture/chunking-and-embeddings.md) | Why chunk size is the highest-leverage knob, and what an embedding actually is |
 | [observability.md](architecture/observability.md) | Tracing, persistent traces, the debugging workflow |
 | [logging.md](architecture/logging.md) | Persistent logs, rotation, retention, the audit stream, redaction |
-| [evaluation.md](architecture/evaluation.md) | Every metric, how to run a comparison, how to gate CI |
-| [knowledge-corpus.md](architecture/knowledge-corpus.md) | How `docs/company/` is organised and how to grow it |
+| [conversation.md](architecture/conversation.md) | Sessions, ephemeral memory, isolation, and where history does and does not reach |
+| [evaluation.md](architecture/evaluation.md) | The suites, how to run a comparison, how to gate CI |
+| [evaluation-methodology.md](architecture/evaluation-methodology.md) | Every metric's definition, purpose, limitations, baseline and regression criteria |
+| [knowledge-corpus.md](architecture/knowledge-corpus.md) | How the corpus is organised and how to grow it |
 | [testing.md](architecture/testing.md) | The four test tiers and what each is for |
 
 ### Technologies

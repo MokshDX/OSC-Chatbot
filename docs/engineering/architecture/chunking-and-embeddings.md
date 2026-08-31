@@ -56,7 +56,7 @@ chunk while every document content hash still matches.** Ingestion sees unchange
 documents, skips them, and leaves a stale index that looks healthy. Use:
 
 ```bash
-./osc ingest ./docs/company --reindex
+./osc ingest --reindex
 ```
 
 This is called out in `PROJECT_STATUS.md`, in `config/default.yaml`, and here, because
@@ -68,43 +68,71 @@ it has caught people.
 
 | Name | Source | What it does |
 |---|---|---|
-| `recursive` | OSC | Splits on the coarsest separator that fits: paragraphs, then lines, then sentences, then characters. **The default** |
+| Name | Source | What it does |
+|---|---|---|
+| `markdown` | `langchain-text-splitters` | Splits on heading structure *first*, packs to size second, records the heading path on each chunk's metadata. **The default** |
+| `recursive` | OSC | Splits on the coarsest separator that fits: paragraphs, then lines, then sentences, then characters |
 | `fixed` | OSC | Fixed-size windows. An evaluation baseline, deliberately naive |
-| `langchain_recursive` | `langchain-text-splitters` | The same idea, better edge cases |
-| `markdown` | `langchain-text-splitters` | Splits on heading structure *first*, packs to size second, records the heading path on each chunk's metadata |
+| `langchain_recursive` | `langchain-text-splitters` | The same idea as `recursive`, better edge cases |
 
-### Why the default is still `recursive` despite known defects
+### Why the default is `markdown` — measured, not assumed
 
-The built-in `recursive` chunker has two known rough edges, both documented: a chunk
-can exceed its size budget by up to the overlap, and the overlap slice can cut
-mid-word. `langchain_recursive` does not have either.
+`recursive` was the default for five phases, kept there deliberately: switching a
+chunker changes every chunk boundary and therefore every chunk id in a live index, and
+the project's rule is that a retrieval change ships with a measured improvement. There
+was no golden set to measure against (ADR 0006).
 
-It remains the default because **switching it changes every chunk boundary and
-therefore every chunk id in a live index**, and the project's rule is that a retrieval
-change ships with a measured improvement. Until this iteration there was no way to
-measure one.
+Phase 6 measured it. All four strategies, same corpus, same embedding model, same
+`top_k`, each after a full `--reindex`:
 
-There is now. The comparison — `recursive` vs `langchain_recursive` vs `markdown`, with
-a number and a decision — is the top recommended next milestone, and it is two commands:
+| strategy | chunks | recall@5 | mrr | ndcg@5 | precision@5 |
+|---|---|---|---|---|---|
+| `recursive` | 52 | 0.909 | 0.855 | 0.868 | 0.186 |
+| `langchain_recursive` | 71 | 0.927 | 0.874 | 0.888 | 0.189 |
+| `fixed` | 45 | 0.946 | 0.872 | 0.890 | 0.193 |
+| **`markdown`** | **80** | **0.982** | **0.897** | **0.918** | **0.200** |
+
+`markdown` wins on every metric. See [ADR 0012](../decisions/0012-markdown-chunking-measured.md).
+
+The two known rough edges in `recursive` — a chunk can exceed its size budget by up to
+the overlap, and the overlap slice can cut mid-word — are no longer on the default
+path, but the strategy is still registered and still has them.
+
+**Re-running the comparison** is two commands, and the pattern generalises to any
+chunker experiment:
 
 ```bash
-./osc eval --retrieval-only -o evaluation/results/recursive.json
-# edit a profile to set chunking.strategy, then:
-./osc ingest ./docs/company --reindex --profile config/experiments/markdown.yaml
-./osc eval --retrieval-only --profile config/experiments/markdown.yaml \
-  --baseline evaluation/results/recursive.json
+./osc eval --suite schema --retrieval-only --no-gate -o before.json
+OSC_CHUNKING__STRATEGY=fixed ./osc ingest --reindex
+OSC_CHUNKING__STRATEGY=fixed ./osc eval --suite schema --retrieval-only --baseline before.json
 ```
 
-### Why `markdown` is the interesting candidate
+`--reindex` is not optional. Chunk ids derive from chunk boundaries while document
+hashes do not, so an ordinary sync reports `skipped` and silently measures the old
+index under the new label.
 
-The corpus is now 17 topic-scoped Markdown files whose H2 headings are the questions
-users ask. A splitter that respects that structure keeps a question and its answer in
-one chunk, and records the heading path — so a chunk knows it is under
-*Draft Order → How are Shopify discount coupons applied?* rather than being an
-anonymous 900-character window that happens to straddle two questions.
+### Why `markdown` won
 
-That is a hypothesis, not a result. It is exactly the kind of claim that used to get
-adopted on plausibility and now has to earn a number.
+The corpus is eleven schema documents that are mostly **markdown tables** — metafield
+inventories, metaobject field lists — with JSON payloads between them. A splitter that
+respects that structure keeps a table with its heading and records the heading path,
+so a chunk knows it is under *AddOnsTierPricing → Inventory* rather than being an
+anonymous 900-character window.
+
+`recursive` did not respect it. Inspecting the index under the old default showed
+`schema.md` producing four chunks: one of 147 characters holding only the heading, one
+starting mid-table at `| \`json\` | Template catalogue…`, and one starting mid-word at
+`ormId\``. **A chunk beginning mid-identifier cannot be retrieved by the identifier it
+contains**, which is precisely what these questions search for.
+
+The gain is concentrated where the defect was: `addons-tier-pricing` and
+`bulk-import-export`, the two most table-dense documents, were the weakest categories
+under `recursive` at 0.60 recall.
+
+**This result is corpus-specific and should not be generalised.** `markdown` is worth
+7 points of recall *on documents that are mostly tables*; on prose it would be worth
+far less. The FAQ suite is retained partly so that claim can be checked rather than
+assumed — running the comparison against it is unfinished work.
 
 ---
 
@@ -112,7 +140,7 @@ adopted on plausibility and now has to earn a number.
 
 ```yaml
 chunking:
-  strategy: recursive
+  strategy: markdown
   chunk_size: 900        # characters
   chunk_overlap: 120
 ```
@@ -127,13 +155,18 @@ chunks fit the prompt budget.
 **Overlap** exists so a fact that straddles a boundary survives in at least one chunk
 whole. It costs storage and duplicate retrieval hits.
 
-900/120 is sized against the answer model's 4096-token context: roughly 225 tokens per
-chunk, five chunks of sources, leaving room for the system prompt and the answer. It is
-an educated guess. `./osc status` reports the *observed* chunk-length percentiles,
-which is the only honest way to check the configured target is being met — a
-`chunk_size` of 900 with a p95 of 180 means the separators are firing far too early.
+900/120 is sized against the answer model's 4096-token context. `./osc status` reports
+the *observed* chunk-length percentiles, which is the only honest way to check the
+configured target is being met — a `chunk_size` of 900 with a p95 of 180 means the
+separators are firing far too early.
 
-Current index: 21 documents, 193 chunks, median 826 characters. Close to target.
+Current index: **11 documents, 80 chunks, median 278 characters.** That is a long way
+below the 900 target, and it is not a defect: `markdown` splits on heading structure
+first, and the schema documents are lists of short sections. It has a consequence
+worth acting on, though — **five chunks is now roughly a third of the context it was
+under `recursive`** (median 826), so `top_k` is carrying far less material than it was
+tuned for. `top_k` has deliberately not been re-tuned in the same change as the
+chunker, and it is the most clearly-owed retrieval experiment in the repository.
 
 ---
 

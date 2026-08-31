@@ -1,23 +1,23 @@
 # Gemini Embeddings
 
-> 8 nodes · cohesion 0.39
+> 8 nodes
 
 ## Key Concepts
 
 - **GeminiEmbeddingModel** (9 connections) — `src/osc_assistant/providers/embeddings/gemini.py`
 - **._embed()** (5 connections) — `src/osc_assistant/providers/embeddings/gemini.py`
 - **.embed_documents()** (3 connections) — `src/osc_assistant/providers/embeddings/gemini.py`
-- **.embed_query()** (3 connections) — `src/osc_assistant/providers/embeddings/gemini.py`
 - **Vector** (3 connections)
-- **.dimensions()** (1 connections) — `src/osc_assistant/providers/embeddings/gemini.py`
+- **.embed_query()** (3 connections) — `src/osc_assistant/providers/embeddings/gemini.py`
 - **.model_id()** (1 connections) — `src/osc_assistant/providers/embeddings/gemini.py`
+- **.dimensions()** (1 connections) — `src/osc_assistant/providers/embeddings/gemini.py`
 - **Adapter over `google-genai`'s embedding interface.** (1 connections) — `src/osc_assistant/providers/embeddings/gemini.py`
 
 ## Relationships
 
-- [Protocol Seams & Embedding Errors](Protocol_Seams_%26_Embedding_Errors.md) (2 shared connections)
-- [Error Hierarchy & Embedding Providers](Error_Hierarchy_%26_Embedding_Providers.md) (1 shared connections)
-- [Provider Errors & ChatModel Protocol](Provider_Errors_%26_ChatModel_Protocol.md) (1 shared connections)
+- [Ingestion Loaders & Parsers](Ingestion_Loaders_%26_Parsers.md) (2 shared connections)
+- [ADR 0001 Protocol Seams](ADR_0001_Protocol_Seams.md) (1 shared connections)
+- [LangChain Integration Tests](LangChain_Integration_Tests.md) (1 shared connections)
 
 ## Source Files
 

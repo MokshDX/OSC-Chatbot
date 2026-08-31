@@ -1,53 +1,61 @@
 # Span Tree & Trace Core
 
-> 22 nodes · cohesion 0.13
+> 35 nodes
 
 ## Key Concepts
 
-- **Trace** (30 connections) — `src/osc_assistant/observability/trace.py`
-- **Span** (19 connections) — `src/osc_assistant/observability/trace.py`
-- **_reset()** (7 connections) — `src/osc_assistant/observability/trace.py`
-- **Any** (6 connections)
-- **_log_trace()** (5 connections) — `src/osc_assistant/observability/trace.py`
-- **.slowest()** (4 connections) — `src/osc_assistant/observability/trace.py`
-- **.set()** (3 connections) — `src/osc_assistant/observability/trace.py`
-- **.to_dict()** (3 connections) — `src/osc_assistant/observability/trace.py`
-- **.to_dict()** (2 connections) — `src/osc_assistant/observability/trace.py`
-- **.root()** (2 connections) — `src/osc_assistant/observability/trace.py`
-- **ContextVar** (1 connections)
-- **T** (1 connections)
-- **One stage of processing, timed. `offset_ms` is measured from the start of the…** (1 connections) — `src/osc_assistant/observability/trace.py`
-- **Attach structured facts about what this stage did. Values should be small and…** (1 connections) — `src/osc_assistant/observability/trace.py`
-- **Everything one operation did, as a flat list of spans in start order. Flat…** (1 connections) — `src/osc_assistant/observability/trace.py`
-- **The leaf span that consumed the most wall time. Leaves only: a parent's…** (1 connections) — `src/osc_assistant/observability/trace.py`
-- **Begin a root trace for one operation (a request, a CLI command, a sync).…** (1 connections) — `src/osc_assistant/observability/trace.py`
-- **Time one stage inside the active trace. Outside a trace this yields a detached…** (1 connections) — `src/osc_assistant/observability/trace.py`
-- **Restore `variable`, tolerating a close in a foreign context. The streaming…** (1 connections) — `src/osc_assistant/observability/trace.py`
-- **Emit the whole trace as one structured record. One line per operation rather…** (1 connections) — `src/osc_assistant/observability/trace.py`
-- **.failed()** (1 connections) — `src/osc_assistant/observability/trace.py`
-- **Token** (1 connections)
+- **InMemorySessionStore** (46 connections) — `src/osc_assistant/conversation.py`
+- **test_conversation.py** (32 connections) — `tests/test_conversation.py`
+- **conversation.py** (19 connections) — `src/osc_assistant/conversation.py`
+- **SessionSettings** (18 connections) — `src/osc_assistant/settings.py`
+- **test_history_is_trimmed_from_the_oldest_end()** (4 connections) — `tests/test_conversation.py`
+- **test_activity_postpones_expiry()** (4 connections) — `tests/test_conversation.py`
+- **test_reading_history_postpones_expiry_so_a_turn_cannot_outlive_itself()** (4 connections) — `tests/test_conversation.py`
+- **test_the_protocol_is_satisfied_structurally()** (3 connections) — `tests/test_conversation.py`
+- **test_history_is_a_copy_so_a_caller_cannot_mutate_the_session()** (3 connections) — `tests/test_conversation.py`
+- **test_destroying_an_unknown_session_reports_that_there_was_nothing()** (3 connections) — `tests/test_conversation.py`
+- **test_a_reopened_session_id_is_never_reissued()** (3 connections) — `tests/test_conversation.py`
+- **test_an_unknown_session_names_the_three_ordinary_causes()** (3 connections) — `tests/test_conversation.py`
+- **test_a_trimmed_session_still_reports_its_true_length()** (3 connections) — `tests/test_conversation.py`
+- **test_the_least_recently_used_session_is_evicted_at_capacity()** (3 connections) — `tests/test_conversation.py`
+- **test_an_idle_session_expires()** (3 connections) — `tests/test_conversation.py`
+- **.__init__()** (2 connections) — `src/osc_assistant/conversation.py`
+- **.live_sessions()** (2 connections) — `src/osc_assistant/conversation.py`
+- **test_a_new_session_starts_empty()** (2 connections) — `tests/test_conversation.py`
+- **test_a_recorded_turn_becomes_user_then_assistant_messages()** (2 connections) — `tests/test_conversation.py`
+- **test_sessions_cannot_see_each_other()** (2 connections) — `tests/test_conversation.py`
+- **test_closing_a_session_destroys_its_memory()** (2 connections) — `tests/test_conversation.py`
+- **test_live_session_count_tracks_creation_and_closure()** (2 connections) — `tests/test_conversation.py`
+- **Session-scoped conversational memory. Until this module existed, every question…** (1 connections) — `src/osc_assistant/conversation.py`
+- **Process-local conversation memory, bounded three ways. The bounds are the…** (1 connections) — `src/osc_assistant/conversation.py`
+- **How many sessions are currently held. For `doctor` and for tests.** (1 connections) — `src/osc_assistant/conversation.py`
+- *... and 10 more nodes in this community*
 
 ## Relationships
 
-- [Ingestion Logging & Trace Persistence](Ingestion_Logging_%26_Trace_Persistence.md) (8 shared connections)
-- [Observability Entry & Trace Rendering](Observability_Entry_%26_Trace_Rendering.md) (8 shared connections)
-- [Persistent Trace Store](Persistent_Trace_Store.md) (6 shared connections)
-- [Answer Generation & Faithfulness Judge](Answer_Generation_%26_Faithfulness_Judge.md) (3 shared connections)
-- [Trace Sink & JSONL Parsing](Trace_Sink_%26_JSONL_Parsing.md) (3 shared connections)
-- [Trace Listing CLI](Trace_Listing_CLI.md) (2 shared connections)
-- [Trace Ring Buffer](Trace_Ring_Buffer.md) (2 shared connections)
-- [Observability Installation & Isolation](Observability_Installation_%26_Isolation.md) (1 shared connections)
-- [Trace Configuration & CLI Trace](Trace_Configuration_%26_CLI_Trace.md) (1 shared connections)
-- [Trace Store Tests](Trace_Store_Tests.md) (1 shared connections)
+- [Generation & Abstention Metrics](Generation_%26_Abstention_Metrics.md) (22 shared connections)
+- [Observability Subsystem](Observability_Subsystem.md) (10 shared connections)
+- [Session Store Internals](Session_Store_Internals.md) (6 shared connections)
+- [Document Loaders](Document_Loaders.md) (5 shared connections)
+- [StoreInspector Protocol](StoreInspector_Protocol.md) (4 shared connections)
+- [Ingestion Loaders & Parsers](Ingestion_Loaders_%26_Parsers.md) (3 shared connections)
+- [SessionStore Seam](SessionStore_Seam.md) (3 shared connections)
+- [Golden Set & Case Results](Golden_Set_%26_Case_Results.md) (2 shared connections)
+- [PgVector SQL & Inspection](PgVector_SQL_%26_Inspection.md) (2 shared connections)
+- [Evaluation Runner Tests](Evaluation_Runner_Tests.md) (1 shared connections)
+- [Doctor Health Checks](Doctor_Health_Checks.md) (1 shared connections)
+- [Cross-Encoder Reranker](Cross-Encoder_Reranker.md) (1 shared connections)
 
 ## Source Files
 
-- `src/osc_assistant/observability/trace.py`
+- `src/osc_assistant/conversation.py`
+- `src/osc_assistant/settings.py`
+- `tests/test_conversation.py`
 
 ## Audit Trail
 
-- EXTRACTED: 89 (96%)
-- INFERRED: 4 (4%)
+- EXTRACTED: 171 (96%)
+- INFERRED: 7 (4%)
 - AMBIGUOUS: 0 (0%)
 
 ---

@@ -1,0 +1,2197 @@
+{
+  "started_at": "2026-08-31T17:40:10.980654+00:00",
+  "duration_seconds": 541.924,
+  "golden_set": "schema.yaml",
+  "case_count": 61,
+  "failed_count": 0,
+  "top_k": 5,
+  "concurrency": 2,
+  "generation": true,
+  "configuration": {
+    "profile_environment": "development",
+    "llm": "ollama/qwen3:8b",
+    "embeddings": "ollama/nomic-embed-text",
+    "reranker": "noop",
+    "vector_store": "pgvector",
+    "chunking": {
+      "strategy": "markdown",
+      "chunk_size": 900,
+      "chunk_overlap": 120
+    },
+    "retrieval": {
+      "strategy": "hybrid",
+      "candidates": 30,
+      "top_k": 5,
+      "rrf_k": 60,
+      "min_score": 0.0,
+      "rewrite_queries": true
+    },
+    "generation": {
+      "max_tokens": 1500,
+      "require_citations": true
+    }
+  },
+  "summary": {
+    "cases_scored": 61.0,
+    "recall@5": 0.9818,
+    "precision@5": 0.2,
+    "ndcg@5": 0.9179,
+    "mrr": 0.897,
+    "hit_rate@5": 0.9818,
+    "citation_coverage": 1.0,
+    "groundedness": 1.0,
+    "citation_precision": 0.875,
+    "fact_match": 0.7818,
+    "abstention_accuracy": 0.6667,
+    "latency_p50_seconds": 17.909,
+    "latency_p95_seconds": 21.084,
+    "latency_mean_seconds": 17.521,
+    "throughput_per_second": 0.113,
+    "input_tokens_total": 63616.0,
+    "output_tokens_total": 2431.0
+  },
+  "cases": [
+    {
+      "id": "addon-variant-key",
+      "question": "Where is the add-on tier pricing payload stored on a product variant?",
+      "tags": [
+        "addons-tier-pricing",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema.md"
+      ],
+      "retrieved_documents": [
+        "schema-6.md",
+        "schema-4.md",
+        "schema-8.md",
+        "schema.md",
+        "schema-2.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.25,
+      "ndcg": 0.43067655807339306,
+      "hit": true,
+      "answer": "The add-on tier pricing payload for a product variant is stored in the `priceRule` field under the `oscp` namespace [5].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 0,
+      "missing_facts": [
+        "adt"
+      ],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 15.013317000120878,
+      "input_tokens": 1034,
+      "output_tokens": 30,
+      "trace_id": "8e39ec61665045e4",
+      "error": null
+    },
+    {
+      "id": "addon-cart-transform-key",
+      "question": "How does the app remember which CartTransform it already registered?",
+      "tags": [
+        "addons-tier-pricing",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema.md"
+      ],
+      "retrieved_documents": [
+        "schema.md",
+        "schema-3.md",
+        "schema-4.md",
+        "schema-7.md",
+        "schema-5.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The app remembers which CartTransform it already registered by storing the `oscp.cartTransformId` as a string value, which is in the format of a GID, such as `\"gid://shopify/CartTransform/123456789\"` [1]. This ID is used to track and reference the specific CartTransform instance.",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 10.5388492080383,
+      "input_tokens": 953,
+      "output_tokens": 73,
+      "trace_id": "c879feef9bef4647",
+      "error": null
+    },
+    {
+      "id": "addon-template-catalogue-ownership",
+      "question": "Which add-on pricing metafield is read-only because another module owns it?",
+      "tags": [
+        "addons-tier-pricing",
+        "ownership"
+      ],
+      "relevant_documents": [
+        "schema.md"
+      ],
+      "retrieved_documents": [
+        "schema-3.md",
+        "schema-6.md",
+        "schema.md",
+        "schema-4.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.3333333333333333,
+      "ndcg": 0.5,
+      "hit": true,
+      "answer": "The `isMember.variant_level_tags` metafield is read-only because it is owned by tier-pricing modules and is read by them via `isMember.variant_level_tags` [5].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 0,
+      "missing_facts": [
+        "tc"
+      ],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 17.479339207988232,
+      "input_tokens": 984,
+      "output_tokens": 39,
+      "trace_id": "303c9ced98b2498e",
+      "error": null
+    },
+    {
+      "id": "addon-domain-type",
+      "question": "What TypeScript contract defines the add-on pricing payload?",
+      "tags": [
+        "addons-tier-pricing",
+        "contracts"
+      ],
+      "relevant_documents": [
+        "schema.md"
+      ],
+      "retrieved_documents": [
+        "schema.md",
+        "schema-8.md",
+        "schema-6.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The TypeScript contract defining the add-on pricing payload is `PriceAddonData` / `PriceAddonRule` / `MarginRule` in `contracts/addOnsTierPricing.contract.ts` [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 17.525282790884376,
+      "input_tokens": 895,
+      "output_tokens": 42,
+      "trace_id": "732d9b7866c64321",
+      "error": null
+    },
+    {
+      "id": "addon-margin-rule-shape",
+      "question": "What fields make up a margin override rule for add-on pricing?",
+      "tags": [
+        "addons-tier-pricing",
+        "sample-data"
+      ],
+      "relevant_documents": [
+        "schema.md"
+      ],
+      "retrieved_documents": [
+        "schema.md",
+        "schema-8.md",
+        "schema-6.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The fields that make up a margin override rule for add-on pricing are not explicitly detailed in the provided sources. However, based on the context of `PriceAddonData`, `PriceAddonRule`, and `MarginRule` mentioned in the `AddOnsTierPricing \u2014 Schema` source, it is implied that such a rule would involve fields related to pricing tiers, margin adjustments, and product-specific configurations. The exact fields are not provided in the sources. [1]",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [
+        "mrgR"
+      ],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 19.957495833048597,
+      "input_tokens": 1149,
+      "output_tokens": 96,
+      "trace_id": "3facfbce6e654578",
+      "error": null
+    },
+    {
+      "id": "autotag-toggle-key",
+      "question": "What switches automatic order tagging on for a shop?",
+      "tags": [
+        "auto-order-tag",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-1.md"
+      ],
+      "retrieved_documents": [
+        "schema-1.md",
+        "schema-10.md",
+        "schema-6.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "Enabling a plan unlocks the UI for automatic order tagging, but it does not auto-set `autoTagStatus` to true [2]. The `autoTagStatus` toggle, located under the Shop's namespace `oscpB2B` and key `autoTagStatus`, is the switch that explicitly enables automatic order tagging [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 2,
+      "grounded_citations": 2,
+      "cited_relevant": 2,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 21.439475417137146,
+      "input_tokens": 1005,
+      "output_tokens": 69,
+      "trace_id": "0b3e343a097f43dd",
+      "error": null
+    },
+    {
+      "id": "autotag-namespace",
+      "question": "Which metafield namespace does automatic order tagging use?",
+      "tags": [
+        "auto-order-tag",
+        "namespace"
+      ],
+      "relevant_documents": [
+        "schema-1.md"
+      ],
+      "retrieved_documents": [
+        "schema-1.md",
+        "schema-8.md",
+        "schema-9.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The metafield namespace used for automatic order tagging is `oscpB2B` [2].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 19.980059208115563,
+      "input_tokens": 1144,
+      "output_tokens": 21,
+      "trace_id": "05981f43093b471e",
+      "error": null
+    },
+    {
+      "id": "autotag-product-definitions",
+      "question": "Which product metafield definitions get copied onto orders as tags?",
+      "tags": [
+        "auto-order-tag",
+        "definitions"
+      ],
+      "relevant_documents": [
+        "schema-1.md"
+      ],
+      "retrieved_documents": [
+        "schema-1.md",
+        "schema-8.md",
+        "schema-3.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The product metafield definitions that get copied onto orders as tags are `warehouse` and `brand` [1]. These definitions are part of the `oscpB2B` namespace and are used as order tags when auto-tagging is enabled [2].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 2,
+      "grounded_citations": 2,
+      "cited_relevant": 2,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 19.9272647080943,
+      "input_tokens": 1148,
+      "output_tokens": 53,
+      "trace_id": "891863bb734a4701",
+      "error": null
+    },
+    {
+      "id": "autotag-plan-does-not-enable",
+      "question": "Does subscribing to a plan turn order tagging on by itself?",
+      "tags": [
+        "auto-order-tag",
+        "behaviour"
+      ],
+      "relevant_documents": [
+        "schema-1.md"
+      ],
+      "retrieved_documents": [
+        "schema-1.md",
+        "schema-6.md",
+        "schema-8.md",
+        "schema-5.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "No, subscribing to a plan unlocks the UI but does not auto-set `autoTagStatus` to true [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 16.276495249941945,
+      "input_tokens": 833,
+      "output_tokens": 25,
+      "trace_id": "5151f08bf630466a",
+      "error": null
+    },
+    {
+      "id": "bulk-variant-rules-key",
+      "question": "Which variant metafield holds quantity-break and currency tier rules?",
+      "tags": [
+        "bulk-import-export",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-2.md"
+      ],
+      "retrieved_documents": [
+        "schema-3.md",
+        "schema-8.md",
+        "schema-9.md",
+        "schema-4.md"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg": 0.0,
+      "hit": false,
+      "answer": "The variant metafield that holds quantity-break and currency tier rules is part of the `CustomerSegment` and is shared with the **CustomerRegistration** schema. It is read by tier-pricing modules via `isMember.variant_level_tags` [5].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 0,
+      "missing_facts": [
+        "priceRule"
+      ],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 15.526395124848932,
+      "input_tokens": 1171,
+      "output_tokens": 51,
+      "trace_id": "79d96f13a98641d7",
+      "error": null
+    },
+    {
+      "id": "bulk-date-range-key",
+      "question": "Where are campaign date-range tier rules kept for a variant?",
+      "tags": [
+        "bulk-import-export",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-2.md"
+      ],
+      "retrieved_documents": [
+        "schema-4.md",
+        "schema-2.md",
+        "schema.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.5,
+      "ndcg": 0.6309297535714575,
+      "hit": true,
+      "answer": "Campaign date-range tier rules for a variant are stored in the `oscp.rangeRule` key under the `oscp` namespace [2]. This key holds a JSON array of date-range rules, such as the one shown in the example:\n\n```json\n[\n{\n\"q\": \"5\",\n\"t\": \"p\",\n\"v\": \"15\",\n\"c\": \"all\",\n\"s\": \"2026-01-01\",\n\"e\": \"2026-12-31\"\n}\n]\n```\n\nThese rules are also compatible with the VariantTierPricing module and the import manager [4].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 2,
+      "grounded_citations": 2,
+      "cited_relevant": 2,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 21.482293624896556,
+      "input_tokens": 1026,
+      "output_tokens": 131,
+      "trace_id": "e9758428ed7b496c",
+      "error": null
+    },
+    {
+      "id": "bulk-owns-no-schema",
+      "question": "Does the bulk import and export feature define storage of its own?",
+      "tags": [
+        "bulk-import-export",
+        "ownership"
+      ],
+      "relevant_documents": [
+        "schema-2.md"
+      ],
+      "retrieved_documents": [
+        "schema-2.md",
+        "schema-8.md",
+        "schema-9.md",
+        "schema-10.md",
+        "schema-1.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The bulk import and export feature does not define storage of its own. The schema for this module focuses on persistence schemas, architecture, routes, tabs, and sample CSV download UX, which are detailed in the README.md file [1]. There is no mention of storage definitions specific to the bulk import and export feature in the provided sources.",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [
+        "does not own"
+      ],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 22.768478209152818,
+      "input_tokens": 1119,
+      "output_tokens": 68,
+      "trace_id": "e25e34e811d349e1",
+      "error": null
+    },
+    {
+      "id": "bulk-csv-not-metafields",
+      "question": "Are the downloadable sample CSV templates stored as metafields?",
+      "tags": [
+        "bulk-import-export",
+        "csv"
+      ],
+      "relevant_documents": [
+        "schema-2.md"
+      ],
+      "retrieved_documents": [
+        "schema-2.md",
+        "schema-9.md",
+        "schema-3.md",
+        "schema-1.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "No, the downloadable sample CSV templates are not stored as metafields. They are CSV files provided via browser downloads using `utils/sampleTemplates.ts` (Blob \u2014 no API) [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [
+        "not metafields"
+      ],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 19.951414958108217,
+      "input_tokens": 1088,
+      "output_tokens": 39,
+      "trace_id": "3dcab040563e46fb",
+      "error": null
+    },
+    {
+      "id": "bulk-csv-module",
+      "question": "Which module generates the sample CSV downloads in the browser?",
+      "tags": [
+        "bulk-import-export",
+        "csv"
+      ],
+      "relevant_documents": [
+        "schema-2.md"
+      ],
+      "retrieved_documents": [
+        "schema-2.md",
+        "schema-7.md",
+        "schema-6.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The `BulkImportExport` module generates the sample CSV downloads in the browser [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [
+        "sampleTemplates.ts"
+      ],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 17.070544708054513,
+      "input_tokens": 873,
+      "output_tokens": 19,
+      "trace_id": "e4d3cece272a406a",
+      "error": null
+    },
+    {
+      "id": "cart-offers-key",
+      "question": "Where does the cart discount feature keep its list of offers?",
+      "tags": [
+        "cart-discount",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-3.md"
+      ],
+      "retrieved_documents": [
+        "schema-3.md",
+        "schema-6.md",
+        "schema-9.md",
+        "schema-4.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The cart discount feature keeps its list of offers in the `oscp.cartRules` namespace under the `json` type [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 14.753764916909859,
+      "input_tokens": 1126,
+      "output_tokens": 28,
+      "trace_id": "a57b71b4b4154f06",
+      "error": null
+    },
+    {
+      "id": "cart-function-eligibility-key",
+      "question": "What aggregated data does the cart discount Shopify Function read for eligibility?",
+      "tags": [
+        "cart-discount",
+        "functions"
+      ],
+      "relevant_documents": [
+        "schema-3.md"
+      ],
+      "retrieved_documents": [
+        "schema-3.md",
+        "schema-6.md",
+        "schema-4.md",
+        "schema-9.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The cart discount Shopify Function reads aggregated `{ tags, collections }` data for eligibility [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [
+        "isCartTags"
+      ],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 15.705428666900843,
+      "input_tokens": 1151,
+      "output_tokens": 20,
+      "trace_id": "ba6faa85db704dbd",
+      "error": null
+    },
+    {
+      "id": "cart-discount-node-title",
+      "question": "What is the automatic discount node behind all cart offers called?",
+      "tags": [
+        "cart-discount",
+        "discount-node"
+      ],
+      "relevant_documents": [
+        "schema-3.md"
+      ],
+      "retrieved_documents": [
+        "schema-4.md",
+        "schema-3.md",
+        "schema-6.md",
+        "schema-9.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.5,
+      "ndcg": 0.6309297535714575,
+      "hit": true,
+      "answer": "The automatic discount node behind all cart offers is titled **\"OSCP CART DISCOUNT\"** (`SHOPIFY_ORDER_DISCOUNT_ID`) [2].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 18.197051416151226,
+      "input_tokens": 1126,
+      "output_tokens": 33,
+      "trace_id": "5a644379834d4264",
+      "error": null
+    },
+    {
+      "id": "cart-why-public-metafields",
+      "question": "Why are the cart discount metafields public rather than private?",
+      "tags": [
+        "cart-discount",
+        "inv-9"
+      ],
+      "relevant_documents": [
+        "schema-3.md"
+      ],
+      "retrieved_documents": [
+        "schema-3.md",
+        "schema-9.md",
+        "schema.md",
+        "schema-6.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The cart discount metafields are public rather than private because they are read by Shopify Functions as input, and private metafields are not visible to Functions [1]. This is an exception to the INV-9 rule, as these metafields are considered standard (public) for the Function's accessibility [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 19.170391709078103,
+      "input_tokens": 1111,
+      "output_tokens": 62,
+      "trace_id": "f37e47564e184a37",
+      "error": null
+    },
+    {
+      "id": "cart-deprecated-key",
+      "question": "Which cart discount metafield is deprecated and cleaned up on save?",
+      "tags": [
+        "cart-discount",
+        "deprecation"
+      ],
+      "relevant_documents": [
+        "schema-3.md"
+      ],
+      "retrieved_documents": [
+        "schema-3.md",
+        "schema-6.md",
+        "schema-4.md",
+        "schema-1.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The `cartCollections` metafield is deprecated and cleaned up on save [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 18.057962582912296,
+      "input_tokens": 1141,
+      "output_tokens": 18,
+      "trace_id": "b8e4f973e8e74874",
+      "error": null
+    },
+    {
+      "id": "registration-forms-key",
+      "question": "Where are the registration form definitions persisted?",
+      "tags": [
+        "customer-registration",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-4.md"
+      ],
+      "retrieved_documents": [
+        "schema-4.md",
+        "schema-5.md",
+        "schema-2.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The registration form definitions are persisted in the **CustomerRegistration** module schema [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [
+        "registractionForm"
+      ],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 15.602934624999762,
+      "input_tokens": 790,
+      "output_tokens": 18,
+      "trace_id": "972b2f8e3fd84e0b",
+      "error": null
+    },
+    {
+      "id": "registration-typo-is-deliberate",
+      "question": "Is the misspelling in the registration form metafield key a bug?",
+      "tags": [
+        "customer-registration",
+        "legacy"
+      ],
+      "relevant_documents": [
+        "schema-4.md"
+      ],
+      "retrieved_documents": [
+        "schema-4.md",
+        "schema-5.md",
+        "schema-9.md",
+        "schema-8.md",
+        "schema-3.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The misspelling in the registration form metafield key is intentional and not a bug. The legacy key `registractionForm` is noted as intentional, related to INV-9 and wholesale parity [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 13.123581958003342,
+      "input_tokens": 995,
+      "output_tokens": 43,
+      "trace_id": "c0ef379cc3a5485b",
+      "error": null
+    },
+    {
+      "id": "registration-auto-approve-key",
+      "question": "What controls whether new customers are approved automatically?",
+      "tags": [
+        "customer-registration",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-4.md"
+      ],
+      "retrieved_documents": [
+        "schema-5.md",
+        "schema-7.md",
+        "schema-10.md",
+        "schema-4.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.25,
+      "ndcg": 0.43067655807339306,
+      "hit": true,
+      "answer": "The approval status of new customers is controlled by the `segment.status` metafield, which is set to `\"approved\"` when a customer is approved [2]. The `registractionForm` and `approveNewCustomers` are shared with the **CustomerRegistration** module, indicating these fields are involved in the approval process [1]. The exact mechanism for automatic approval is not explicitly detailed in the sources.",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 2,
+      "grounded_citations": 2,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 15.529127000132576,
+      "input_tokens": 941,
+      "output_tokens": 81,
+      "trace_id": "1f0e5cb5b69d4a19",
+      "error": null
+    },
+    {
+      "id": "registration-member-tags",
+      "question": "How do tier pricing modules find out which registration forms a customer belongs to?",
+      "tags": [
+        "customer-registration",
+        "integration"
+      ],
+      "relevant_documents": [
+        "schema-4.md"
+      ],
+      "retrieved_documents": [
+        "schema-4.md",
+        "schema-5.md",
+        "schema-6.md",
+        "schema-2.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "Tier pricing modules determine which registration forms a customer belongs to by reading the `isMember.variant_level_tags` field, which is populated from the `registractionForm` metafield shared between **CustomerRegistration** and **CustomerSegment** modules [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 17.909241874935105,
+      "input_tokens": 995,
+      "output_tokens": 51,
+      "trace_id": "9d5ed1b6933b4e8a",
+      "error": null
+    },
+    {
+      "id": "registration-discount-node-cache",
+      "question": "Where is the cached wholesale discount node GID kept?",
+      "tags": [
+        "customer-registration",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-4.md"
+      ],
+      "retrieved_documents": [
+        "schema-4.md",
+        "schema-3.md",
+        "schema-9.md",
+        "schema.md",
+        "schema-8.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The cached wholesale discount node GID is kept in the `oscp.discountNodeId` field, stored as a string value with the example format `\"gid://shopify/DiscountAutomaticNode/1234567890\"` [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 17.176630083005875,
+      "input_tokens": 987,
+      "output_tokens": 53,
+      "trace_id": "a620b4a3b24a4c00",
+      "error": null
+    },
+    {
+      "id": "segment-assigned-key",
+      "question": "Which customer metafield records the segment a customer belongs to?",
+      "tags": [
+        "customer-segment",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-5.md"
+      ],
+      "retrieved_documents": [
+        "schema-5.md",
+        "schema-1.md",
+        "schema-8.md",
+        "schema-3.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The customer metafield that records the segment a customer belongs to is `segment.assigned` [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 16.634410625090823,
+      "input_tokens": 1060,
+      "output_tokens": 22,
+      "trace_id": "9b91a11808a94adc",
+      "error": null
+    },
+    {
+      "id": "segment-status-values",
+      "question": "What values can a customer's segment status take?",
+      "tags": [
+        "customer-segment",
+        "enums"
+      ],
+      "relevant_documents": [
+        "schema-5.md"
+      ],
+      "retrieved_documents": [
+        "schema-5.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "A customer's segment status can take the value `\"approved\"` [2]. The status can also be `\"pending\"`, as indicated in the table under the `status` key [4].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 2,
+      "grounded_citations": 2,
+      "cited_relevant": 2,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 15.935355792054906,
+      "input_tokens": 850,
+      "output_tokens": 39,
+      "trace_id": "ebeb572f36b34420",
+      "error": null
+    },
+    {
+      "id": "segment-shared-key",
+      "question": "Which module shares the registration form metafield with customer segments?",
+      "tags": [
+        "customer-segment",
+        "ownership"
+      ],
+      "relevant_documents": [
+        "schema-4.md",
+        "schema-5.md"
+      ],
+      "retrieved_documents": [
+        "schema-5.md",
+        "schema-4.md",
+        "schema-1.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.4,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The **CustomerRegistration** module shares the registration form metafield with customer segments [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 14.282013082876801,
+      "input_tokens": 881,
+      "output_tokens": 19,
+      "trace_id": "09761a017f134053",
+      "error": null
+    },
+    {
+      "id": "draft-mode-key",
+      "question": "What selects between the Shopify Function and draft order processing modes?",
+      "tags": [
+        "draft-order",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-6.md"
+      ],
+      "retrieved_documents": [
+        "schema-6.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The selection between the Shopify Function and draft order processing modes is determined by the `oscp.orderProcessingMode` metafield on the shop. This metafield can be set to either `\"shopify_function\"` (default) or `\"draft_order\"`, and it is configured through the GlobalSetting UI [5].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 15.859791625058278,
+      "input_tokens": 1050,
+      "output_tokens": 63,
+      "trace_id": "fd4f2604d7844772",
+      "error": null
+    },
+    {
+      "id": "draft-default-mode",
+      "question": "Which order processing mode is the default?",
+      "tags": [
+        "draft-order",
+        "defaults"
+      ],
+      "relevant_documents": [
+        "schema-6.md"
+      ],
+      "retrieved_documents": [
+        "schema-6.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The default order processing mode is `draft_order` [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [
+        "shopify_function"
+      ],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 16.588675916893408,
+      "input_tokens": 951,
+      "output_tokens": 14,
+      "trace_id": "c3edebfa45a6463c",
+      "error": null
+    },
+    {
+      "id": "draft-active-conditions",
+      "question": "What has to be true for order processing to report itself as active?",
+      "tags": [
+        "draft-order",
+        "behaviour"
+      ],
+      "relevant_documents": [
+        "schema-6.md"
+      ],
+      "retrieved_documents": [
+        "schema-6.md",
+        "schema-5.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "For order processing to report itself as active, the `oscp.orderProcessingActive` metafield must be set to `\"true\"`, which occurs when the mode is `draft_order` and the plan includes the feature [2].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 15.117213290883228,
+      "input_tokens": 775,
+      "output_tokens": 47,
+      "trace_id": "45b0bf0d0f504440",
+      "error": null
+    },
+    {
+      "id": "draft-idempotency-model",
+      "question": "What stops the same cart producing two draft orders?",
+      "tags": [
+        "draft-order",
+        "prisma"
+      ],
+      "relevant_documents": [
+        "schema-6.md"
+      ],
+      "retrieved_documents": [
+        "schema-6.md",
+        "schema-3.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The same cart cannot produce two draft orders due to the idempotency mechanism enforced by the `OrderProcessingDraft` model. This model ensures that only one row exists per `(shop, cartTokenHash)` combination within the `IDEMPOTENCY_WINDOW_MS` (15 minutes) [4]. This prevents duplicate draft orders for the same cart.",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 18.462554750032723,
+      "input_tokens": 891,
+      "output_tokens": 72,
+      "trace_id": "96c0cf077f994f20",
+      "error": null
+    },
+    {
+      "id": "draft-idempotency-window",
+      "question": "How long is a draft order reused for the same cart?",
+      "tags": [
+        "draft-order",
+        "limits"
+      ],
+      "relevant_documents": [
+        "schema-6.md"
+      ],
+      "retrieved_documents": [
+        "schema-6.md",
+        "schema-3.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The draft order is reused within an `IDEMPOTENCY_WINDOW_MS` of 15 minutes [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 17.488197333179414,
+      "input_tokens": 881,
+      "output_tokens": 24,
+      "trace_id": "15a83c52589b45b1",
+      "error": null
+    },
+    {
+      "id": "draft-unique-constraint",
+      "question": "What is the uniqueness constraint on the draft order idempotency table?",
+      "tags": [
+        "draft-order",
+        "prisma"
+      ],
+      "relevant_documents": [
+        "schema-6.md"
+      ],
+      "retrieved_documents": [
+        "schema-6.md",
+        "schema-10.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The uniqueness constraint on the draft order idempotency table is that there is one row per combination of `(shop, cartTokenHash)` [2].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 14.4579369998537,
+      "input_tokens": 1019,
+      "output_tokens": 32,
+      "trace_id": "0d20f74fceb94229",
+      "error": null
+    },
+    {
+      "id": "draft-shopify-tag",
+      "question": "How are draft orders created by this app identified inside Shopify?",
+      "tags": [
+        "draft-order",
+        "tagging"
+      ],
+      "relevant_documents": [
+        "schema-6.md"
+      ],
+      "retrieved_documents": [
+        "schema-6.md",
+        "schema-5.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "Draft orders created by this app are identified inside Shopify with the tag `oscp-order-processing` [3].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 15.293700332986191,
+      "input_tokens": 1061,
+      "output_tokens": 23,
+      "trace_id": "3721bc7d0a9344c5",
+      "error": null
+    },
+    {
+      "id": "draft-addon-limitation",
+      "question": "Are add-on tier pricing lines supported in draft order mode?",
+      "tags": [
+        "draft-order",
+        "limitations"
+      ],
+      "relevant_documents": [
+        "schema-6.md"
+      ],
+      "retrieved_documents": [
+        "schema-6.md",
+        "schema-8.md",
+        "schema-4.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "No, add-on tier pricing lines are not fully supported in draft order mode. PriceAddon (`oscp.adt`) lines are skipped by qty/range engines in this mode [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 18.007076457841322,
+      "input_tokens": 893,
+      "output_tokens": 39,
+      "trace_id": "c6c0084bf3cc4ae3",
+      "error": null
+    },
+    {
+      "id": "draft-uses-prisma",
+      "question": "Which part of order processing uses a relational database rather than metafields?",
+      "tags": [
+        "draft-order",
+        "storage"
+      ],
+      "relevant_documents": [
+        "schema-6.md"
+      ],
+      "retrieved_documents": [
+        "schema-1.md",
+        "schema-8.md",
+        "schema-3.md",
+        "schema-6.md",
+        "schema-9.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.25,
+      "ndcg": 0.43067655807339306,
+      "hit": true,
+      "answer": "The `DraftOrderProcessing` schema uses a relational database through the `orderProcessingActive` metafield, which is a real metafield (not derived) and is read by the `cart-checkout-validation` Function [4].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [
+        "Prisma"
+      ],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 19.206211583223194,
+      "input_tokens": 1161,
+      "output_tokens": 47,
+      "trace_id": "151db36e7b3f4038",
+      "error": null
+    },
+    {
+      "id": "email-templates-key",
+      "question": "Where are the notification email templates stored?",
+      "tags": [
+        "email-configuration",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-7.md"
+      ],
+      "retrieved_documents": [
+        "schema-7.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The notification email templates are stored in the `app_settings.notifications` namespace under the key `notifications`, which is a JSON array of objects containing `title`, `status`, `subject`, and `template` fields [3][4][5].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 3,
+      "grounded_citations": 3,
+      "cited_relevant": 3,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 19.552790332818404,
+      "input_tokens": 988,
+      "output_tokens": 50,
+      "trace_id": "4a8739b572c44272",
+      "error": null
+    },
+    {
+      "id": "email-from-address-field",
+      "question": "Which field holds the configured from-address for notifications?",
+      "tags": [
+        "email-configuration",
+        "legacy"
+      ],
+      "relevant_documents": [
+        "schema-7.md"
+      ],
+      "retrieved_documents": [
+        "schema-7.md",
+        "schema-4.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The `configuerdEmailId` field holds the configured from-address for notifications [3].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 17.89211191702634,
+      "input_tokens": 951,
+      "output_tokens": 20,
+      "trace_id": "b9fc8b0e16de4aad",
+      "error": null
+    },
+    {
+      "id": "email-credentials-location",
+      "question": "Are the SMTP credentials kept in the notifications metafield?",
+      "tags": [
+        "email-configuration",
+        "security"
+      ],
+      "relevant_documents": [
+        "schema-7.md"
+      ],
+      "retrieved_documents": [
+        "schema-7.md",
+        "schema-5.md",
+        "schema-4.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "No, the SMTP credentials are not kept in the notifications metafield. The notifications metafield stores SMTP notification templates and the configured from-address, but the actual SMTP credentials are managed through environment variables [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 16.90172041603364,
+      "input_tokens": 794,
+      "output_tokens": 42,
+      "trace_id": "086afd09f75745c1",
+      "error": null
+    },
+    {
+      "id": "extrafee-metaobject-type",
+      "question": "What metaobject type backs an extra fee rule?",
+      "tags": [
+        "extra-fee",
+        "metaobject"
+      ],
+      "relevant_documents": [
+        "schema-8.md"
+      ],
+      "retrieved_documents": [
+        "schema-8.md",
+        "schema-10.md",
+        "schema-9.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The metaobject type that backs an extra fee rule is `extra_fee_rule` [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 17.975131332874298,
+      "input_tokens": 1286,
+      "output_tokens": 20,
+      "trace_id": "a4253507b7214290",
+      "error": null
+    },
+    {
+      "id": "extrafee-product-tag",
+      "question": "How is the hidden fee product kept out of the resource pickers?",
+      "tags": [
+        "extra-fee",
+        "tagging"
+      ],
+      "relevant_documents": [
+        "schema-8.md"
+      ],
+      "retrieved_documents": [
+        "schema-8.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The hidden fee product is tagged with `oscp-extra-fee`, and pickers are instructed to exclude it using `NOT tag:oscp-extra-fee` [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 20.407691665925086,
+      "input_tokens": 1141,
+      "output_tokens": 37,
+      "trace_id": "662f2e8791114cab",
+      "error": null
+    },
+    {
+      "id": "extrafee-tier-fields",
+      "question": "Which field on an extra fee rule holds the tier rows?",
+      "tags": [
+        "extra-fee",
+        "metaobject"
+      ],
+      "relevant_documents": [
+        "schema-8.md"
+      ],
+      "retrieved_documents": [
+        "schema-8.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The `quantity_ranges` field holds the tier rows on an extra fee rule [4].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 21.084302000002936,
+      "input_tokens": 1255,
+      "output_tokens": 19,
+      "trace_id": "2433acd04fef4a97",
+      "error": null
+    },
+    {
+      "id": "extrafee-calculation-modes",
+      "question": "What are the two ways an extra fee can be calculated?",
+      "tags": [
+        "extra-fee",
+        "enums"
+      ],
+      "relevant_documents": [
+        "schema-8.md"
+      ],
+      "retrieved_documents": [
+        "schema-8.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The two ways an extra fee can be calculated are `all_applied_items` and `per_item` [4].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 21.06413641688414,
+      "input_tokens": 1202,
+      "output_tokens": 25,
+      "trace_id": "17fb6e69a4d24bd4",
+      "error": null
+    },
+    {
+      "id": "extrafee-collection-expansion",
+      "question": "What happens to a collection scope on an extra fee rule when it is saved?",
+      "tags": [
+        "extra-fee",
+        "behaviour"
+      ],
+      "relevant_documents": [
+        "schema-8.md"
+      ],
+      "retrieved_documents": [
+        "schema-8.md",
+        "schema-10.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The collection scope on an extra fee rule is not pre-expanded at save; instead, it is resolved live in Liquid at render time [4].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 20.942021625116467,
+      "input_tokens": 1193,
+      "output_tokens": 30,
+      "trace_id": "6e41aaa89ed741cf",
+      "error": null
+    },
+    {
+      "id": "freegift-metaobject-type",
+      "question": "What metaobject type stores a free gift rule?",
+      "tags": [
+        "free-gift",
+        "metaobject"
+      ],
+      "relevant_documents": [
+        "schema-9.md"
+      ],
+      "retrieved_documents": [
+        "schema-9.md",
+        "schema-8.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The metaobject type that stores a free gift rule is `oscp_freegifts` [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 19.530313791008666,
+      "input_tokens": 1295,
+      "output_tokens": 22,
+      "trace_id": "eb5584f1e3cd46ca",
+      "error": null
+    },
+    {
+      "id": "freegift-function-handle",
+      "question": "What is the handle of the free gift Shopify Function?",
+      "tags": [
+        "free-gift",
+        "functions"
+      ],
+      "relevant_documents": [
+        "schema-9.md"
+      ],
+      "retrieved_documents": [
+        "schema-9.md",
+        "schema-4.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The handle of the free gift Shopify Function is `free-gift-discount` (`SHOPIFY_FREE_GIFT_DISCOUNT_ID`) [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 19.98449358297512,
+      "input_tokens": 1129,
+      "output_tokens": 32,
+      "trace_id": "beb97c18f49c480e",
+      "error": null
+    },
+    {
+      "id": "freegift-widget-copy",
+      "question": "Where is the progress bar and popup copy for free gifts configured?",
+      "tags": [
+        "free-gift",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-9.md"
+      ],
+      "retrieved_documents": [
+        "schema-9.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The progress bar and popup copy for free gifts are configured in the `oscp.freegift_global_settings` field, which is a JSON object containing the text and color settings for these elements [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 19.098210624884814,
+      "input_tokens": 1113,
+      "output_tokens": 41,
+      "trace_id": "65fca252aa6e4ee8",
+      "error": null
+    },
+    {
+      "id": "freegift-readd-behaviour",
+      "question": "Which setting puts a free gift back if the customer removes it from the cart?",
+      "tags": [
+        "free-gift",
+        "behaviour"
+      ],
+      "relevant_documents": [
+        "schema-9.md"
+      ],
+      "retrieved_documents": [
+        "schema-9.md",
+        "schema-4.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The `re_add_if_removed` setting puts a free gift back if the customer removes it from the cart [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 18.74979737494141,
+      "input_tokens": 1110,
+      "output_tokens": 25,
+      "trace_id": "0b7939cb56794e36",
+      "error": null
+    },
+    {
+      "id": "freegift-product-link",
+      "question": "How is a product linked to the free gift rules that apply to it?",
+      "tags": [
+        "free-gift",
+        "references"
+      ],
+      "relevant_documents": [
+        "schema-9.md"
+      ],
+      "retrieved_documents": [
+        "schema-9.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "A product is linked to the free gift rules through the `free_gifts` field in the `oscp_freegifts` metaobject. Specifically, the `free_gifts` field contains a `goals` array, which includes an object with a `free_gift` property that specifies the product and variant via their respective `product_id` and `variant_id` [4].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [
+        "metaobject_reference"
+      ],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 20.628818582976237,
+      "input_tokens": 1307,
+      "output_tokens": 78,
+      "trace_id": "662b3c0e5ae14d19",
+      "error": null
+    },
+    {
+      "id": "accesslock-metaobject-type",
+      "question": "What metaobject type defines an access lock rule?",
+      "tags": [
+        "access-lock",
+        "metaobject"
+      ],
+      "relevant_documents": [
+        "schema-10.md"
+      ],
+      "retrieved_documents": [
+        "schema-10.md",
+        "schema-8.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The metaobject type that defines an access lock rule is `$app:access_lock_rule` [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 19.761592583032325,
+      "input_tokens": 1180,
+      "output_tokens": 22,
+      "trace_id": "5f9aee6785634868",
+      "error": null
+    },
+    {
+      "id": "accesslock-gate-installed-key",
+      "question": "How does the app know whether the theme gate has been injected?",
+      "tags": [
+        "access-lock",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-10.md"
+      ],
+      "retrieved_documents": [
+        "schema-10.md",
+        "schema-8.md",
+        "schema-7.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "The app determines if the theme gate has been injected by checking the `oscp.gateInstalled` field, which is a boolean value. If this field is set to `true`, it indicates that the gate has been injected [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 17.372597082983702,
+      "input_tokens": 1079,
+      "output_tokens": 49,
+      "trace_id": "8b1578b1eec2455c",
+      "error": null
+    },
+    {
+      "id": "accesslock-legacy-keys",
+      "question": "Why do some older installations use abbreviated access lock field keys?",
+      "tags": [
+        "access-lock",
+        "legacy"
+      ],
+      "relevant_documents": [
+        "schema-10.md"
+      ],
+      "retrieved_documents": [
+        "schema-10.md",
+        "schema-8.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "Legacy installations may still use abbreviated keys (`st` / `ti` / `ua` / `ut` / `con`) because these were the original field keys used before they were replaced with more descriptive keys [1]. Field keys are immutable once created, meaning they cannot be changed after being set [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 18.65412004198879,
+      "input_tokens": 985,
+      "output_tokens": 64,
+      "trace_id": "99f97d596ae54ba2",
+      "error": null
+    },
+    {
+      "id": "accesslock-condition-shape",
+      "question": "What does an access lock condition entry consist of?",
+      "tags": [
+        "access-lock",
+        "sample-data"
+      ],
+      "relevant_documents": [
+        "schema-10.md"
+      ],
+      "retrieved_documents": [
+        "schema-10.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "An access lock condition entry consists of `entity`, `field`, `operator`, and `value` [2].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 17.95231729093939,
+      "input_tokens": 989,
+      "output_tokens": 24,
+      "trace_id": "f5be314f8274471e",
+      "error": null
+    },
+    {
+      "id": "accesslock-collection-timing",
+      "question": "When is collection membership resolved for an access lock?",
+      "tags": [
+        "access-lock",
+        "behaviour"
+      ],
+      "relevant_documents": [
+        "schema-10.md"
+      ],
+      "retrieved_documents": [
+        "schema-10.md",
+        "schema-5.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 1.0,
+      "ndcg": 1.0,
+      "hit": true,
+      "answer": "Collection membership is resolved live in Liquid at render time \u2014 not pre-expanded at save [1].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 15.660378125030547,
+      "input_tokens": 972,
+      "output_tokens": 20,
+      "trace_id": "db40ffee75344602",
+      "error": null
+    },
+    {
+      "id": "accesslock-checkout-lock-key",
+      "question": "Which optional metafield carries checkout hard-lock customer tags?",
+      "tags": [
+        "access-lock",
+        "metafield-key"
+      ],
+      "relevant_documents": [
+        "schema-10.md"
+      ],
+      "retrieved_documents": [
+        "schema-1.md",
+        "schema-8.md",
+        "schema-3.md",
+        "schema-10.md"
+      ],
+      "recall": 1.0,
+      "precision": 0.2,
+      "reciprocal_rank": 0.25,
+      "ndcg": 0.43067655807339306,
+      "hit": true,
+      "answer": "The optional metafield that carries checkout hard-lock customer tags is `lockTags` in the `oscp` namespace [4].",
+      "abstained": false,
+      "must_abstain": false,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 1,
+      "missing_facts": [],
+      "expected_facts": 1,
+      "faithful": null,
+      "latency_seconds": 15.142369292210788,
+      "input_tokens": 1110,
+      "output_tokens": 27,
+      "trace_id": "a069dffa6b684360",
+      "error": null
+    },
+    {
+      "id": "abstain-http-routes",
+      "question": "What HTTP routes does the cart discount module expose?",
+      "tags": [
+        "abstention",
+        "out-of-scope"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "schema-6.md",
+        "schema-3.md",
+        "schema.md",
+        "schema-4.md"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg": 0.0,
+      "hit": false,
+      "answer": "The cart discount module does not expose any HTTP routes. The architecture, routes, and events for this module are described in the README.md file, but no specific routes are listed in the provided sources [2].",
+      "abstained": false,
+      "must_abstain": true,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 16.92905362509191,
+      "input_tokens": 977,
+      "output_tokens": 43,
+      "trace_id": "a27fd7fd939946f2",
+      "error": null
+    },
+    {
+      "id": "abstain-pricing-plan-cost",
+      "question": "How much does the Platinum plan cost per month?",
+      "tags": [
+        "abstention",
+        "out-of-scope"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "schema-8.md",
+        "schema-6.md",
+        "schema.md"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg": 0.0,
+      "hit": false,
+      "answer": "I could not find anything in the indexed OSC documents that answers this. Try rephrasing, or check whether the relevant source has been indexed.",
+      "abstained": true,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 18.471585833001882,
+      "input_tokens": 1029,
+      "output_tokens": 20,
+      "trace_id": "a3a351e484be404f",
+      "error": null
+    },
+    {
+      "id": "abstain-rate-limits",
+      "question": "What Shopify API rate limits apply when bulk importing tier pricing?",
+      "tags": [
+        "abstention",
+        "out-of-scope"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "schema-8.md",
+        "schema-4.md",
+        "schema-6.md",
+        "schema.md"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg": 0.0,
+      "hit": false,
+      "answer": "I could not find anything in the indexed OSC documents that answers this. Try rephrasing, or check whether the relevant source has been indexed.",
+      "abstained": true,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 18.373552083969116,
+      "input_tokens": 1197,
+      "output_tokens": 18,
+      "trace_id": "827d396450ec4309",
+      "error": null
+    },
+    {
+      "id": "abstain-database-hosting",
+      "question": "Which cloud provider hosts the Prisma database in production?",
+      "tags": [
+        "abstention",
+        "out-of-scope"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "schema-6.md",
+        "schema-4.md",
+        "schema-5.md",
+        "schema-3.md",
+        "schema-9.md"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg": 0.0,
+      "hit": false,
+      "answer": "I could not find anything in the indexed OSC documents that answers this. Try rephrasing, or check whether the relevant source has been indexed.",
+      "abstained": true,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 11.180080958176404,
+      "input_tokens": 1140,
+      "output_tokens": 18,
+      "trace_id": "4c406eb3817444b4",
+      "error": null
+    },
+    {
+      "id": "abstain-support-sla",
+      "question": "What is the support response time commitment for OSCP customers?",
+      "tags": [
+        "abstention",
+        "out-of-scope"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "schema-2.md",
+        "schema-6.md",
+        "schema-10.md"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg": 0.0,
+      "hit": false,
+      "answer": "I could not find anything in the indexed OSC documents that answers this. Try rephrasing, or check whether the relevant source has been indexed.",
+      "abstained": true,
+      "must_abstain": true,
+      "citations": 0,
+      "grounded_citations": 0,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 9.71426570811309,
+      "input_tokens": 990,
+      "output_tokens": 19,
+      "trace_id": "dfcf24906d8c4535",
+      "error": null
+    },
+    {
+      "id": "abstain-liquid-snippet-source",
+      "question": "What is the exact Liquid snippet the access lock gate injects into a theme?",
+      "tags": [
+        "abstention",
+        "out-of-scope"
+      ],
+      "relevant_documents": [],
+      "retrieved_documents": [
+        "schema-10.md"
+      ],
+      "recall": 0.0,
+      "precision": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg": 0.0,
+      "hit": false,
+      "answer": "The exact Liquid snippet the access lock gate injects into a theme is not explicitly provided in the sources. The sources mention that the gate injection is part of the schema and that the injection is mirrored in the `oscp` namespace, but they do not specify the actual Liquid code snippet used [2].",
+      "abstained": false,
+      "must_abstain": true,
+      "citations": 1,
+      "grounded_citations": 1,
+      "cited_relevant": 0,
+      "missing_facts": [],
+      "expected_facts": 0,
+      "faithful": null,
+      "latency_seconds": 18.247327500022948,
+      "input_tokens": 946,
+      "output_tokens": 62,
+      "trace_id": "a66ae912061d4ef8",
+      "error": null
+    }
+  ]
+}

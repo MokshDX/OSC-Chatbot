@@ -1,0 +1,533 @@
+# OSC golden set — the FAQ suite. **Not the production suite.**
+#
+# This is the merchant-facing OSCP Wholesale B2B FAQ, and it was the production
+# corpus and golden set through Phase 5. Phase 6 moved the authoritative knowledge
+# source to `docs/company/schema/` (ADR 0011); the FAQ documents stayed on disk and
+# left the index.
+#
+# It is kept, unmodified, for two reasons. It is 86 curated cases and a committed
+# baseline representing real measurement work, and deleting evaluation cases because
+# they no longer match the current corpus is exactly the habit that makes a
+# benchmark dishonest. And it remains the only suite over prose documents, which is
+# what makes it useful as a control when a chunker or retrieval change is suspected
+# of being specific to the schema corpus's tables and JSON.
+#
+# It is scored against a different corpus, so **its numbers are not comparable to
+# the schema suite's**. To run it:
+#
+#     OSC_WORKSPACE_ID=faq ./osc ingest docs/company/faq
+#     OSC_WORKSPACE_ID=faq ./osc eval --golden-set evaluation/suites/faq.yaml
+#
+# The separate workspace is what keeps the two corpora from sharing an index; every
+# table carries `workspace_id` as a partition key.
+#
+# Curated against the FAQ corpus. Two rules were followed when writing it, and both
+# matter more than the case count:
+#
+#   1. Questions are phrased the way a merchant would ask them, not copied from the
+#      FAQ headings. A golden set of verbatim headings measures string matching and
+#      reports it as retrieval quality — every question would score 1.0 and the
+#      number would move for no reason anyone could act on.
+#
+#   2. `expected_facts` are short, distinctive and load-bearing: a number, a limit,
+#      a tag, a product name. Anything longer scores the model's phrasing rather
+#      than its correctness, and would fail a perfectly good answer that used a
+#      synonym.
+#
+# `relevant_documents` are corpus-relative paths under this suite's ingest root
+# (docs/company/faq). Run `./osc documents` to see what is actually indexed.
+#
+# Abstention cases at the end are deliberate. Without them an evaluation rewards a
+# model that answers everything, which is the failure mode this system is designed
+# against.
+
+version: 1
+corpus: docs/company/faq
+description: >
+  OSCP Wholesale B2B knowledge assistant — 81 curated questions covering all
+  seventeen FAQ topic areas, plus 5 abstention cases the corpus cannot answer.
+
+cases:
+  # ------------------------------------------------------------ tiered pricing
+  - id: tier-collection-level
+    question: Can I set up a bulk discount that applies to a whole collection?
+    relevant_documents: [tiered-pricing-guide.md]
+    expected_facts: ["collection"]
+    tags: [tiered-pricing]
+
+  - id: tier-product-level
+    question: How do I give my wholesale customers a discount on specific products?
+    relevant_documents: [tiered-pricing-guide.md]
+    tags: [tiered-pricing]
+
+  - id: tier-variants-supported
+    question: Does tiered pricing work for individual product variants?
+    relevant_documents: [tiered-pricing-guide.md]
+    tags: [tiered-pricing]
+
+  - id: tier-shopify-admin-order
+    question: If I create an order myself from the Shopify admin, does the tier price still apply?
+    relevant_documents: [tiered-pricing-guide.md]
+    tags: [tiered-pricing]
+
+  # ---------------------------------------------------------- offer priority
+  - id: priority-variant-wins
+    question: I have offers at variant, product and collection level on the same item. Which one wins?
+    relevant_documents: [priority-of-the-offers.md]
+    expected_facts: ["variant"]
+    tags: [priority]
+
+  - id: priority-two-collections
+    question: A product sits in two collections that both have discount rules. Which discount shows?
+    relevant_documents: [priority-of-the-offers.md]
+    tags: [priority]
+
+  - id: priority-one-variant-only
+    question: Why is my offer only showing on one variant instead of all of them?
+    relevant_documents: [priority-of-the-offers.md]
+    tags: [priority, troubleshooting]
+
+  # ------------------------------------------ product / collection integration
+  - id: integration-buy-now
+    question: Is the Buy Now button supported by the app?
+    relevant_documents: [product-and-collection-page-integration.md]
+    tags: [integration]
+
+  - id: integration-no-grid
+    question: Instead of a pricing table, can I just show the discounted price next to the normal price?
+    relevant_documents:
+      - product-and-collection-page-integration.md
+      - theme-compatibility.md
+    tags: [integration]
+
+  - id: integration-payment-gateways
+    question: Will this work with my payment gateway?
+    relevant_documents: [product-and-collection-page-integration.md]
+    tags: [integration]
+
+  - id: integration-collection-limit
+    question: What is the maximum number of collections I can put in one offer?
+    relevant_documents: [product-and-collection-page-integration.md]
+    expected_facts: ["10"]
+    tags: [integration, limits]
+
+  # ------------------------------------------------------- theme compatibility
+  - id: theme-grid-colour
+    question: How do I change the colours of the discount grid to match my theme?
+    relevant_documents: [theme-compatibility.md]
+    expected_facts: ["css"]
+    tags: [theme]
+
+  - id: theme-variant-offer-setup
+    question: Where in the dashboard do I create a variant offer based on customer tags?
+    relevant_documents: [theme-compatibility.md]
+    tags: [theme, setup]
+
+  - id: theme-customer-groups
+    question: Which customer groups can I assign a discount to?
+    relevant_documents: [theme-compatibility.md]
+    expected_facts: ["logged in"]
+    tags: [theme, setup]
+
+  - id: theme-table-missing
+    question: The discount table is not showing up on my product page. What should I check?
+    relevant_documents: [theme-compatibility.md]
+    expected_facts: ["app embeds"]
+    tags: [theme, troubleshooting]
+
+  - id: theme-cart-price-missing
+    question: The discounted price is not appearing on the cart page.
+    relevant_documents: [theme-compatibility.md]
+    tags: [theme, troubleshooting]
+
+  - id: theme-mini-cart
+    question: My mini cart is still showing the full price.
+    relevant_documents: [theme-compatibility.md]
+    tags: [theme, troubleshooting]
+
+  - id: theme-checkout-button
+    question: The price is wrong when I click checkout from the cart drawer. How do I fix it?
+    relevant_documents: [theme-compatibility.md]
+    tags: [theme, troubleshooting]
+
+  - id: theme-add-to-cart
+    question: What do I configure so the discount applies when Add to Cart is clicked?
+    relevant_documents: [theme-compatibility.md]
+    tags: [theme, troubleshooting]
+
+  - id: theme-single-quantity-price
+    question: How can I display a discounted price for a single unit on the product page?
+    relevant_documents: [theme-compatibility.md]
+    tags: [theme]
+
+  - id: theme-grid-customisation
+    question: My price grid does not appear at all. Could my theme customisations be the cause?
+    relevant_documents: [theme-compatibility.md]
+    tags: [theme, troubleshooting]
+
+  # --------------------------------------------------------- registration form
+  - id: registration-create-form
+    question: How do I build a wholesale signup form?
+    relevant_documents: [registration-form.md]
+    expected_facts: ["registration form setup"]
+    tags: [registration]
+
+  - id: registration-show-frontend
+    question: How do customers actually reach the registration form on my storefront?
+    relevant_documents: [registration-form.md]
+    expected_facts: ["main menu"]
+    tags: [registration]
+
+  - id: registration-no-emails
+    question: My customers are not getting approval emails. What is wrong?
+    relevant_documents: [registration-form.md]
+    expected_facts: ["email notification setup"]
+    tags: [registration, troubleshooting]
+
+  # ------------------------------------------------------------------- export
+  - id: export-metafields-csv
+    question: How do I export my pricing data to a CSV?
+    relevant_documents: [export.md]
+    expected_facts: ["email"]
+    tags: [export]
+
+  - id: export-bulk-edit-variants
+    question: Is there a way to edit lots of variant rules at once instead of one by one?
+    relevant_documents: [export.md]
+    expected_facts: ["import"]
+    tags: [export]
+
+  - id: export-pricing-in-csv
+    question: Can the CSV include the discount rules for each variant?
+    relevant_documents: [export.md]
+    tags: [export]
+
+  # ---------------------------------------------------------- quick order form
+  - id: quick-order-styling
+    question: Can the quick order form be restyled to match my shop?
+    relevant_documents: [quick-order-form.md]
+    tags: [quick-order]
+
+  - id: quick-order-bulk-sku
+    question: Can I paste in a list of SKUs rather than typing them one at a time?
+    relevant_documents: [quick-order-form.md]
+    expected_facts: ["apps@oscprofessionals.com"]
+    tags: [quick-order, limitations]
+
+  - id: quick-order-variants
+    question: Does entering a variant SKU add that exact variant to the cart?
+    relevant_documents: [quick-order-form.md]
+    tags: [quick-order]
+
+  - id: quick-order-bad-sku
+    question: What happens if a customer types an SKU that does not exist?
+    relevant_documents: [quick-order-form.md]
+    tags: [quick-order]
+
+  - id: quick-order-tier-pricing
+    question: Will quantity discounts show inside the quick order form?
+    relevant_documents: [quick-order-form.md]
+    tags: [quick-order, tiered-pricing]
+
+  # ------------------------------------------------------------- cart discount
+  - id: cart-discount-testing
+    question: How can I check that my cart discount is actually working?
+    relevant_documents: [cart-discount.md]
+    tags: [cart-discount]
+
+  - id: cart-discount-scheduling
+    question: Can I schedule a cart discount to run only over a weekend?
+    relevant_documents: [cart-discount.md]
+    tags: [cart-discount, limitations]
+
+  - id: cart-discount-customer-tags
+    question: Can cart discounts be limited to customers with a particular tag?
+    relevant_documents: [cart-discount.md]
+    tags: [cart-discount, limitations]
+
+  - id: cart-discount-tiers
+    question: Can I make a cart discount get bigger as the customer spends more?
+    relevant_documents: [cart-discount.md]
+    tags: [cart-discount]
+
+  # -------------------------------------------------------------------- market
+  - id: market-testing
+    question: How do I test that customers in another country see the right offer?
+    relevant_documents: [market.md]
+    expected_facts: ["vpn"]
+    tags: [market]
+
+  - id: market-conflicting-offers
+    question: Two offers target the same country with different discounts. Which applies?
+    relevant_documents: [market.md]
+    tags: [market, priority]
+
+  - id: market-all-vs-specific
+    question: I have an All Markets offer and a USA offer. What does a US customer see?
+    relevant_documents: [market.md]
+    expected_facts: ["usa"]
+    tags: [market, priority]
+
+  # ---------------------------------------------------------------- tax display
+  - id: tax-what-it-does
+    question: What is the tax display feature for?
+    relevant_documents: [tax-display.md]
+    tags: [tax]
+
+  - id: tax-enable
+    question: Where do I turn on tax display?
+    relevant_documents: [tax-display.md]
+    expected_facts: ["settings"]
+    tags: [tax]
+
+  - id: tax-per-country-rates
+    question: Can I use a different tax rate for each country I sell to?
+    relevant_documents: [tax-display.md]
+    tags: [tax]
+
+  - id: tax-global-vs-country
+    question: If I set a global tax rate and a country rate, which one is used?
+    relevant_documents: [tax-display.md]
+    expected_facts: ["country"]
+    tags: [tax, priority]
+
+  - id: tax-shopify-prerequisite
+    question: Do I need to set anything up in Shopify before tax display works?
+    relevant_documents: [tax-display.md]
+    expected_facts: ["markets"]
+    tags: [tax, setup]
+
+  - id: tax-affects-checkout
+    question: Does the tax display setting change what the customer is actually charged?
+    relevant_documents: [tax-display.md]
+    tags: [tax, limitations]
+
+  - id: tax-per-product
+    question: Can I switch tax display on for only some products?
+    relevant_documents: [tax-display.md]
+    tags: [tax, limitations]
+
+  # ------------------------------------- combined collection quantity discounts
+  - id: combined-deleted-label
+    question: I deleted the discount label the app created. What happens now?
+    relevant_documents: [combined-collection-quantity-discount-slabs.md]
+    tags: [combined-collections, troubleshooting]
+
+  - id: combined-not-applying
+    question: My combined collection discounts are not applying. What should I check?
+    relevant_documents: [combined-collection-quantity-discount-slabs.md]
+    tags: [combined-collections, troubleshooting]
+
+  - id: combined-multiple-collections
+    question: If a product is in more than one registered collection, which discount does it get?
+    relevant_documents: [combined-collection-quantity-discount-slabs.md]
+    expected_facts: ["best"]
+    tags: [combined-collections, priority]
+
+  - id: combined-update-collection
+    question: What happens to discounts when I add products to a registered collection?
+    relevant_documents: [combined-collection-quantity-discount-slabs.md]
+    tags: [combined-collections]
+
+  - id: combined-restrict-groups
+    question: Can I limit combined collection discounts to my VIP customers?
+    relevant_documents: [combined-collection-quantity-discount-slabs.md]
+    tags: [combined-collections]
+
+  # -------------------------------------------------------------- order limits
+  - id: limits-combine-row-and-order
+    question: Can a row-level discount and an order-level discount both apply to one order?
+    relevant_documents:
+      - order-limits.md
+      - row-level-discount.md
+    tags: [order-limits, row-level]
+
+  - id: limits-conditions
+    question: If I set several conditions on an order limit, do they all have to be met?
+    relevant_documents: [order-limits.md]
+    tags: [order-limits]
+
+  - id: limits-scope
+    question: Can I apply an order limit to just one product rather than the whole cart?
+    relevant_documents: [order-limits.md]
+    tags: [order-limits, limitations]
+
+  # ---------------------------------------------------------- row level discount
+  - id: row-before-tax
+    question: Is a row-level discount taken off before or after tax and shipping?
+    relevant_documents: [row-level-discount.md]
+    expected_facts: ["before"]
+    tags: [row-level]
+
+  - id: row-tiered
+    question: How do I set 10% off over $100 and 15% off over $500 at row level?
+    relevant_documents: [row-level-discount.md]
+    expected_facts: ["two separate offers"]
+    tags: [row-level]
+
+  - id: row-threshold-drop
+    question: What happens to the discount if the customer removes an item and drops below the minimum?
+    relevant_documents: [row-level-discount.md]
+    tags: [row-level]
+
+  - id: row-selected-products
+    question: Can row-level discounts apply to only some products in the cart?
+    relevant_documents: [row-level-discount.md]
+    tags: [row-level, limitations]
+
+  # ------------------------------------------------------------------ extra fee
+  - id: fee-what-is-it
+    question: What can I use the extra fee feature for?
+    relevant_documents: [extra-fee.md]
+    tags: [extra-fee]
+
+  - id: fee-specific-products
+    question: I want a packaging charge on fragile items only. How do I set that up?
+    relevant_documents: [extra-fee.md]
+    expected_facts: ["specific products"]
+    tags: [extra-fee]
+
+  - id: fee-flat-handling
+    question: How do I add the same handling charge to every order?
+    relevant_documents: [extra-fee.md]
+    expected_facts: ["all products"]
+    tags: [extra-fee]
+
+  - id: fee-multiple-rules
+    question: Can I have several extra fees running at once?
+    relevant_documents: [extra-fee.md]
+    tags: [extra-fee]
+
+  - id: fee-requires-code
+    question: Do I need a developer to set up an extra fee?
+    relevant_documents: [extra-fee.md]
+    tags: [extra-fee]
+
+  # ----------------------------------------------------------- add-on tier pricing
+  - id: addon-single-cost
+    question: I only have one unit cost and one margin. Can I still use add-on tier pricing?
+    relevant_documents: [add-on-tier-pricing.md]
+    tags: [add-on-pricing]
+
+  - id: addon-mixed-cart
+    question: If a customer orders several different products and variants together, is each priced correctly?
+    relevant_documents: [add-on-tier-pricing.md]
+    tags: [add-on-pricing]
+
+  - id: addon-all-sizes
+    question: Can one tier structure cover every size of a product?
+    relevant_documents: [add-on-tier-pricing.md]
+    tags: [add-on-pricing]
+
+  - id: addon-cost-components
+    question: How many cost parameters and profit margins can I define for a variant?
+    relevant_documents: [add-on-tier-pricing.md]
+    expected_facts: ["four", "two"]
+    tags: [add-on-pricing, limits]
+
+  # ------------------------------------------------------------------ free gift
+  - id: gift-what-is-it
+    question: How does the free gift feature work?
+    relevant_documents: [free-gift.md]
+    tags: [free-gift]
+
+  - id: gift-shows-as-free
+    question: Will the customer see the gift as costing nothing in their cart?
+    relevant_documents: [free-gift.md]
+    tags: [free-gift]
+
+  - id: gift-multiple
+    question: Can one rule hand out more than one gift product?
+    relevant_documents: [free-gift.md]
+    tags: [free-gift]
+
+  - id: gift-triggers
+    question: What conditions can I use to trigger a free gift?
+    relevant_documents: [free-gift.md]
+    tags: [free-gift]
+
+  - id: gift-audience
+    question: Can I restrict free gifts to logged-in or VIP customers only?
+    relevant_documents: [free-gift.md]
+    tags: [free-gift]
+
+  - id: gift-discount-code
+    question: Does the customer have to enter a coupon code to get the gift?
+    relevant_documents: [free-gift.md]
+    tags: [free-gift]
+
+  # ---------------------------------------------------------------- draft order
+  - id: draft-how-pricing-applied
+    question: How does the app apply wholesale prices at checkout using draft orders?
+    relevant_documents: [draft-order.md]
+    expected_facts: ["draft order"]
+    tags: [draft-order]
+
+  - id: draft-coupon-stacking
+    question: If a customer uses a Shopify discount code on top of tier pricing, what do they pay?
+    relevant_documents: [draft-order.md]
+    expected_facts: ["$22"]
+    tags: [draft-order, priority]
+
+  - id: draft-order-tag
+    question: How can I tell which of my orders were created by the app?
+    relevant_documents: [draft-order.md]
+    expected_facts: ["oscp-order-processing"]
+    tags: [draft-order]
+
+  - id: draft-supported-features
+    question: Which wholesale pricing features work with draft orders right now?
+    relevant_documents: [draft-order.md]
+    expected_facts: ["variant"]
+    tags: [draft-order, limitations]
+
+  - id: draft-cart-page-price
+    question: Why does my cart page still show the full price in draft order mode?
+    relevant_documents: [draft-order.md]
+    expected_facts: ["checkout"]
+    tags: [draft-order, troubleshooting]
+
+  - id: draft-plan-downgrade
+    question: I downgraded my plan. Do I need to do anything about the draft order setting?
+    relevant_documents: [draft-order.md]
+    tags: [draft-order]
+
+  - id: draft-price-security
+    question: Can a customer tamper with the wholesale price before checkout?
+    relevant_documents: [draft-order.md]
+    expected_facts: ["server-side"]
+    tags: [draft-order, security]
+
+  - id: draft-double-click
+    question: What stops duplicate draft orders if someone clicks checkout twice?
+    relevant_documents: [draft-order.md]
+    expected_facts: ["15"]
+    tags: [draft-order]
+
+  # ------------------------------------------------------------- abstention set
+  # The corpus genuinely does not answer these. A system that produces a confident
+  # answer to any of them is hallucinating, and that is what these cases catch.
+  - id: abstain-pricing-plans
+    question: How much does the OSCP Wholesale B2B app cost per month?
+    must_abstain: true
+    tags: [abstention]
+
+  - id: abstain-refund-policy
+    question: What is OSC's refund policy for annual subscriptions?
+    must_abstain: true
+    tags: [abstention]
+
+  - id: abstain-woocommerce
+    question: Does this app work with WooCommerce or BigCommerce?
+    must_abstain: true
+    tags: [abstention]
+
+  - id: abstain-api-rate-limits
+    question: What are the API rate limits for the wholesale pricing endpoints?
+    must_abstain: true
+    tags: [abstention]
+
+  - id: abstain-employee-leave
+    question: How many days of annual leave does an OSC employee get?
+    must_abstain: true
+    tags: [abstention]

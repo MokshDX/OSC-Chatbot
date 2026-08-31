@@ -83,7 +83,7 @@ project's rule is that a retrieval change ships with a measured improvement.
 **What it buys.**
 
 - Measured on the current corpus: `recall@5` 0.932, `mrr` 0.860 over 81 golden cases
-  (`evaluation/baselines/retrieval-default.json`).
+  (`evaluation/baselines/faq-retrieval.json`).
 - No tuning parameter between the two methods. Changing the embedding model does not
   require re-deriving a weight.
 - One round trip, one datastore, one backup.

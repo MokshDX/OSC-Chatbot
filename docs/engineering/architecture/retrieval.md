@@ -136,18 +136,39 @@ That comparison is a recommended next milestone precisely because it is now chea
 
 ## Query rewriting
 
-Off by default. It resolves conversational references — "what about the second one?" —
-into a standalone query using the configured `fast_llm`.
+**On by default since Phase 6, on a measurement.** It resolves conversational
+references — "what about the second one?" — into a standalone query using the
+configured `fast_llm`.
 
 It is best-effort by construction: any failure falls back to the original question and
 records why on the span. A rewriting stage that can fail a request would be a
 liability, since it is an optimisation.
 
-Two reasons it is off. It costs a second model call on the critical path, and its
-benefit has never been measured. There is also currently nothing to rewrite *from* —
-the bundled UI does not send conversation history, so every turn is an independent
-question. Re-enabling it belongs with conversation persistence, and with an evaluation
-run.
+**This is the only path by which conversation history reaches retrieval.** With it
+off, a follow-up is *generated* with full context and *retrieved for* as if it were
+standalone — "what type is it?" searches the index for those literal words. That is
+not a theory: the conversational suite runs every context-dependent turn twice, once
+in the session and once cold, and the pair says so directly.
+
+|  | off | on |
+|---|---|---|
+| `follow_up_resolution` | 0.765 | **0.941** |
+| `follow_up_resolution_no_context` (cold control) | 0.765 | 0.765 |
+| `follow_up_lift` | **0.000** | **+0.177** |
+| `context_pollution` | 0.000 | 0.000 |
+
+A lift of exactly zero with it off is the whole argument. Turning it on resolves three
+more of the seventeen context-dependent turns and does not drag standalone questions
+back toward the previous topic.
+
+Single-turn quality is unaffected **by construction** — with no history the rewriter
+returns the question untouched and makes no model call — and that was confirmed rather
+than assumed: `recall@5`, `mrr`, `ndcg@5` and `precision@5` on the schema suite are
+bit-identical with it on and off.
+
+The cost is one `fast_llm` call per follow-up turn, on the critical path. It was off
+through Phase 5 because there was nothing to rewrite *from*: no session memory existed
+and the bundled UI sent no history. Both landed in Phase 6 (ADR 0013).
 
 ---
 
@@ -160,13 +181,15 @@ retrieval:
   top_k: 5              # passed to the model as sources
   rrf_k: 60             # RRF constant
   min_score: 0.0        # applied to first-stage scores
-  rewrite_queries: false
+  rewrite_queries: true   # the only path by which history reaches retrieval
 ```
 
 `candidates` is the reranker's working set: with `noop` it only needs to exceed
 `top_k`, but with a cross-encoder it is the recall ceiling the reranker can reorder
-within. `top_k` is bounded by the model's context — five chunks of ~900 characters plus
-the system prompt is what fits in Qwen3's 4096-token window on this deployment.
+within. `top_k` is bounded by the model's context. Note that since the chunker changed
+(ADR 0012) the median chunk is 278 characters rather than 826, so five chunks is now
+roughly a third of the context it used to be — **`top_k` has not been re-tuned, and
+that is the most clearly-owed experiment in this file.**
 
 **Every one of these values is currently an educated guess.** That is what the
 evaluation harness exists to change.
@@ -175,25 +198,31 @@ evaluation harness exists to change.
 
 ## Measured baseline
 
-Default local profile, 81 scored cases, `docs/company/` corpus:
+Default local profile, 55 scored cases, `docs/company/schema` corpus, `markdown`
+chunking:
 
 | Metric | Value |
 |---|---|
-| `recall@5` | 0.932 |
-| `hit_rate@5` | 0.938 |
-| `mrr` | 0.860 |
-| `precision@5` | 0.190 |
-| `latency_p95` | 0.049 s |
+| `recall@5` | **0.982** |
+| `hit_rate@5` | **0.982** |
+| `ndcg@5` | **0.918** |
+| `mrr` | **0.897** |
+| `precision@5` | 0.200 |
 
-From `evaluation/baselines/retrieval-default.json`. `precision@5` is low by
-construction: most cases have exactly one relevant document out of five slots, so the
-ceiling is 0.2 — it is useful as a *relative* measure across runs, not as an absolute.
+From `evaluation/baselines/schema-retrieval.json`. `precision@5` is at its
+**structural maximum**: most cases have exactly one relevant document out of five
+slots, so the ceiling *is* 0.2 and the observed value is a perfect score. It is useful
+as a *relative* measure across runs and misleading as an absolute one — this is the
+metric in the report most likely to be misread.
 
-The six cases that miss are informative rather than embarrassing. They cluster where
-the corpus genuinely overlaps: a question about collection-level bulk discounts is
-answered by both `tiered-pricing-guide.md` and
-`combined-collection-quantity-discount-slabs.md`, and the golden set names only one.
+The single case that misses is informative rather than embarrassing.
+`bulk-variant-rules-key` asks where quantity-break tier rules live; `oscp.priceRule`
+is described in both `schema-2.md` and `schema-6.md`, and the golden set names one.
 That is a curation finding, and the kind of thing the harness exists to surface.
+
+The Phase 5 figures over the FAQ corpus (`recall@5` 0.932, `mrr` 0.860) are preserved
+in `evaluation/baselines/faq-retrieval.json`. **They are not comparable to the above**
+— different corpus, different questions.
 
 ---
 

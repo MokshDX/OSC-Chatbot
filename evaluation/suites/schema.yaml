@@ -1,0 +1,420 @@
+# OSC golden set — the single-turn suite for the authoritative schema corpus.
+#
+# Scored against `docs/company/schema/`, which is the production knowledge source
+# (`corpus.root` in the active profile). The FAQ suite in `faq.yaml` is scored
+# against a different corpus and is not comparable to this one; see the header there.
+#
+# Four rules were followed writing this, and each exists because breaking it
+# produces a number that looks fine and measures nothing:
+#
+#   1. **Questions are phrased the way an engineer would ask them**, not copied from
+#      the headings or the table cells. A golden set of verbatim headings measures
+#      string matching and reports it as retrieval quality: every question scores
+#      1.0 and the number never moves for a reason anyone can act on.
+#
+#   2. **`expected_facts` are short, distinctive and load-bearing** — a metafield
+#      key, a namespace, a GID shape, a numeric limit. This corpus is unusually good
+#      for that: `adt`, `cartTransformId`, `registractionForm` and
+#      `IDEMPOTENCY_WINDOW_MS` are strings that appear nowhere else and cannot be
+#      produced by a plausible-sounding guess. Anything longer would score the
+#      model's phrasing rather than its correctness.
+#
+#   3. **Facts are drawn from the document body, not from the question.** A case
+#      whose expected fact is a word the question already contains is scored on
+#      echo, and an extractive model passes it without retrieving anything.
+#
+#   4. **Abstention cases name things this corpus genuinely does not cover.** These
+#      documents are persistence schemas: they deliberately push architecture,
+#      routes, events and UX into a README that is *not* in the corpus. That makes
+#      honest unanswerable questions easy to write and realistic — they are the
+#      questions a developer actually asks these files and does not get an answer to.
+#
+# `relevant_documents` are corpus-relative paths — the same string the filesystem
+# loader records as `relative_path` on every chunk. `./osc documents` lists what is
+# actually indexed.
+
+version: 1
+corpus: docs/company/schema
+description: >
+  OSCP module persistence schemas — 46 curated questions across all eleven schema
+  documents, plus 6 abstention cases the corpus deliberately does not answer.
+
+cases:
+  # ------------------------------------------------- AddOnsTierPricing (schema.md)
+  - id: addon-variant-key
+    question: Where is the add-on tier pricing payload stored on a product variant?
+    relevant_documents: [schema.md]
+    expected_facts: ["adt"]
+    tags: [addons-tier-pricing, metafield-key]
+
+  - id: addon-cart-transform-key
+    question: How does the app remember which CartTransform it already registered?
+    relevant_documents: [schema.md]
+    expected_facts: ["cartTransformId"]
+    tags: [addons-tier-pricing, metafield-key]
+
+  - id: addon-template-catalogue-ownership
+    question: Which add-on pricing metafield is read-only because another module owns it?
+    relevant_documents: [schema.md]
+    expected_facts: ["tc"]
+    tags: [addons-tier-pricing, ownership]
+
+  - id: addon-domain-type
+    question: What TypeScript contract defines the add-on pricing payload?
+    relevant_documents: [schema.md]
+    expected_facts: ["PriceAddonData"]
+    tags: [addons-tier-pricing, contracts]
+
+  - id: addon-margin-rule-shape
+    question: What fields make up a margin override rule for add-on pricing?
+    relevant_documents: [schema.md]
+    expected_facts: ["mrgR"]
+    tags: [addons-tier-pricing, sample-data]
+
+  # ------------------------------------------------------ AutoOrderTag (schema-1.md)
+  - id: autotag-toggle-key
+    question: What switches automatic order tagging on for a shop?
+    relevant_documents: [schema-1.md]
+    expected_facts: ["autoTagStatus"]
+    tags: [auto-order-tag, metafield-key]
+
+  - id: autotag-namespace
+    question: Which metafield namespace does automatic order tagging use?
+    relevant_documents: [schema-1.md]
+    expected_facts: ["oscpB2B"]
+    tags: [auto-order-tag, namespace]
+
+  - id: autotag-product-definitions
+    question: Which product metafield definitions get copied onto orders as tags?
+    relevant_documents: [schema-1.md]
+    expected_facts: ["warehouse"]
+    tags: [auto-order-tag, definitions]
+
+  - id: autotag-plan-does-not-enable
+    question: Does subscribing to a plan turn order tagging on by itself?
+    relevant_documents: [schema-1.md]
+    expected_facts: ["does not"]
+    tags: [auto-order-tag, behaviour]
+
+  # -------------------------------------------------- BulkImportExport (schema-2.md)
+  - id: bulk-variant-rules-key
+    question: Which variant metafield holds quantity-break and currency tier rules?
+    relevant_documents: [schema-2.md]
+    expected_facts: ["priceRule"]
+    tags: [bulk-import-export, metafield-key]
+
+  - id: bulk-date-range-key
+    question: Where are campaign date-range tier rules kept for a variant?
+    relevant_documents: [schema-2.md]
+    expected_facts: ["rangeRule"]
+    tags: [bulk-import-export, metafield-key]
+
+  - id: bulk-owns-no-schema
+    question: Does the bulk import and export feature define storage of its own?
+    relevant_documents: [schema-2.md]
+    expected_facts: ["does not own"]
+    tags: [bulk-import-export, ownership]
+
+  - id: bulk-csv-not-metafields
+    question: Are the downloadable sample CSV templates stored as metafields?
+    relevant_documents: [schema-2.md]
+    expected_facts: ["not metafields"]
+    tags: [bulk-import-export, csv]
+
+  - id: bulk-csv-module
+    question: Which module generates the sample CSV downloads in the browser?
+    relevant_documents: [schema-2.md]
+    expected_facts: ["sampleTemplates.ts"]
+    tags: [bulk-import-export, csv]
+
+  # ------------------------------------------------------ CartDiscount (schema-3.md)
+  - id: cart-offers-key
+    question: Where does the cart discount feature keep its list of offers?
+    relevant_documents: [schema-3.md]
+    expected_facts: ["cartRules"]
+    tags: [cart-discount, metafield-key]
+
+  - id: cart-function-eligibility-key
+    question: What aggregated data does the cart discount Shopify Function read for eligibility?
+    relevant_documents: [schema-3.md]
+    expected_facts: ["isCartTags"]
+    tags: [cart-discount, functions]
+
+  - id: cart-discount-node-title
+    question: What is the automatic discount node behind all cart offers called?
+    relevant_documents: [schema-3.md]
+    expected_facts: ["OSCP CART DISCOUNT"]
+    tags: [cart-discount, discount-node]
+
+  - id: cart-why-public-metafields
+    question: Why are the cart discount metafields public rather than private?
+    relevant_documents: [schema-3.md]
+    expected_facts: ["not visible to Functions"]
+    tags: [cart-discount, inv-9]
+
+  - id: cart-deprecated-key
+    question: Which cart discount metafield is deprecated and cleaned up on save?
+    relevant_documents: [schema-3.md]
+    expected_facts: ["cartCollections"]
+    tags: [cart-discount, deprecation]
+
+  # ----------------------------------------------- CustomerRegistration (schema-4.md)
+  - id: registration-forms-key
+    question: Where are the registration form definitions persisted?
+    relevant_documents: [schema-4.md]
+    expected_facts: ["registractionForm"]
+    tags: [customer-registration, metafield-key]
+
+  - id: registration-typo-is-deliberate
+    question: Is the misspelling in the registration form metafield key a bug?
+    relevant_documents: [schema-4.md]
+    expected_facts: ["intentional"]
+    tags: [customer-registration, legacy]
+
+  - id: registration-auto-approve-key
+    question: What controls whether new customers are approved automatically?
+    relevant_documents: [schema-4.md]
+    expected_facts: ["approveNewCustomers"]
+    tags: [customer-registration, metafield-key]
+
+  - id: registration-member-tags
+    question: How do tier pricing modules find out which registration forms a customer belongs to?
+    relevant_documents: [schema-4.md]
+    expected_facts: ["variant_level_tags"]
+    tags: [customer-registration, integration]
+
+  - id: registration-discount-node-cache
+    question: Where is the cached wholesale discount node GID kept?
+    relevant_documents: [schema-4.md]
+    expected_facts: ["discountNodeId"]
+    tags: [customer-registration, metafield-key]
+
+  # --------------------------------------------------- CustomerSegment (schema-5.md)
+  - id: segment-assigned-key
+    question: Which customer metafield records the segment a customer belongs to?
+    relevant_documents: [schema-5.md]
+    expected_facts: ["segment"]
+    tags: [customer-segment, metafield-key]
+
+  - id: segment-status-values
+    question: What values can a customer's segment status take?
+    relevant_documents: [schema-5.md]
+    expected_facts: ["pending"]
+    tags: [customer-segment, enums]
+
+  - id: segment-shared-key
+    question: Which module shares the registration form metafield with customer segments?
+    relevant_documents: [schema-4.md, schema-5.md]
+    expected_facts: ["CustomerRegistration"]
+    tags: [customer-segment, ownership]
+
+  # ---------------------------------------------- DraftOrderProcessing (schema-6.md)
+  - id: draft-mode-key
+    question: What selects between the Shopify Function and draft order processing modes?
+    relevant_documents: [schema-6.md]
+    expected_facts: ["orderProcessingMode"]
+    tags: [draft-order, metafield-key]
+
+  - id: draft-default-mode
+    question: Which order processing mode is the default?
+    relevant_documents: [schema-6.md]
+    expected_facts: ["shopify_function"]
+    tags: [draft-order, defaults]
+
+  - id: draft-active-conditions
+    question: What has to be true for order processing to report itself as active?
+    relevant_documents: [schema-6.md]
+    expected_facts: ["plan"]
+    tags: [draft-order, behaviour]
+
+  - id: draft-idempotency-model
+    question: What stops the same cart producing two draft orders?
+    relevant_documents: [schema-6.md]
+    expected_facts: ["OrderProcessingDraft"]
+    tags: [draft-order, prisma]
+
+  - id: draft-idempotency-window
+    question: How long is a draft order reused for the same cart?
+    relevant_documents: [schema-6.md]
+    expected_facts: ["15 min"]
+    tags: [draft-order, limits]
+
+  - id: draft-unique-constraint
+    question: What is the uniqueness constraint on the draft order idempotency table?
+    relevant_documents: [schema-6.md]
+    expected_facts: ["cartTokenHash"]
+    tags: [draft-order, prisma]
+
+  - id: draft-shopify-tag
+    question: How are draft orders created by this app identified inside Shopify?
+    relevant_documents: [schema-6.md]
+    expected_facts: ["oscp-order-processing"]
+    tags: [draft-order, tagging]
+
+  - id: draft-addon-limitation
+    question: Are add-on tier pricing lines supported in draft order mode?
+    relevant_documents: [schema-6.md]
+    expected_facts: ["skipped"]
+    tags: [draft-order, limitations]
+
+  - id: draft-uses-prisma
+    question: Which part of order processing uses a relational database rather than metafields?
+    relevant_documents: [schema-6.md]
+    expected_facts: ["Prisma"]
+    tags: [draft-order, storage]
+
+  # -------------------------------------------- EmailConfiguration (schema-7.md)
+  - id: email-templates-key
+    question: Where are the notification email templates stored?
+    relevant_documents: [schema-7.md]
+    expected_facts: ["notifications"]
+    tags: [email-configuration, metafield-key]
+
+  - id: email-from-address-field
+    question: Which field holds the configured from-address for notifications?
+    relevant_documents: [schema-7.md]
+    expected_facts: ["configuerdEmailId"]
+    tags: [email-configuration, legacy]
+
+  - id: email-credentials-location
+    question: Are the SMTP credentials kept in the notifications metafield?
+    relevant_documents: [schema-7.md]
+    expected_facts: ["env"]
+    tags: [email-configuration, security]
+
+  # ---------------------------------------------------------- ExtraFee (schema-8.md)
+  - id: extrafee-metaobject-type
+    question: What metaobject type backs an extra fee rule?
+    relevant_documents: [schema-8.md]
+    expected_facts: ["extra_fee_rule"]
+    tags: [extra-fee, metaobject]
+
+  - id: extrafee-product-tag
+    question: How is the hidden fee product kept out of the resource pickers?
+    relevant_documents: [schema-8.md]
+    expected_facts: ["oscp-extra-fee"]
+    tags: [extra-fee, tagging]
+
+  - id: extrafee-tier-fields
+    question: Which field on an extra fee rule holds the tier rows?
+    relevant_documents: [schema-8.md]
+    expected_facts: ["quantity_ranges"]
+    tags: [extra-fee, metaobject]
+
+  - id: extrafee-calculation-modes
+    question: What are the two ways an extra fee can be calculated?
+    relevant_documents: [schema-8.md]
+    expected_facts: ["per_item"]
+    tags: [extra-fee, enums]
+
+  - id: extrafee-collection-expansion
+    question: What happens to a collection scope on an extra fee rule when it is saved?
+    relevant_documents: [schema-8.md]
+    expected_facts: ["expanded"]
+    tags: [extra-fee, behaviour]
+
+  # --------------------------------------------------------- FreeGift (schema-9.md)
+  - id: freegift-metaobject-type
+    question: What metaobject type stores a free gift rule?
+    relevant_documents: [schema-9.md]
+    expected_facts: ["oscp_freegifts"]
+    tags: [free-gift, metaobject]
+
+  - id: freegift-function-handle
+    question: What is the handle of the free gift Shopify Function?
+    relevant_documents: [schema-9.md]
+    expected_facts: ["free-gift-discount"]
+    tags: [free-gift, functions]
+
+  - id: freegift-widget-copy
+    question: Where is the progress bar and popup copy for free gifts configured?
+    relevant_documents: [schema-9.md]
+    expected_facts: ["freegift_global_settings"]
+    tags: [free-gift, metafield-key]
+
+  - id: freegift-readd-behaviour
+    question: Which setting puts a free gift back if the customer removes it from the cart?
+    relevant_documents: [schema-9.md]
+    expected_facts: ["re_add_if_removed"]
+    tags: [free-gift, behaviour]
+
+  - id: freegift-product-link
+    question: How is a product linked to the free gift rules that apply to it?
+    relevant_documents: [schema-9.md]
+    expected_facts: ["metaobject_reference"]
+    tags: [free-gift, references]
+
+  # ------------------------------------------------------- AccessLock (schema-10.md)
+  - id: accesslock-metaobject-type
+    question: What metaobject type defines an access lock rule?
+    relevant_documents: [schema-10.md]
+    expected_facts: ["access_lock_rule"]
+    tags: [access-lock, metaobject]
+
+  - id: accesslock-gate-installed-key
+    question: How does the app know whether the theme gate has been injected?
+    relevant_documents: [schema-10.md]
+    expected_facts: ["gateInstalled"]
+    tags: [access-lock, metafield-key]
+
+  - id: accesslock-legacy-keys
+    question: Why do some older installations use abbreviated access lock field keys?
+    relevant_documents: [schema-10.md]
+    expected_facts: ["immutable"]
+    tags: [access-lock, legacy]
+
+  - id: accesslock-condition-shape
+    question: What does an access lock condition entry consist of?
+    relevant_documents: [schema-10.md]
+    expected_facts: ["operator"]
+    tags: [access-lock, sample-data]
+
+  - id: accesslock-collection-timing
+    question: When is collection membership resolved for an access lock?
+    relevant_documents: [schema-10.md]
+    expected_facts: ["render"]
+    tags: [access-lock, behaviour]
+
+  - id: accesslock-checkout-lock-key
+    question: Which optional metafield carries checkout hard-lock customer tags?
+    relevant_documents: [schema-10.md]
+    expected_facts: ["lockTags"]
+    tags: [access-lock, metafield-key]
+
+  # --------------------------------------------------------------- abstention
+  #
+  # These are not trick questions. Every one is something a developer would
+  # reasonably ask *these files* and not get an answer to, because the schema
+  # documents deliberately push architecture, routes, events, UX and operational
+  # concerns into a README that is not part of this corpus. Without these cases the
+  # evaluation rewards a model that answers everything confidently.
+
+  - id: abstain-http-routes
+    question: What HTTP routes does the cart discount module expose?
+    must_abstain: true
+    tags: [abstention, out-of-scope]
+
+  - id: abstain-pricing-plan-cost
+    question: How much does the Platinum plan cost per month?
+    must_abstain: true
+    tags: [abstention, out-of-scope]
+
+  - id: abstain-rate-limits
+    question: What Shopify API rate limits apply when bulk importing tier pricing?
+    must_abstain: true
+    tags: [abstention, out-of-scope]
+
+  - id: abstain-database-hosting
+    question: Which cloud provider hosts the Prisma database in production?
+    must_abstain: true
+    tags: [abstention, out-of-scope]
+
+  - id: abstain-support-sla
+    question: What is the support response time commitment for OSCP customers?
+    must_abstain: true
+    tags: [abstention, out-of-scope]
+
+  - id: abstain-liquid-snippet-source
+    question: What is the exact Liquid snippet the access lock gate injects into a theme?
+    must_abstain: true
+    tags: [abstention, out-of-scope]

@@ -88,7 +88,12 @@ def serve(
 
 @app.command(rich_help_panel=RUNNING)
 def ingest(
-    path: Annotated[Path, typer.Argument(help="Directory to index.")],
+    path: Annotated[
+        Path | None,
+        typer.Argument(
+            help="Directory to index. Defaults to the configured `corpus.root`.",
+        ),
+    ] = None,
     profile: ProfileOption = None,
     prune: Annotated[
         bool,
@@ -110,10 +115,14 @@ def ingest(
 ) -> None:
     """Index a directory of documents."""
     settings = load(profile, verbose=verbose)
+    # Naming the root here rather than defaulting the argument to a literal keeps
+    # exactly one definition of "what the corpus is" in the system. A second literal
+    # is how an ingest root and a doctor root drift apart without either being wrong.
+    root = path or settings.corpus.root
 
     async def _run() -> None:
         async with Container(settings) as container:
-            loader = FilesystemLoader(path)
+            loader = FilesystemLoader(root)
             report = await container.ingestion.ingest(
                 loader.load(), prune=prune, reindex=reindex, source_failures=loader.failures
             )

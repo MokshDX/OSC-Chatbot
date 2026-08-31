@@ -289,10 +289,15 @@ are all knobs whose current values are educated guesses — moving one without a
 before/after number is how the guesses became permanent in the first place.
 
 ```bash
-make eval-retrieval          # recall@k, MRR, precision@k — no model calls
-make eval                    # adds citation, grounding, fact and abstention metrics
-make eval-gate               # what CI runs; fails on a regression
+make verify                  # THE test command: every tier, one summary, one exit code
+make eval                    # THE quality command: both suites, gated against baselines
+make eval-retrieval          # retrieval only, ungated — for chunker/embedding experiments
+make eval-gate               # what CI runs; exits non-zero on a regression
 ```
+
+**There are two canonical commands and everything else is a slice of one of them.**
+`make verify` answers "does it work?"; `make eval` answers "is it good?". Do not add a
+third entry point for either question.
 
 * **Deterministic metrics gate CI; the LLM judge is opt-in.** A gate that can change
   its mind between two runs of the same commit is not a gate.
@@ -307,7 +312,11 @@ make eval-gate               # what CI runs; fails on a regression
 
 ## Knowledge corpus rules
 
-* **`docs/company/` is the corpus. `docs/engineering/` is not, and must never be
+* **`corpus.root` is the corpus — `docs/company/schema/` by default — and it is
+  named in exactly one place.** Do not reintroduce a literal corpus path in the
+  Makefile, a CLI default or a message; `./osc ingest` with no argument reads the
+  setting (ADR 0010). `docs/company/faq/` and `docs/company/scenarios/` stay on disk
+  and out of the index. **`docs/engineering/` is not the corpus, and must never be
   indexed.** An answer sourced from an ADR would retrieve cleanly, ground correctly and
   cite accurately while being from the wrong universe — nothing downstream catches it.
 * **Never modify company documentation unless explicitly instructed.** Preserve
@@ -315,6 +324,26 @@ make eval-gate               # what CI runs; fails on a regression
 * **Tests use isolated fixtures, never the production corpus.** A test asserting
   against a real FAQ answer starts failing the day someone edits it.
 * Adding a corpus category is creating a directory. There is no registry to update.
+
+## Conversation rules
+
+* **Session memory is ephemeral and must stay that way in this phase.** Process-local,
+  bounded by message count / session count / idle TTL, destroyed on close and on
+  restart (ADR 0013). The audit stream is where a durable record of an answered
+  question already lives; do not add a second place that retains user text.
+* **`SessionStore` is a Protocol with one implementation and no registry.** A registry
+  earns its indirection when an operator picks between implementations by
+  configuration. When a durable store lands, `Container.sessions` becomes a registry
+  lookup and nothing above it changes.
+* **A turn is defined once, in `Conversation`.** Both API routes and the evaluation
+  harness go through it, which is what keeps "an abstention is still a turn" and "a
+  failed stream records nothing" from being three separate opinions.
+* **History reaches retrieval only through the query rewriter.** If you turn
+  `retrieval.rewrite_queries` off, conversational memory stops affecting retrieval
+  entirely — measured, not asserted: `follow_up_lift` was exactly 0.000 with it off.
+* **Conversational metrics are reported with a cold control.** A follow-up that gets
+  answered proves nothing on its own. Never report `follow_up_resolution` without
+  `follow_up_resolution_no_context` beside it.
 
 ## Observability rules for new code
 

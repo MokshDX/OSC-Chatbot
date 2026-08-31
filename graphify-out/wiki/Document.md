@@ -1,8 +1,8 @@
 # Document
 
-> God node · 66 connections · `src/osc_assistant/types.py`
+> God node · 54 connections · `src/osc_assistant/types.py`
 
-**Community:** [Ingestion Pipeline & Loaders](Ingestion_Pipeline_%26_Loaders.md)
+**Community:** [Conversational Evaluator](Conversational_Evaluator.md)
 
 ## Connections by Relation
 
@@ -21,8 +21,8 @@
 
 ### imports
 - protocols.py `EXTRACTED`
-- memory.py `EXTRACTED`
 - pgvector.py `EXTRACTED`
+- memory.py `EXTRACTED`
 - langchain_splitters.py `EXTRACTED`
 - recursive.py `EXTRACTED`
 - loaders.py `EXTRACTED`
@@ -36,41 +36,41 @@
 
 ### references
 - to_chunks() `EXTRACTED`
-- retrieval() `EXTRACTED`
 - ._read() `EXTRACTED`
 - .ingest() `EXTRACTED`
 - indexed() `EXTRACTED`
 - indexed() `EXTRACTED`
 - test_a_populated_index_produces_no_note() `EXTRACTED`
-- test_genuinely_removed_documents_are_still_pruned_alongside_failures() `EXTRACTED`
-- test_one_bad_document_does_not_abort_the_sync() `EXTRACTED`
-- test_unreadable_documents_are_not_pruned() `EXTRACTED`
 - exploding_client() `EXTRACTED`
 - test_a_known_provider_failure_keeps_its_actionable_message() `EXTRACTED`
 - .split() `EXTRACTED`
 - .split() `EXTRACTED`
 - .replace_document() `EXTRACTED`
 - .replace_document() `EXTRACTED`
-- test_a_sync_reports_the_trace_that_produced_it() `EXTRACTED`
-- test_prune_disabled_leaves_other_documents_alone() `EXTRACTED`
-- test_reindex_forces_work_the_content_hash_says_is_unnecessary() `EXTRACTED`
 - .split() `EXTRACTED`
+- ._index() `EXTRACTED`
+- ._summarise() `EXTRACTED`
+- .split() `EXTRACTED`
+- .replace_document() `EXTRACTED`
+- .split() `EXTRACTED`
+- .load() `EXTRACTED`
+- documents() `EXTRACTED`
 
 ### uses
 - [StubEmbeddingModel](StubEmbeddingModel.md) `INFERRED`
-- [StubChatModel](StubChatModel.md) `INFERRED`
-- ChatModel `INFERRED`
+- StubChatModel `INFERRED`
 - EmbeddingModel `INFERRED`
 - VectorStore `INFERRED`
-- Chunker `INFERRED`
-- Reranker `INFERRED`
+- ChatModel `INFERRED`
 - _FakeEmbeddings `INFERRED`
 - _ExplodingChatModel `INFERRED`
 - _SyncClosableReranker `INFERRED`
-- StoreInspector `INFERRED`
+- Chunker `INFERRED`
 - _ClosableEmbedding `INFERRED`
-- FailingChatModel `INFERRED`
+- Reranker `INFERRED`
 - NativeCitationChatModel `INFERRED`
+- FailingChatModel `INFERRED`
+- StoreInspector `INFERRED`
 
 ---
 

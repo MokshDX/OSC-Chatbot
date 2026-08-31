@@ -1,52 +1,62 @@
 # Doctor Health Checks
 
-> 18 nodes · cohesion 0.24
+> 57 nodes
 
 ## Key Concepts
 
-- **diagnose.py** (53 connections) — `src/osc_assistant/cli/diagnose.py`
-- **Settings** (36 connections) — `src/osc_assistant/settings.py`
-- **_run_checks()** (12 connections) — `src/osc_assistant/cli/diagnose.py`
-- **Check** (10 connections) — `src/osc_assistant/cli/diagnose.py`
-- **_check_llm()** (7 connections) — `src/osc_assistant/cli/diagnose.py`
-- **_check_chunker()** (5 connections) — `src/osc_assistant/cli/diagnose.py`
-- **_check_langchain()** (5 connections) — `src/osc_assistant/cli/diagnose.py`
-- **_check_reranker()** (5 connections) — `src/osc_assistant/cli/diagnose.py`
-- **_check_store()** (5 connections) — `src/osc_assistant/cli/diagnose.py`
-- **_check_corpus()** (4 connections) — `src/osc_assistant/cli/diagnose.py`
-- **Path** (4 connections)
-- **.traces_are_exposed()** (2 connections) — `src/osc_assistant/settings.py`
-- **.marker()** (1 connections) — `src/osc_assistant/cli/diagnose.py`
-- **Diagnostics and inspection: understanding the system without reading its…** (1 connections) — `src/osc_assistant/cli/diagnose.py`
-- **Report the LangChain versions in play. Both are core dependencies.** (1 connections) — `src/osc_assistant/cli/diagnose.py`
-- **One diagnostic result. `status` is deliberately three-valued. A warning is a…** (1 connections) — `src/osc_assistant/cli/diagnose.py`
-- **Root configuration object. Nested values are addressable from the environment…** (1 connections) — `src/osc_assistant/settings.py`
-- **Whether the HTTP trace endpoints should be registered. Two conditions, not one.…** (1 connections) — `src/osc_assistant/settings.py`
+- **Trace** (28 connections) — `src/osc_assistant/observability/trace.py`
+- **trace.py** (24 connections) — `src/osc_assistant/observability/trace.py`
+- **observability/__init__.py** (20 connections) — `src/osc_assistant/observability/__init__.py`
+- **Span** (19 connections) — `src/osc_assistant/observability/trace.py`
+- **current_trace_id()** (12 connections) — `src/osc_assistant/observability/trace.py`
+- **store.py** (11 connections) — `src/osc_assistant/observability/store.py`
+- **render.py** (10 connections) — `src/osc_assistant/observability/render.py`
+- **trace_from_dict()** (10 connections) — `src/osc_assistant/observability/store.py`
+- **render_waterfall()** (8 connections) — `src/osc_assistant/observability/render.py`
+- **.get()** (7 connections) — `src/osc_assistant/observability/trace.py`
+- **annotate_text()** (7 connections) — `src/osc_assistant/observability/trace.py`
+- **._read_backwards()** (6 connections) — `src/osc_assistant/observability/store.py`
+- **Any** (6 connections)
+- **render_summary()** (5 connections) — `src/osc_assistant/observability/render.py`
+- **_details()** (5 connections) — `src/osc_assistant/observability/render.py`
+- **.get()** (5 connections) — `src/osc_assistant/observability/store.py`
+- **_parse_line()** (5 connections) — `src/osc_assistant/observability/store.py`
+- **set_trace_sink()** (5 connections) — `src/osc_assistant/observability/trace.py`
+- **_log_trace()** (5 connections) — `src/osc_assistant/observability/trace.py`
+- **.set_text()** (4 connections) — `src/osc_assistant/observability/trace.py`
+- **.slowest()** (4 connections) — `src/osc_assistant/observability/trace.py`
+- **test_the_waterfall_renders_every_span_and_marks_failures()** (4 connections) — `tests/test_observability.py`
+- **_label()** (3 connections) — `src/osc_assistant/observability/render.py`
+- **.set()** (3 connections) — `src/osc_assistant/observability/trace.py`
+- **.to_dict()** (3 connections) — `src/osc_assistant/observability/trace.py`
+- *... and 32 more nodes in this community*
 
 ## Relationships
 
-- [Diagnostic CLI Commands](Diagnostic_CLI_Commands.md) (14 shared connections)
-- [Container Lifecycle & E2E](Container_Lifecycle_%26_E2E.md) (9 shared connections)
-- [Composition Root & Settings Models](Composition_Root_%26_Settings_Models.md) (7 shared connections)
-- [Trace Listing CLI](Trace_Listing_CLI.md) (6 shared connections)
-- [Settings Sources & Tests](Settings_Sources_%26_Tests.md) (5 shared connections)
-- [Evaluation CLI Command](Evaluation_CLI_Command.md) (4 shared connections)
-- [Answer Generation & Faithfulness Judge](Answer_Generation_%26_Faithfulness_Judge.md) (4 shared connections)
-- [Inspection Payloads & Redaction](Inspection_Payloads_%26_Redaction.md) (3 shared connections)
-- [Protocol Seams & Embedding Errors](Protocol_Seams_%26_Embedding_Errors.md) (3 shared connections)
-- [FastAPI Application Assembly](FastAPI_Application_Assembly.md) (3 shared connections)
-- [Startup Banner & Lifecycle](Startup_Banner_%26_Lifecycle.md) (3 shared connections)
-- [CLI Core Commands](CLI_Core_Commands.md) (2 shared connections)
+- [AccessLock & BulkImportExport Schemas](AccessLock_%26_BulkImportExport_Schemas.md) (12 shared connections)
+- [Trace Store File Handling](Trace_Store_File_Handling.md) (9 shared connections)
+- [Golden Set & Case Results](Golden_Set_%26_Case_Results.md) (9 shared connections)
+- [Answerer & Abstention Policy](Answerer_%26_Abstention_Policy.md) (8 shared connections)
+- [Evaluation Runner Tests](Evaluation_Runner_Tests.md) (6 shared connections)
+- [Trace Ring Buffer](Trace_Ring_Buffer.md) (4 shared connections)
+- [Context Var Reset](Context_Var_Reset.md) (3 shared connections)
+- [Shared Test Fixtures](Shared_Test_Fixtures.md) (1 shared connections)
+- [Test Doubles & Stubs](Test_Doubles_%26_Stubs.md) (1 shared connections)
+- [Span Tree & Trace Core](Span_Tree_%26_Trace_Core.md) (1 shared connections)
+- [Suite Loading & Validation](Suite_Loading_%26_Validation.md) (1 shared connections)
 
 ## Source Files
 
-- `src/osc_assistant/cli/diagnose.py`
-- `src/osc_assistant/settings.py`
+- `src/osc_assistant/observability/__init__.py`
+- `src/osc_assistant/observability/render.py`
+- `src/osc_assistant/observability/store.py`
+- `src/osc_assistant/observability/trace.py`
+- `tests/test_observability.py`
 
 ## Audit Trail
 
-- EXTRACTED: 149 (97%)
-- INFERRED: 5 (3%)
+- EXTRACTED: 246 (95%)
+- INFERRED: 13 (5%)
 - AMBIGUOUS: 0 (0%)
 
 ---

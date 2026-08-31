@@ -26,21 +26,43 @@ measured improvement.*
 ## Quick start
 
 ```bash
-make ingest              # the golden set is scored against what is actually indexed
-make eval-retrieval      # fast, free, no model calls — chunkers and embeddings
-make eval                # the full picture, including generation
-make eval-gate           # what CI runs: fails on a regression
+make ingest              # suites are scored against what is actually indexed
+make eval                # THE canonical command: both suites, gated
+make eval-retrieval      # fast, free, ungated, no model calls — for experiments
+make eval-gate           # what CI runs: retrieval only, exits non-zero on a regression
 ```
+
+`./osc eval` with no arguments runs the single-turn suite **and** the conversational
+suite, compares each against its committed baseline, prints the report and exits
+non-zero on a regression. Answering "is OSC any good?" should not require remembering
+four flags.
 
 Or directly, for the shapes the Makefile does not cover:
 
 ```bash
+./osc eval --suite conversational            # just the multi-turn suite
 ./osc eval --tag draft-order                 # one product area
 ./osc eval --concurrency 4                   # measure throughput under load
 ./osc eval --judge                           # add LLM-as-judge faithfulness
-./osc eval --profile config/experiments/hosted-anthropic.yaml -o evaluation/results/anthropic.json
-./osc eval --baseline evaluation/baselines/full-default.json   # diff against a known run
+./osc eval --no-gate                         # measure without judging
+./osc eval --profile config/experiments/hosted-anthropic.yaml --suite schema -o results/anthropic.json
 ```
+
+`--output` names one file, so it is refused when more than one suite is planned —
+the second would silently overwrite the first.
+
+### The suites
+
+| File | Shape | Scored against |
+|---|---|---|
+| `suites/schema.yaml` | 55 single-turn + 6 abstention | `docs/company/schema` |
+| `suites/conversational.yaml` | 18 sessions, 46 turns | `docs/company/schema` |
+| `suites/faq.yaml` | 86 single-turn | `docs/company/faq` — preserved, not production |
+
+Each declares its `corpus`. That is recorded rather than enforced — the harness knows
+which *documents* are indexed, not which directory they came from — but it turns the
+commonest failure ("every case scored zero") into a message naming the directory to
+ingest.
 
 ---
 
@@ -48,7 +70,7 @@ Or directly, for the shapes the Makefile does not cover:
 
 ```mermaid
 graph LR
-    G[golden-set.yaml] --> D[dataset.py<br/>load + validate]
+    G[suites/*.yaml] --> D[dataset.py<br/>load + validate]
     D --> R[runner.py<br/>Evaluator]
     C[Container] --> R
     R --> RP[RetrievalPipeline]
@@ -87,7 +109,7 @@ silently compare two different systems. `compare` diffs only metrics present in 
 
 ## The golden set
 
-`evaluation/golden-set.yaml`. 86 cases: 81 with known-correct source documents, 5 that
+`evaluation/suites/schema.yaml`. 61 cases: 55 with known-correct source documents, 6 that
 the corpus genuinely cannot answer.
 
 ```yaml
@@ -219,16 +241,16 @@ The intended workflow, and the reason the configuration snapshot exists:
 
 ```bash
 # Baseline: whatever is committed today.
-./osc eval --retrieval-only -o evaluation/baselines/retrieval-default.json
+./osc eval --retrieval-only -o evaluation/baselines/faq-retrieval.json
 
 # Change one thing.
 $EDITOR config/experiments/markdown-chunker.yaml     # chunking.strategy: markdown
-./osc ingest ./docs/company --reindex --profile config/experiments/markdown-chunker.yaml
+./osc ingest --reindex --profile config/experiments/markdown-chunker.yaml
 
 # Measure it against the baseline.
 ./osc eval --retrieval-only \
   --profile config/experiments/markdown-chunker.yaml \
-  --baseline evaluation/baselines/retrieval-default.json
+  --baseline evaluation/baselines/faq-retrieval.json
 ```
 
 The comparison table colours a delta by direction, using a table of which metrics
@@ -245,19 +267,38 @@ new label.
 ## Gating CI
 
 ```bash
-./osc eval --retrieval-only \
-  --baseline evaluation/baselines/retrieval-default.json \
-  --fail-under recall@5=0.90 --fail-under mrr=0.82
+make eval-gate          # ./osc eval --retrieval-only
 ```
 
-Exits non-zero if any named metric is below its threshold. `--fail-under` is parsed in
-the CLI rather than in the runner because it is a *policy about* a run, not a property
-*of* one: the same numbers are a pass in a local experiment and a failure in CI, and
-only the caller knows which it is.
+**No thresholds are typed.** Each suite is compared against its committed baseline,
+and every tolerance is derived from the run it judges:
 
-Thresholds are the committed baseline rounded down — tight enough to catch a
-regression, loose enough that ordinary variance does not cry wolf. Raise them when a
-change earns it; a threshold that never moves is a threshold nobody believes.
+| Family | Tolerance | Why |
+|---|---|---|
+| Retrieval | `1/n` — one case | Deterministic for a fixed index; the question is materiality, not noise |
+| Generation, citations, abstention | `2 × √(p(1−p)/n)` | Two standard errors — a drop inside it is indistinguishable from re-running the same commit |
+| Latency | 25%, **warning only** | Machine-dependent and heavy-tailed; a busy laptop is not a regression |
+| Counts and totals | not gated | They measure the run's size, not its quality |
+
+`n` is the number of cases that contributed to *that* metric, not the suite size:
+`abstention_accuracy` over six cases is far noisier than `fact_match` over
+forty-seven.
+
+The gate also blocks **trade-offs** — an improvement bought with a regression
+elsewhere, which per-metric thresholds cannot see:
+
+| Improves | At the cost of | The gaming move |
+|---|---|---|
+| `precision@k` | `recall@k` | Return fewer results |
+| `abstention_accuracy` | `citation_coverage` | Abstain more often |
+| `latency_p50` | `recall@k` | Retrieve fewer candidates |
+
+Retrieval-only, because a gate must be deterministic: including generation would let
+it change its mind between two runs of the same commit.
+
+Full rationale and every metric's regression criteria:
+[evaluation-methodology.md](evaluation-methodology.md) and
+[ADR 0014](../decisions/0014-derived-regression-tolerances.md).
 
 ---
 
@@ -267,10 +308,16 @@ change earns it; a threshold that never moves is a threshold nobody believes.
 are noise. A run worth keeping is promoted to a named file, because a baseline nobody
 can see is not a baseline.
 
+Named `<suite>-<variant>.json`, which is what the gate looks up automatically.
+
 | File | What it records |
 |---|---|
-| `retrieval-default.json` | Default local profile, retrieval only. The CI gate's reference |
-| `full-default.json` | Default local profile with generation. The quality reference |
+| `schema-retrieval.json` | Default profile, retrieval only. The CI gate's reference |
+| `schema-full.json` | Default profile with generation. The quality reference |
+| `conversational-full.json` | Default profile, multi-turn |
+| `faq-retrieval.json`, `faq-full.json` | The Phase 5 corpus. Historical, not comparable to the above |
+
+See [`evaluation/baselines/README.md`](../../../evaluation/baselines/README.md).
 
 ---
 
@@ -280,16 +327,25 @@ can see is not a baseline.
   stubs, including the Anthropic native-citation path — the only verified citation
   implementation in the codebase. Running `--profile config/experiments/hosted-anthropic.yaml`
   is one command; it needs a credential.
-- **The two scenario workbooks are not in the golden set.** All 81 scored cases target
-  the FAQ. The `.docx` and `.xlsx` documents are indexed and compete for retrieval
-  slots — which makes the numbers *harder*, honestly — but no case asserts they can be
-  retrieved.
+- **The scenario workbooks are neither indexed nor scored.** They left the index with
+  the corpus move (ADR 0011). The `.docx` and `.xlsx` parsers are still exercised by
+  the end-to-end suite against generated fixtures, so parser coverage is intact, but
+  no golden case scores retrieval over a spreadsheet any more.
+- **`fact_match` is substring matching**, which is brittle in one direction and blind
+  in the other. It is a floor on correctness, not a measure of it — see
+  [evaluation-methodology.md](evaluation-methodology.md).
 - **No question was written by a user.** The set was curated from the corpus, which
   means it inherits the corpus's blind spots. Real questions from
   [feedback capture](../../../PROJECT_STATUS.md) are the natural next source, and the
   reason feedback compounds.
 - **Nothing measures answer *helpfulness*.** Faithfulness and fact coverage together
   say "not wrong". They do not say "useful".
+- **Only six abstention cases.** `abstention_accuracy` is the weakest measured
+  behaviour (0.667) *and* the least reliably measured: six cases give the derived gate
+  a tolerance of ±0.385, so it would take a drop of more than two cases to fail.
+  Widening this is the single highest-value addition to the suites.
+- **The conversational suite is 18 sessions over 11 documents.** A real measurement,
+  and a small one. Its numbers should not be generalised to a larger corpus.
 
 ---
 
@@ -297,4 +353,7 @@ can see is not a baseline.
 
 - [retrieval.md](retrieval.md) — what the numbers are measuring
 - [knowledge-corpus.md](knowledge-corpus.md) — why the corpus shape and the golden set are coupled
+- [evaluation-methodology.md](evaluation-methodology.md) — every metric's definition, limitations, baseline and regression criteria
+- [conversation.md](conversation.md) — what the conversational metrics are measuring
 - [ADR 0005](../decisions/0005-evaluation-framework.md) — the decision record
+- [ADR 0014](../decisions/0014-derived-regression-tolerances.md) — why tolerances are derived

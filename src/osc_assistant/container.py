@@ -19,6 +19,7 @@ from typing import Self
 
 from . import providers as _providers  # noqa: F401 - registers built-in providers
 from .chunking import RecursiveChunker  # noqa: F401 - registers built-in chunkers
+from .conversation import Conversation, InMemorySessionStore, SessionStore
 from .generation import Answerer
 from .ingestion import IngestionPipeline
 from .logging import get_logger
@@ -193,6 +194,35 @@ class Container:
             model=self.llm,
             settings=self.settings.generation,
         )
+
+    @cached_property
+    def sessions(self) -> SessionStore:
+        """Conversational memory.
+
+        Not built through a registry, unlike the five swappable seams. A registry
+        earns its indirection when an operator picks between implementations by
+        configuration, and there is exactly one implementation: adding
+        `session_store_registry` today would be a naming ceremony around a single
+        constructor. When a durable store lands, this line becomes a registry
+        lookup and nothing above it changes — which is the property the
+        `SessionStore` Protocol is actually buying.
+        """
+        log.info(
+            "component.built",
+            extra={
+                "component": "sessions",
+                "provider": "memory",
+                "max_messages": self.settings.session.max_messages,
+                "max_sessions": self.settings.session.max_sessions,
+                "idle_ttl_seconds": self.settings.session.idle_ttl_seconds,
+            },
+        )
+        return InMemorySessionStore(self.settings.session)
+
+    @cached_property
+    def conversation(self) -> Conversation:
+        log.debug("pipeline.built", extra={"component": "conversation"})
+        return Conversation(answerer=self.answerer, store=self.sessions)
 
     @cached_property
     def ingestion(self) -> IngestionPipeline:

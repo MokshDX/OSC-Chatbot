@@ -23,8 +23,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
 from ..container import Container
+from ..conversation import UnknownSessionError
 from ..errors import AssistantError, ConfigurationError
 from ..generation import AnswerComplete, RetrievalReady
+from ..generation.answerer import AnswerEvent
 from ..logging import configure_logging, get_logger
 from ..observability import RECORDER, configure_observability
 from ..protocols import StoreInspector
@@ -42,6 +44,7 @@ from .schemas import (
     RetrievedChunkBody,
     SearchRequestBody,
     SearchResponseBody,
+    SessionBody,
     TraceListBody,
 )
 from .sse import SSE_HEADERS, SSE_MEDIA_TYPE, encode_event
@@ -309,24 +312,72 @@ def _trace_payload(trace_id: str) -> dict[str, object] | None:
     return recorded.to_dict() if recorded else None
 
 
+@router.post("/sessions", response_model=SessionBody, status_code=201)
+async def open_session(request: Request) -> SessionBody:
+    """Open a conversation.
+
+    Sessions are ephemeral: memory lives in this process, is bounded, expires when
+    idle, and does not survive a restart. A client that gets a 404 on its next turn
+    should open a new session rather than treat it as an error.
+    """
+    return SessionBody(session_id=await _container(request).conversation.start())
+
+
+@router.delete("/sessions/{session_id}", status_code=204)
+async def close_session(request: Request, session_id: str) -> None:
+    """Destroy a session and everything remembered in it.
+
+    Idempotent: closing an unknown or already-closed session is a 204, because the
+    caller's intent — "this conversation is over" — is satisfied either way, and a
+    client cleaning up on page unload cannot act on a 404.
+    """
+    await _container(request).conversation.close(session_id)
+
+
 # response_model is disabled because this endpoint returns either an SSE stream or
 # a JSON body; the union cannot be expressed as a single response model. The
 # non-streaming branch still returns a validated AnswerBody.
 @router.post("/chat", response_model=None)
 async def chat(request: Request, body: ChatRequestBody) -> StreamingResponse | AnswerBody:
-    """Answer a question, streaming by default."""
-    answerer = _container(request).answerer
+    """Answer a question, streaming by default.
+
+    Three shapes, one handler: a one-shot question, a client-supplied transcript,
+    and a server-held session. Only the last needs the `Conversation`; the other two
+    go straight to the `Answerer`, which is why a stateless caller pays nothing for
+    a feature it does not use.
+    """
+    container = _container(request)
+    answerer = container.answerer
     history = body.domain_history()
+    session_id = body.session_id
+
+    if session_id is not None:
+        # Fail before the response begins. Inside the SSE generator the status code
+        # is already fixed at 200, so an unknown session would arrive as an in-band
+        # error event — a worse report of an ordinary client mistake than a 404.
+        try:
+            await container.sessions.history(session_id)
+        except UnknownSessionError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     if not body.stream:
-        answer = await answerer.answer(body.question, history)
+        answer = (
+            await container.conversation.answer(session_id, body.question)
+            if session_id is not None
+            else await answerer.answer(body.question, history)
+        )
         return AnswerBody.from_domain(
             answer, trace=_trace_payload(answer.trace_id) if body.explain else None
         )
 
+    def _events() -> AsyncIterator[AnswerEvent]:
+        if session_id is not None:
+            return container.conversation.stream(session_id, body.question)
+        return answerer.stream(body.question, history)
+
     async def events() -> AsyncIterator[str]:
         try:
-            async for event in answerer.stream(body.question, history):
+            async for event in _events():
                 match event:
                     case RetrievalReady():
                         yield encode_event(

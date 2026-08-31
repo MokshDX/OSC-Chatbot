@@ -1,58 +1,59 @@
 # Server Lifecycle Tests
 
-> 25 nodes · cohesion 0.12
+> 28 nodes
 
 ## Key Concepts
 
-- **test_server_lifecycle.py** (30 connections) — `tests/test_server_lifecycle.py`
-- **_settings()** (16 connections) — `tests/test_server_lifecycle.py`
-- **exploding_client()** (7 connections) — `tests/test_server_lifecycle.py`
-- **test_a_known_provider_failure_keeps_its_actionable_message()** (7 connections) — `tests/test_server_lifecycle.py`
-- **test_shutdown_releases_every_component_that_was_built()** (7 connections) — `tests/test_server_lifecycle.py`
-- **TestClient** (5 connections)
-- **test_a_component_that_fails_to_close_does_not_break_shutdown()** (5 connections) — `tests/test_server_lifecycle.py`
-- **test_an_empty_index_is_reported_at_startup()** (5 connections) — `tests/test_server_lifecycle.py`
-- **test_embedding_vectors_are_unaffected_by_the_close_probe()** (5 connections) — `tests/test_server_lifecycle.py`
-- **test_shutdown_does_not_construct_what_was_never_used()** (5 connections) — `tests/test_server_lifecycle.py`
-- **test_startup_notes_reach_the_structured_log_too()** (5 connections) — `tests/test_server_lifecycle.py`
-- **test_an_unexpected_failure_does_not_leak_internals_to_the_client()** (4 connections) — `tests/test_server_lifecycle.py`
-- **test_an_unexpected_stream_failure_still_ends_the_stream()** (4 connections) — `tests/test_server_lifecycle.py`
-- **test_every_adapter_that_owns_an_sdk_client_can_be_released()** (2 connections) — `tests/test_server_lifecycle.py`
-- **Startup, shutdown and in-flight failure behaviour of the service. These cover…** (1 connections) — `tests/test_server_lifecycle.py`
-- **A condition worth interrupting a developer for belongs in the log as well.** (1 connections) — `tests/test_server_lifecycle.py`
-- **A client told nothing waits forever. The handler previously caught only…** (1 connections) — `tests/test_server_lifecycle.py`
-- **An unexpected exception's message is not part of the API contract.** (1 connections) — `tests/test_server_lifecycle.py`
-- **`AssistantError` messages are written for operators and are safe to surface.** (1 connections) — `tests/test_server_lifecycle.py`
-- **Only the vector store was closed before; provider HTTP clients leaked.** (1 connections) — `tests/test_server_lifecycle.py`
-- **`ingest` never builds a chat model; tearing one down would build it. That would…** (1 connections) — `tests/test_server_lifecycle.py`
-- **Shutdown runs on the failure path too; it must not mask the original error.** (1 connections) — `tests/test_server_lifecycle.py`
-- **A sanity check that the probe does not disturb a normal component.** (1 connections) — `tests/test_server_lifecycle.py`
-- **Regression: `Container.shutdown()` probes for `aclose`/`close`, and an adapter…** (1 connections) — `tests/test_server_lifecycle.py`
-- **A service that starts perfectly and abstains from everything looks broken. It…** (1 connections) — `tests/test_server_lifecycle.py`
+- **ADR 0005 — An In-Repo Evaluation Harness, Not A Third-Party One** (10 connections) — `docs/engineering/decisions/0005-evaluation-framework.md`
+- **ADR 0006 — Keep recursive As The Default Until Measured** (8 connections) — `docs/engineering/decisions/0006-chunking-strategy.md`
+- **ADR 0007 — Corpus Root Is docs/company/; The FAQ Is Split By Topic** (7 connections) — `docs/engineering/decisions/0007-knowledge-corpus-layout.md`
+- **ADR 0001 — Five Protocols As The Swappability Seams** (5 connections) — `docs/engineering/decisions/0001-provider-abstraction.md`
+- **ADR 0002 — Adopt LangChain For Undifferentiated Work Only** (4 connections) — `docs/engineering/decisions/0002-langchain-scope.md`
+- **Dependency Posture: Small Core, Vendor SDKs As Extras** (4 connections) — `docs/engineering/technologies/README.md`
+- **documents Extra (pypdf, python-docx, openpyxl)** (4 connections) — `docs/engineering/technologies/python-tooling.md`
+- **langchain-core And langchain-text-splitters Are Core Dependencies** (2 connections) — `docs/engineering/decisions/0002-langchain-scope.md`
+- **Rejected: RAGAS** (2 connections) — `docs/engineering/decisions/0005-evaluation-framework.md`
+- **A Retrieval Change Ships With A Measured Improvement** (2 connections) — `docs/engineering/decisions/0006-chunking-strategy.md`
+- **The Open Chunker Comparison (Milestone A)** (2 connections) — `docs/engineering/decisions/0006-chunking-strategy.md`
+- **openpyxl Added For .xlsx Scenario Workbooks** (2 connections) — `docs/engineering/decisions/0007-knowledge-corpus-layout.md`
+- **Shared Chunk Id Helper And Idempotent Ingestion** (2 connections) — `docs/engineering/architecture/chunking-and-embeddings.md`
+- **--reindex Required After A Chunker Change** (2 connections) — `docs/engineering/architecture/chunking-and-embeddings.md`
+- **Rejected: Abstract Base Classes And Framework Abstractions** (1 connections) — `docs/engineering/decisions/0001-provider-abstraction.md`
+- **Provider-Specific Tuning Lives In Untyped options** (1 connections) — `docs/engineering/decisions/0001-provider-abstraction.md`
+- **Rejected: A pytest Suite With Quality Assertions** (1 connections) — `docs/engineering/decisions/0005-evaluation-framework.md`
+- **The Harness Drives The Real Pipelines** (1 connections) — `docs/engineering/decisions/0005-evaluation-framework.md`
+- **The fact_match 1.0 Defect Found By Building It** (1 connections) — `docs/engineering/decisions/0005-evaluation-framework.md`
+- **A Golden Set Is A Maintained Asset** (1 connections) — `docs/engineering/decisions/0005-evaluation-framework.md`
+- **fixed Retained As An Evaluation Control** (1 connections) — `docs/engineering/decisions/0006-chunking-strategy.md`
+- **Character-Based Rather Than Token-Based Sizing** (1 connections) — `docs/engineering/decisions/0006-chunking-strategy.md`
+- **Semantic Chunking Deferred** (1 connections) — `docs/engineering/decisions/0006-chunking-strategy.md`
+- **Rejected: An Ingest-Time Exclusion List** (1 connections) — `docs/engineering/decisions/0007-knowledge-corpus-layout.md`
+- **Rejected: Split At Question Level (89 Files)** (1 connections) — `docs/engineering/decisions/0007-knowledge-corpus-layout.md`
+- *... and 3 more nodes in this community*
 
 ## Relationships
 
-- [Composition Root & Settings Models](Composition_Root_%26_Settings_Models.md) (9 shared connections)
-- [Container Lifecycle & E2E](Container_Lifecycle_%26_E2E.md) (5 shared connections)
-- [FastAPI Application Assembly](FastAPI_Application_Assembly.md) (4 shared connections)
-- [Startup Banner & Lifecycle](Startup_Banner_%26_Lifecycle.md) (4 shared connections)
-- [Ingestion Pipeline & Loaders](Ingestion_Pipeline_%26_Loaders.md) (4 shared connections)
-- [Chunker Factories & Pipeline Wiring](Chunker_Factories_%26_Pipeline_Wiring.md) (4 shared connections)
-- [Citation Parsing & Gemini Chat](Citation_Parsing_%26_Gemini_Chat.md) (4 shared connections)
-- [Protocol Seams & Embedding Errors](Protocol_Seams_%26_Embedding_Errors.md) (3 shared connections)
-- [Stub Chat Model & Answerer Tests](Stub_Chat_Model_%26_Answerer_Tests.md) (3 shared connections)
-- [Shared Test Fixtures & Retrieval Tests](Shared_Test_Fixtures_%26_Retrieval_Tests.md) (2 shared connections)
-- [Provider Errors & ChatModel Protocol](Provider_Errors_%26_ChatModel_Protocol.md) (2 shared connections)
-- [Answer Generation & Faithfulness Judge](Answer_Generation_%26_Faithfulness_Judge.md) (1 shared connections)
+- [Ingestion Tests](Ingestion_Tests.md) (3 shared connections)
+- [LangChain Splitters](LangChain_Splitters.md) (2 shared connections)
+- [LangChain Chat Bridge](LangChain_Chat_Bridge.md) (2 shared connections)
+- [Conversational Evaluation Tests](Conversational_Evaluation_Tests.md) (2 shared connections)
+- [Corpus Boundary Rules](Corpus_Boundary_Rules.md) (1 shared connections)
 
 ## Source Files
 
-- `tests/test_server_lifecycle.py`
+- `docs/engineering/architecture/chunking-and-embeddings.md`
+- `docs/engineering/decisions/0001-provider-abstraction.md`
+- `docs/engineering/decisions/0002-langchain-scope.md`
+- `docs/engineering/decisions/0005-evaluation-framework.md`
+- `docs/engineering/decisions/0006-chunking-strategy.md`
+- `docs/engineering/decisions/0007-knowledge-corpus-layout.md`
+- `docs/engineering/technologies/README.md`
+- `docs/engineering/technologies/python-tooling.md`
 
 ## Audit Trail
 
-- EXTRACTED: 115 (97%)
-- INFERRED: 3 (3%)
+- EXTRACTED: 53 (76%)
+- INFERRED: 17 (24%)
 - AMBIGUOUS: 0 (0%)
 
 ---

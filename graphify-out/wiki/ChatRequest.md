@@ -1,13 +1,12 @@
 # ChatRequest
 
-> God node · 59 connections · `src/osc_assistant/types.py`
+> God node · 57 connections · `src/osc_assistant/types.py`
 
-**Community:** [Citation Parsing & Gemini Chat](Citation_Parsing_%26_Gemini_Chat.md)
+**Community:** [LangChain Integration Tests](LangChain_Integration_Tests.md)
 
 ## Connections by Relation
 
 ### calls
-- _check_llm() `EXTRACTED`
 - .is_faithful() `EXTRACTED`
 - .rewrite() `EXTRACTED`
 - test_bridge_reports_an_empty_completion_rather_than_abstaining() `EXTRACTED`
@@ -19,10 +18,9 @@
 - types.py `EXTRACTED`
 
 ### imports
-- diagnose.py `EXTRACTED`
 - protocols.py `EXTRACTED`
-- llm/langchain_bridge.py `EXTRACTED`
 - answerer.py `EXTRACTED`
+- llm/langchain_bridge.py `EXTRACTED`
 - llm/openai_compatible.py `EXTRACTED`
 - llm/gemini.py `EXTRACTED`
 - anthropic_provider.py `EXTRACTED`
@@ -57,19 +55,19 @@
 
 ### uses
 - [StubEmbeddingModel](StubEmbeddingModel.md) `INFERRED`
-- [StubChatModel](StubChatModel.md) `INFERRED`
-- ChatModel `INFERRED`
+- StubChatModel `INFERRED`
 - EmbeddingModel `INFERRED`
 - VectorStore `INFERRED`
-- Chunker `INFERRED`
-- Reranker `INFERRED`
+- ChatModel `INFERRED`
 - _FakeEmbeddings `INFERRED`
 - _ExplodingChatModel `INFERRED`
 - _SyncClosableReranker `INFERRED`
-- StoreInspector `INFERRED`
+- Chunker `INFERRED`
 - _ClosableEmbedding `INFERRED`
-- FailingChatModel `INFERRED`
+- Reranker `INFERRED`
 - NativeCitationChatModel `INFERRED`
+- FailingChatModel `INFERRED`
+- StoreInspector `INFERRED`
 
 ---
 

@@ -1,15 +1,15 @@
 # ADR 0008 Content Deduplication
 
-> 6 nodes · cohesion 0.33
+> 6 nodes
 
 ## Key Concepts
 
 - **ADR 0008 — Ingestion deduplicates by source, not by content** (5 connections) — `docs/engineering/decisions/0008-content-level-deduplication.md`
 - **0008-content-level-deduplication.md** (1 connections) — `docs/engineering/decisions/0008-content-level-deduplication.md`
-- **Alternatives considered** (1 connections) — `docs/engineering/decisions/0008-content-level-deduplication.md`
-- **Consequences** (1 connections) — `docs/engineering/decisions/0008-content-level-deduplication.md`
 - **Context** (1 connections) — `docs/engineering/decisions/0008-content-level-deduplication.md`
 - **Decision** (1 connections) — `docs/engineering/decisions/0008-content-level-deduplication.md`
+- **Alternatives considered** (1 connections) — `docs/engineering/decisions/0008-content-level-deduplication.md`
+- **Consequences** (1 connections) — `docs/engineering/decisions/0008-content-level-deduplication.md`
 
 ## Relationships
 

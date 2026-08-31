@@ -1,8 +1,8 @@
 # ScoredChunk
 
-> God node · 40 connections · `src/osc_assistant/types.py`
+> God node · 36 connections · `src/osc_assistant/types.py`
 
-**Community:** [Search Strategies & Reranking](Search_Strategies_%26_Reranking.md)
+**Community:** [Logging System Design](Logging_System_Design.md)
 
 ## Connections by Relation
 
@@ -11,11 +11,9 @@
 
 ### imports
 - protocols.py `EXTRACTED`
-- runner.py `EXTRACTED`
-- memory.py `EXTRACTED`
 - pgvector.py `EXTRACTED`
+- memory.py `EXTRACTED`
 - retrieval/pipeline.py `EXTRACTED`
-- schemas.py `EXTRACTED`
 - judge.py `EXTRACTED`
 - cross_encoder.py `EXTRACTED`
 - noop.py `EXTRACTED`
@@ -29,14 +27,12 @@
 - reciprocal_rank_fusion() `EXTRACTED`
 - _to_scored_chunk() `EXTRACTED`
 - _ranking() `EXTRACTED`
-- ._score_retrieval() `EXTRACTED`
 - .is_faithful() `EXTRACTED`
 - .search_hybrid() `EXTRACTED`
 - .search_vector() `EXTRACTED`
 - .search_hybrid() `EXTRACTED`
 - .search_vector() `EXTRACTED`
 - .search_keyword() `EXTRACTED`
-- .from_domain() `EXTRACTED`
 - to_langchain_document() `EXTRACTED`
 - .search_hybrid() `EXTRACTED`
 - .search_keyword() `EXTRACTED`
@@ -46,11 +42,12 @@
 - .search_keyword() `EXTRACTED`
 - .rerank() `EXTRACTED`
 - .rerank() `EXTRACTED`
+- .rerank() `EXTRACTED`
 
 ### uses
-- ChatModel `INFERRED`
 - EmbeddingModel `INFERRED`
 - VectorStore `INFERRED`
+- ChatModel `INFERRED`
 - Chunker `INFERRED`
 - Reranker `INFERRED`
 - StoreInspector `INFERRED`

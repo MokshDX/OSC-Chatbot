@@ -1,4 +1,4 @@
-.PHONY: help install test test-integration test-e2e lint typecheck check format \
+.PHONY: help install verify test test-integration test-e2e lint typecheck check format \
         serve ingest reindex doctor status config providers documents document \
         chunk ask search traces trace version clean eval eval-retrieval eval-gate
 
@@ -12,11 +12,12 @@ OSC  := ./osc
 # PostgreSQL with pgvector for storage. No API credential is required.
 DSN ?= postgresql://mokshdutt@localhost:5432/osc
 
-# Corpus directory for `make ingest`. This is `docs/company`, not `docs`: the
-# company knowledge corpus and this repository's own engineering documentation both
-# live under docs/, and only the first of them belongs in the answer index. See
-# docs/engineering/architecture/knowledge-corpus.md.
-DOCS ?= ./docs/company
+# The corpus root is NOT defined here. It is `corpus.root` in the active profile,
+# and `./osc ingest` with no argument reads it. This file used to carry its own
+# copy, which meant the ingest root and the root `doctor` checked were two facts
+# that had to be kept equal by hand. Override for a one-off with:
+#   make ingest DOCS=docs/company/faq
+DOCS ?=
 
 # Free-form argument for the commands that take one:
 #   make ask Q="how many leave days?"
@@ -38,40 +39,67 @@ clean:  ## Remove caches and build artefacts
 
 # ------------------------------------------------------------------------ checks
 
-test:  ## Unit tests: no network, no database, no credentials
+# ============================================================================
+# The two canonical commands.
+#
+#   make verify   Does OSC work?     every automated test, one summary
+#   make eval     Is OSC any good?   every metric, gated against the baseline
+#
+# Everything below them is a narrower slice of one of the two, kept because a
+# two-second hermetic loop is worth having and a thirty-second one is not.
+# ============================================================================
+
+# The smoke test needs its OWN database: the chunks table fixes its vector width at
+# creation, and the suite clears its workspace when it finishes.
+E2E_DSN ?= postgresql://mokshdutt@localhost:5432/osc_e2e
+
+verify:  ## EVERY test — unit, integration, E2E — plus lint and types, in one report
+	@$(VENV)/bin/ruff check . && $(VENV)/bin/mypy src
+	@createdb $(notdir $(E2E_DSN)) 2>/dev/null || true
+	@OSC_TEST_DSN=$(DSN) OSC_TEST_DIMENSIONS=768 \
+	 OSC_E2E=1 OSC_E2E_DSN=$(E2E_DSN) \
+	 $(VENV)/bin/pytest -q -ra
+# One pytest invocation rather than three, so there is one summary line, one exit
+# code and one list of failures. Three invocations mean a failure in the first can
+# scroll off the screen before the third finishes, which is the exact thing a
+# canonical command exists to prevent. `-ra` names every skip and failure, so a
+# suite silently skipping for a missing database is visible rather than green.
+#
+# Integration and E2E need two different databases; `OSC_E2E_DSN` is what lets them
+# both be addressed in one process. OSC_TEST_DIMENSIONS must match the width the
+# target database's chunks table was migrated with — 768 for nomic-embed-text.
+
+test:  ## Fast hermetic subset: no network, no database, no credentials
 	$(VENV)/bin/pytest -q
 
-# Adds the pgvector suite. OSC_TEST_DIMENSIONS must match the width the target
-# database's chunks table was migrated with — 768 for nomic-embed-text. Against a
-# throwaway database, drop it and the narrow stub width is used instead.
 test-integration:  ## Unit tests plus the pgvector suite against a real database
 	OSC_TEST_DSN=$(DSN) OSC_TEST_DIMENSIONS=768 $(VENV)/bin/pytest -q
 
-# The smoke test drives the whole path against live Ollama and PostgreSQL. It needs
-# its OWN database: the chunks table fixes its vector width at creation, and this
-# suite deletes every document in its workspace when it finishes.
-E2E_DSN ?= postgresql://mokshdutt@localhost:5432/osc_e2e
-
 test-e2e:  ## End-to-end smoke test against a live Ollama and PostgreSQL
 	@createdb $(notdir $(E2E_DSN)) 2>/dev/null || true
-	OSC_E2E=1 OSC_TEST_DSN=$(E2E_DSN) $(VENV)/bin/pytest tests/test_e2e.py -q
+	OSC_E2E=1 OSC_E2E_DSN=$(E2E_DSN) $(VENV)/bin/pytest tests/test_e2e.py -q
 
-# Measurement, not testing: `make test` asks "is it correct?", `make eval` asks
-# "is it any good?". The golden set needs the corpus indexed first (`make ingest`).
-GOLDEN ?= evaluation/golden-set.yaml
+# Measurement, not testing: `make verify` asks "is it correct?", `make eval` asks
+# "is it any good?". Needs the corpus indexed first (`make ingest`).
 
-eval:  ## Score the golden set with generation — the full quality picture
-	$(OSC) eval --golden-set $(GOLDEN)
+eval:  ## EVERY metric — single-turn and conversational — gated against the baseline
+	$(OSC) eval
 
-eval-retrieval:  ## Score retrieval only — fast and free, enough to compare chunkers
-	$(OSC) eval --golden-set $(GOLDEN) --retrieval-only
+# Ungated on purpose: this is the experimentation loop. Comparing four chunkers
+# means three of the runs are *expected* to be worse than the baseline, and a
+# non-zero exit on each of them would train the reflex of passing --no-gate.
+eval-retrieval:  ## Retrieval only, ungated — fast, free, and enough to compare chunkers
+	$(OSC) eval --retrieval-only --no-gate
 
-# The CI gate. Thresholds are the committed baseline rounded down, so an ordinary
-# run passes and a regression does not. Raise them when a change earns it.
-eval-gate:  ## Fail if retrieval quality has regressed below the committed baseline
-	$(OSC) eval --golden-set $(GOLDEN) --retrieval-only \
-	  --baseline evaluation/baselines/retrieval-default.json \
-	  --fail-under recall@5=0.90 --fail-under mrr=0.82
+# What CI runs. No thresholds are typed here any more: the gate derives each
+# metric's tolerance from the run itself (one case for deterministic retrieval
+# metrics, two standard errors for sampled generation metrics) and compares against
+# the committed baselines. See src/osc_assistant/evaluation/gate.py.
+#
+# Retrieval-only because a gate must be deterministic: generation samples, so a
+# gate including it could change its mind between two runs of the same commit.
+eval-gate:  ## Fail if retrieval quality has regressed beyond tolerance
+	$(OSC) eval --retrieval-only
 
 lint:  ## ruff
 	$(VENV)/bin/ruff check .
@@ -82,7 +110,7 @@ format:  ## ruff --fix
 typecheck:  ## mypy --strict
 	$(VENV)/bin/mypy src
 
-check: lint typecheck test  ## lint + typecheck + test
+check: lint typecheck test  ## Fast pre-commit loop: lint + types + hermetic tests
 
 # ----------------------------------------------------------------- running things
 

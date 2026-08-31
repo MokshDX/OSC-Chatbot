@@ -44,3 +44,8 @@ considered** · **Consequences** (what it costs, honestly).
 | [0007](0007-knowledge-corpus-layout.md) | Corpus root is `docs/company/`; split the FAQ by topic | Accepted |
 | [0008](0008-content-level-deduplication.md) | Deduplicate by source, not by content — and detect, don't collapse | Accepted, with a known cost |
 | [0009](0009-persistent-logging.md) | Persistent logging on the stdlib, fed by the span stream | Accepted |
+| [0010](0010-corpus-root-is-configuration.md) | The corpus root is configuration, defined once | Accepted |
+| [0011](0011-schema-first-knowledge-corpus.md) | The schema corpus is the authoritative knowledge source | Accepted (narrows 0007) |
+| [0012](0012-markdown-chunking-measured.md) | `markdown` becomes the default chunker, on a measurement | Accepted (supersedes 0006) |
+| [0013](0013-ephemeral-session-memory.md) | Conversational memory is ephemeral, process-local and bounded | Accepted |
+| [0014](0014-derived-regression-tolerances.md) | Regression tolerances are derived, not typed | Accepted |

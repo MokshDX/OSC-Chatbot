@@ -138,29 +138,35 @@ Verified versions: `langchain-core` 1.5.3, `langchain-text-splitters` 1.1.2.
 - **A framework's release cadence.** LangChain moves fast and has broken APIs across
   major versions. Constrained to `>=1.0` and confined to two packages, which limits the
   blast radius.
-- **The chunkers are registered but unmeasured.** They cost no code to maintain, but
-  "available" is not "better". See below.
+- **The chunkers were registered but unmeasured for five phases.** That is now closed:
+  `markdown`, from `langchain-text-splitters`, is the measured default (ADR 0012). See
+  below.
 
 ---
 
 ## Future evolution
 
-**The chunker comparison is the open item.** The default is still `recursive` despite
-`langchain_recursive` having strictly better edge cases, because switching changes every
-chunk id in a live index and the project's rule is that a retrieval change ships with a
-measured improvement.
+**The chunker comparison is closed, and the library won it.** `markdown` — from
+`langchain-text-splitters`, one of the two adopted packages — is the default since
+Phase 6, measured against the three alternatives on the schema suite:
 
-There was no way to measure one until this iteration. There is now:
+| strategy | recall@5 | mrr | ndcg@5 |
+|---|---|---|---|
+| `recursive` (OSC's own, previous default) | 0.909 | 0.855 | 0.868 |
+| `langchain_recursive` | 0.927 | 0.874 | 0.888 |
+| `fixed` (OSC's own) | 0.946 | 0.872 | 0.890 |
+| **`markdown`** | **0.982** | **0.897** | **0.918** |
 
-```bash
-./osc eval --retrieval-only -o evaluation/results/recursive.json
-./osc ingest ./docs/company --reindex --profile config/experiments/markdown.yaml
-./osc eval --retrieval-only --profile config/experiments/markdown.yaml \
-  --baseline evaluation/results/recursive.json
-```
+That is the clearest vindication of the adoption rule in ADR 0002 — *adopt LangChain
+for undifferentiated work, keep OSC's own code where OSC's design is better*. Text
+splitting is undifferentiated work, the library's heading-aware splitter is better at
+it than the one written here, and the decision was settled by a number rather than by
+preference. Full record: [ADR 0012](../decisions/0012-markdown-chunking-measured.md).
 
-Whichever wins becomes the default. That is a Milestone A success criterion, and the
-single highest-value use of the harness on day one.
+**What is still open** is whether that gain is corpus-specific. The schema corpus is
+mostly tables, which is exactly what heading-aware splitting helps most; the FAQ suite
+is prose and is retained partly to test that. Re-running the comparison against it is
+unfinished work.
 
 ---
 

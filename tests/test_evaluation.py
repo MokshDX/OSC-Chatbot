@@ -460,3 +460,91 @@ async def test_the_judge_sees_the_passages_the_answer_was_built_from(
     assert report.summary["faithfulness"] == pytest.approx(1.0)
     # The judge prompt must carry the retrieved text, or it is grading blind.
     assert "leave days" in model.requests[-1].messages[0].content
+
+
+# ------------------------------------------------------------------------- nDCG
+
+
+def test_ndcg_is_one_when_every_relevant_document_is_at_the_top():
+    assert m.ndcg_at_k(["a", "b"], ["a", "b", "c"], 3) == pytest.approx(1.0)
+
+
+def test_ndcg_separates_two_rankings_that_recall_and_mrr_cannot():
+    """The reason this metric was added.
+
+    Both rankings retrieve all three relevant documents (recall 1.0) and both put a
+    relevant one first (MRR 1.0). Only nDCG distinguishes them, and the difference —
+    two relevant passages pushed below a top_k boundary — is precisely the thing
+    that changes what the model gets to read.
+    """
+    tight = m.ndcg_at_k(["a", "b", "c"], ["a", "b", "c", "x", "y"], 5)
+    spread = m.ndcg_at_k(["a", "b", "c"], ["a", "x", "y", "b", "c"], 5)
+
+    assert m.recall_at_k(["a", "b", "c"], ["a", "b", "c", "x", "y"], 5) == 1.0
+    assert m.recall_at_k(["a", "b", "c"], ["a", "x", "y", "b", "c"], 5) == 1.0
+    assert m.reciprocal_rank(["a", "b", "c"], ["a", "x", "y", "b", "c"]) == 1.0
+    assert tight > spread
+
+
+def test_ndcg_normalises_against_an_ideal_capped_at_k():
+    """With four relevant documents and k=2, holding two of them is perfect.
+
+    Normalising against all four would score the best achievable ranking at 0.5 and
+    report a defect in retrieval that is really a property of k.
+    """
+    assert m.ndcg_at_k(["a", "b", "c", "d"], ["a", "b"], 2) == pytest.approx(1.0)
+
+
+def test_ndcg_of_a_ranking_with_nothing_relevant_is_zero():
+    assert m.ndcg_at_k(["a"], ["x", "y"], 2) == 0.0
+
+
+def test_ndcg_discounts_by_position_not_by_count():
+    """A single relevant document scores less the further down it appears."""
+    first = m.ndcg_at_k(["a"], ["a", "x", "y"], 3)
+    third = m.ndcg_at_k(["a"], ["x", "y", "a"], 3)
+    assert first == pytest.approx(1.0)
+    assert 0.0 < third < first
+
+
+# ------------------------------------------------------- the shipped suites
+
+
+def test_the_shipped_schema_suite_is_valid_and_declares_its_corpus():
+    """`make eval` runs this file; a validation error here is a broken gate.
+
+    Cheap to catch here rather than forty minutes into an evaluation run.
+    """
+    suite = load_golden_set(Path("evaluation/suites/schema.yaml"))
+
+    assert suite.corpus == "docs/company/schema"
+    assert len(suite.cases) > 40
+    # Abstention cases are what stop the suite rewarding a model that answers
+    # everything. Their absence would not fail any other assertion.
+    assert any(case.must_abstain for case in suite.cases)
+
+
+def test_the_preserved_faq_suite_still_loads():
+    """The FAQ suite is kept runnable, not just kept on disk.
+
+    Deleting evaluation cases because they no longer match the current corpus is
+    the habit that makes a benchmark dishonest, so the promise that this suite is
+    still usable is asserted rather than stated in a comment.
+    """
+    suite = load_golden_set(Path("evaluation/suites/faq.yaml"))
+
+    assert suite.corpus == "docs/company/faq"
+    assert len(suite.cases) == 86
+    # Paths are relative to this suite's own corpus root, not to docs/company.
+    assert not any(
+        path.startswith("faq/") for case in suite.cases for path in case.relevant_documents
+    )
+
+
+def test_the_two_suites_are_scored_against_different_corpora():
+    """Their numbers are not comparable, and the files say so themselves."""
+    schema = load_golden_set(Path("evaluation/suites/schema.yaml"))
+    faq = load_golden_set(Path("evaluation/suites/faq.yaml"))
+
+    assert schema.corpus != faq.corpus
+    assert not (schema.referenced_documents & faq.referenced_documents)

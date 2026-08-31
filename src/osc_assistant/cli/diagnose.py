@@ -102,8 +102,11 @@ def doctor(
         typer.Option(help="Make one real call to the chat and embedding models."),
     ] = True,
     corpus: Annotated[
-        Path | None, typer.Option(help="Corpus directory to check for readable files.")
-    ] = Path("docs/company"),
+        Path | None,
+        typer.Option(
+            help="Corpus directory to check. Defaults to the configured `corpus.root`."
+        ),
+    ] = None,
     verbose: VerboseOption = False,
 ) -> None:
     """Check that every configured component is reachable and consistent.
@@ -117,7 +120,7 @@ def doctor(
     common causes of "it worked yesterday".
     """
     settings = load(profile, verbose=verbose)
-    checks = run(_run_checks(settings, probe=probe, corpus=corpus))
+    checks = run(_run_checks(settings, probe=probe, corpus=corpus or settings.corpus.root))
 
     report = table("check", "status", "detail")
     for check in checks:
@@ -210,7 +213,7 @@ async def _check_store(container: Container, settings: Settings) -> list[Check]:
 
     if stats.documents == 0:
         checks.append(
-            Check("index", "warn", "empty — run `osc-assistant ingest ./docs/company`")
+            Check("index", "warn", f"empty — run `osc-assistant ingest {settings.corpus.root}`")
         )
     elif stats.chunks == 0:
         checks.append(

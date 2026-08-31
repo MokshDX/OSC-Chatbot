@@ -1,9 +1,10 @@
 # OSC Knowledge Assistant
 
-A provider-agnostic retrieval-augmented question answering service over OSC's
+A provider-agnostic retrieval-augmented **conversational** assistant over OSC's
 internal documents. Answers are grounded in retrieved source material, carry
 citations back to that material, and the assistant declines to answer rather than
-guessing when the corpus does not support one.
+guessing when the corpus does not support one. Sessions hold conversation history,
+so follow-ups resolve against what was said before.
 
 The chat model, embedding model, reranker, vector store and chunking strategy are
 all selected by configuration. Switching any of them is a profile edit.
@@ -24,16 +25,22 @@ make install                       # creates .venv and installs the project
 export OSC_DATABASE__DSN=postgresql://USER@localhost:5432/osc
 
 ./osc doctor                       # is everything actually reachable?
-./osc ingest ./docs/company        # migrations run automatically on first use
-./osc ask "Can I apply tiered pricing at collection level?"
+./osc ingest                       # indexes `corpus.root`; migrations run on first use
+./osc ask "Where is the add-on tier pricing payload stored?"
 ./osc serve                        # HTTP API + chat UI on http://localhost:8000
 
-make eval-retrieval                # is retrieval any good? fast, no model calls
+make verify                        # does it work?    every test, one report
+make eval                          # is it any good?  every metric, gated
 ```
 
-**The corpus is `docs/company/`, not `docs/`.** `docs/engineering/` holds this
-repository's own engineering knowledge base and is deliberately never indexed — see
-[`docs/engineering/architecture/knowledge-corpus.md`](docs/engineering/architecture/knowledge-corpus.md).
+**The corpus is `docs/company/schema/`** — the authoritative knowledge source, set as
+`corpus.root` in the profile and named in exactly one place. The sibling `faq/` and
+`scenarios/` directories stay on disk and out of the index, and `docs/engineering/`
+holds this repository's own knowledge base and is never indexed. An answer from the
+wrong directory retrieves cleanly, grounds correctly and cites accurately, so nothing
+downstream catches it — the boundary has to be the directory itself. See
+[`knowledge-corpus.md`](docs/engineering/architecture/knowledge-corpus.md) and
+[ADR 0011](docs/engineering/decisions/0011-schema-first-knowledge-corpus.md).
 
 `./osc` runs the CLI without activating the virtualenv or typing a path into it;
 `make help` lists a target for every command.
@@ -44,7 +51,7 @@ repository's own engineering knowledge base and is deliberately never indexed �
 |---|---|
 | **Running things** | |
 | `./osc serve` | HTTP API and chat UI |
-| `./osc ingest ./docs/company [--reindex]` | Index a directory |
+| `./osc ingest [dir] [--reindex]` | Index `corpus.root`, or a directory you name |
 | `./osc ask "…" [--explain] [--json]` | The whole pipeline, with citations |
 | `./osc search "…" [--explain] [--json]` | Retrieval only — the debugging surface |
 | **Understanding things** | |
@@ -52,7 +59,7 @@ repository's own engineering knowledge base and is deliberately never indexed �
 | `./osc config` | The fully resolved configuration and where it came from |
 | `./osc providers` | Every registered provider, marking the active ones |
 | `./osc status` | What is indexed: counts, chunk sizes, formats |
-| `./osc eval [--retrieval-only]` | Score the golden set — retrieval and answer quality |
+| `./osc eval [--retrieval-only]` | **Every quality metric**, gated against the baseline |
 | **Looking at data** | |
 | `./osc documents [search]` | Indexed documents and their chunk counts |
 | `./osc document <id\|path>` | One document's record and how it chunked |
@@ -183,7 +190,7 @@ stays readable.
   llm          ollama/qwen3:8b
   embeddings   ollama/nomic-embed-text
   store        pgvector   retrieval hybrid   chunker recursive
-  note         the index is empty — every question will abstain. Run `./osc ingest ./docs/company`.
+  note         the index is empty — every question will abstain. Run `./osc ingest`.
 ```
 
 That last line is the one that earns its place: a service which starts perfectly and
@@ -192,7 +199,7 @@ somebody thinks to look.
 
 ## Ingestion
 
-Drop files anywhere under `./docs/company` and run `./osc ingest ./docs/company`.
+Drop files anywhere under the configured `corpus.root` and run `./osc ingest`.
 
 | Format | Extensions | Extraction |
 |---|---|---|
@@ -213,7 +220,7 @@ with its chunks.
 text and nothing else, so changing `chunking.strategy`, `chunk_size` or the
 embedding model leaves every stored chunk stale while every hash still matches. An
 ordinary sync would report `skipped` for the whole corpus and quietly keep the old
-chunks. `./osc ingest ./docs/company --reindex` forces the work.
+chunks. `./osc ingest --reindex` forces the work.
 
 **One bad file cannot break a sync.** A corrupt or password-protected document is
 reported and skipped, the rest of the corpus still indexes, and the command exits
@@ -426,12 +433,13 @@ stores implement it.
 
 ## Interfaces
 
-- **CLI** — thirteen commands, listed above. `make help` for the shortcuts.
+- **CLI** — the commands listed above. `make help` for the shortcuts.
 - **HTTP** — `GET /api/health` (liveness plus the active component set),
   `GET /api/status` (what is indexed), `POST /api/search` (retrieval only),
-  `POST /api/chat` (SSE by default). Both `POST` endpoints accept `explain: true`
-  to return the execution trace inline. `GET /api/traces` and
-  `/api/traces/{id}` in development only.
+  `POST /api/chat` (SSE by default), `POST /api/sessions` and
+  `DELETE /api/sessions/{id}` (open and destroy a conversation). Both `POST`
+  query endpoints accept `explain: true` to return the execution trace inline.
+  `GET /api/traces` and `/api/traces/{id}` in development only.
 - **UI** — a single static page at `/`. Deliberately one file with no build step;
   it consumes the same public API as any other client and is expected to be
   replaced by a richer one.
@@ -440,20 +448,39 @@ stores implement it.
 
 ## Testing
 
+**There are two canonical commands, and they answer two different questions.**
+
 ```bash
-make test              # 320 tests: no network, no database, no credentials
-make test-integration  # +18 pgvector tests against a real database
-make test-e2e          # +9 end-to-end tests against live Ollama and PostgreSQL
-make check             # lint + typecheck + test
+make verify   # Does OSC work?    every test, lint and types, in one report
+make eval     # Is OSC any good?  every metric, gated against the baseline
 ```
 
-**`make test` asks whether the system is correct. `make eval` asks whether it is
-good.** They are different questions, and a system can pass every test while
-answering every question badly — see [Evaluation](#evaluation).
+A system can pass every test while answering every question badly, which is why
+these are separate and why neither substitutes for the other.
 
-`make test-e2e` needs its **own** database: the `chunks` table fixes its vector
-width at creation, and the suite deletes every document in its workspace when it
-finishes.
+`make verify` runs the **whole** suite — unit, pgvector integration and end-to-end —
+in a *single* pytest invocation, so there is one summary line, one exit code and one
+list of failures. Three invocations would mean a failure in the first can scroll off
+the screen before the third finishes, which is the exact thing a canonical command
+exists to prevent. `-ra` names every skip, so a suite silently skipping for a
+missing database is visible rather than green.
+
+It needs a live Ollama and PostgreSQL. Without them the dependent suites skip and
+say so.
+
+Narrower slices, kept because a two-second hermetic loop is worth having:
+
+```bash
+make test              # fast hermetic subset: no network, no database, no credentials
+make check             # lint + typecheck + the hermetic subset — the pre-commit loop
+make test-integration  # + the pgvector suite against a real database
+make test-e2e          # + the end-to-end suite against live Ollama and PostgreSQL
+```
+
+The end-to-end suite needs its **own** database (`OSC_E2E_DSN`): the `chunks` table
+fixes its vector width at creation, and the suite clears its workspace when it
+finishes. That separate variable is what lets `make verify` address both databases
+in one process.
 
 The suite runs the real pipelines against in-process implementations of the
 provider protocols. The API and CLI tests register those doubles through the
@@ -499,43 +526,107 @@ construction: the oldest rotated file is deleted, not archived.
 
 Full detail: [`docs/engineering/architecture/logging.md`](docs/engineering/architecture/logging.md).
 
+## Conversations
+
+OSC is multi-turn. A session is opened by the client, the server holds the history,
+and closing it destroys the memory.
+
+```bash
+SID=$(curl -sX POST localhost:8000/api/sessions | jq -r .session_id)
+curl -sX POST localhost:8000/api/chat -H 'content-type: application/json' \
+  -d "{\"question\":\"Where is the add-on tier pricing payload stored?\",
+       \"session_id\":\"$SID\",\"stream\":false}" | jq -r .text
+# "…the `oscp.adt` metafield on a ProductVariant… [1]"
+
+curl -sX POST localhost:8000/api/chat -H 'content-type: application/json' \
+  -d "{\"question\":\"What type is it?\",\"session_id\":\"$SID\",\"stream\":false}" | jq -r .text
+# resolves "it" against the previous turn
+
+curl -sX DELETE localhost:8000/api/sessions/$SID    # memory destroyed
+```
+
+Two ways to supply context, **mutually exclusive on one request**: `session_id`
+(server-held, right for a chat UI) or `history` (client-held, right for a stateless
+integration). Supplying both is a `422` rather than a silent choice about which to
+believe.
+
+Memory is **ephemeral by design** — process-local, bounded by message count, session
+count and idle TTL, destroyed on close and on restart. The audit stream already holds
+one durable record per answered question, which is what a compliance question actually
+wants, without keeping user text in a second place with its own retention story.
+
+Conversation history reaches retrieval only through query rewriting, which is why
+`retrieval.rewrite_queries` is on by default — with it off, the measured contribution
+of memory to retrieval was exactly zero. See [Evaluation](#evaluation).
+
+Full detail: [`docs/engineering/architecture/conversation.md`](docs/engineering/architecture/conversation.md).
+
 ## Evaluation
 
-Quality is measured, not asserted. `evaluation/golden-set.yaml` holds 86 curated
-questions — 81 with known-correct source documents, 5 the corpus cannot answer and
-must be declined.
+Quality is measured, not asserted. Two suites, both scored against
+`docs/company/schema/`:
+
+| Suite | Cases | What it measures |
+|---|---|---|
+| `evaluation/suites/schema.yaml` | 55 + 6 abstention | Single-turn retrieval, answer, citation, abstention |
+| `evaluation/suites/conversational.yaml` | 18 sessions, 46 turns | Follow-ups, context switching, isolation |
 
 ```bash
-make eval-retrieval    # fast and free: recall@k, MRR, precision@k, no model calls
-make eval              # adds citation, grounding, fact and abstention metrics
-make eval-gate         # what CI runs: fails on a regression against the baseline
+make eval              # BOTH suites, gated against the committed baselines
+make eval-retrieval    # retrieval only, ungated: fast, free, no model calls
+make eval-gate         # what CI runs: retrieval only, exits non-zero on a regression
 ```
 
-Measured baseline for the default local profile
-(`evaluation/baselines/full-default.json`):
+### Measured baseline
 
-| Retrieval | | Generation | |
-|---|---|---|---|
-| `recall@5` | 0.932 | `citation_coverage` | 1.00 |
-| `hit_rate@5` | 0.938 | `groundedness` | 1.00 |
-| `mrr` | 0.860 | `citation_precision` | 0.732 |
-| `precision@5` | 0.190 | `fact_match` | 0.90 |
+Default local profile — Qwen3-8B via Ollama, `nomic-embed-text`, pgvector,
+`markdown` chunking, `top_k=5`. Corpus of 11 documents / 80 chunks.
 
-Comparing two configurations is two commands, because `--profile` already retargets
-the whole stack:
+| Retrieval | | Answer & citations | | Conversation | |
+|---|---|---|---|---|---|
+| `recall@5` | **0.982** | `groundedness` | **1.000** | `follow_up_resolution` | **0.941** |
+| `hit_rate@5` | **0.982** | `citation_coverage` | **1.000** | ↳ cold control | 0.765 |
+| `ndcg@5` | **0.918** | `citation_precision` | 0.875 | ↳ **lift** | **+0.177** |
+| `mrr` | **0.897** | `fact_match` | 0.782 | `context_pollution` | **0.000** |
+| `precision@5` | 0.200 ᵃ | `abstention_accuracy` | 0.667 ᵇ | `session_isolation` | **1.000** |
+
+ᵃ At the structural maximum — most questions have one relevant document, so with
+`k=5` no ranking can exceed 0.2. ᵇ The weakest number here: two of six unanswerable
+questions still got an answer.
+
+**Every conversational number is reported with its control.** Each
+context-dependent turn is run twice — once in the session, once cold — because a
+follow-up that gets answered proves nothing on its own; it may have retrieved the
+right document by keyword luck. The *lift* is the evidence. It measured exactly
+**0.000** before query rewriting was enabled, which is what turned "does memory
+work?" from a suspicion into a number.
+
+### Comparing two configurations
 
 ```bash
-./osc eval --retrieval-only -o evaluation/results/before.json
-./osc eval --retrieval-only --profile config/experiments/hosted-anthropic.yaml \
-  --baseline evaluation/results/before.json
+./osc eval --suite schema --retrieval-only --no-gate -o before.json
+OSC_CHUNKING__STRATEGY=markdown ./osc ingest --reindex
+./osc eval --suite schema --retrieval-only --baseline before.json
 ```
 
-The comparison prints per-metric deltas and every configuration key that differs, so
-two runs of different systems cannot be mistaken for a result. Add `--judge` for
-LLM-as-judge faithfulness; it is opt-in because a gate that can change its mind
-between two runs of the same commit is not a gate.
+The gate derives each metric's tolerance from the run itself — one case for
+deterministic retrieval metrics, two standard errors for sampled generation metrics
+— rather than comparing against a threshold someone typed. It reports the previous
+and current value, the tolerance and where it came from, the cases that changed from
+passing to failing, and the categories they span. It also blocks **trade-offs**: a
+precision win bought with a recall loss is not a win.
 
-Full detail: [`docs/engineering/architecture/evaluation.md`](docs/engineering/architecture/evaluation.md).
+`--reindex` after a chunker change. Chunk ids derive from chunk boundaries while
+document hashes do not, so an ordinary sync reports `skipped` and silently measures
+the old index under the new label.
+
+Add `--judge` for LLM-as-judge faithfulness. It is opt-in and never gates, because a
+gate that can change its mind between two runs of the same commit is not a gate.
+
+Full detail: [`docs/engineering/architecture/evaluation.md`](docs/engineering/architecture/evaluation.md)
+and [`evaluation-methodology.md`](docs/engineering/architecture/evaluation-methodology.md),
+which documents every metric's definition, limitations, baseline and regression
+criteria.
 
 ## Engineering knowledge base
 
@@ -546,8 +637,13 @@ diagrams and references. Start with
 
 ## Not yet built
 
-Authentication (OIDC), per-document access control, rate limiting, conversation
-persistence, and connectors beyond the filesystem. The
-service exposes no write endpoint — ingestion is a CLI operation — and must sit
-behind the corporate identity proxy until OIDC lands. See `PROJECT_STATUS.md` for
-the full picture and the recommended order of work.
+Authentication (OIDC), per-document access control, rate limiting, **durable**
+conversation persistence, and connectors beyond the filesystem. The service exposes
+no write endpoint — ingestion is a CLI operation — and must sit behind the corporate
+identity proxy until OIDC lands. See `PROJECT_STATUS.md` for the full picture and the
+recommended order of work.
+
+Conversation memory exists and works, but it lives in the answering process
+(see [Conversations](#conversations)): it does not survive a restart, and behind more
+than one replica a client's next turn may reach a process that never heard of its
+session. Sticky sessions or a shared store is a prerequisite for horizontal scaling.
