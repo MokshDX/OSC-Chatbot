@@ -5,7 +5,12 @@
 # Every target below goes through ./osc or $(VENV), so no command in this file —
 # and none in the documentation — asks anyone to type a path into .venv.
 VENV := .venv
-PY   := $(VENV)/bin/python
+ifeq ($(OS),Windows_NT)
+BIN := $(VENV)/Scripts
+else
+BIN := $(VENV)/bin
+endif
+PY   := $(BIN)/python
 OSC  := ./osc
 
 # The default profile is fully local: Ollama for generation and embeddings,
@@ -32,7 +37,7 @@ help:  ## Show every target with its description
 # ------------------------------------------------------------------ environment
 
 install:  ## Create the virtualenv and install the project with dev extras
-	python -m venv $(VENV) && $(VENV)/bin/pip install -e ".[dev,openai,documents]"
+	python -m venv $(VENV) && $(BIN)/pip install -e ".[dev,openai,documents]"
 
 clean:  ## Remove caches and build artefacts
 	rm -rf .pytest_cache .mypy_cache .ruff_cache **/__pycache__
@@ -54,11 +59,11 @@ clean:  ## Remove caches and build artefacts
 E2E_DSN ?= postgresql://mokshdutt@localhost:5432/osc_e2e
 
 verify:  ## EVERY test — unit, integration, E2E — plus lint and types, in one report
-	@$(VENV)/bin/ruff check . && $(VENV)/bin/mypy src
+	@$(BIN)/ruff check . && $(BIN)/mypy src
 	@createdb $(notdir $(E2E_DSN)) 2>/dev/null || true
 	@OSC_TEST_DSN=$(DSN) OSC_TEST_DIMENSIONS=768 \
 	 OSC_E2E=1 OSC_E2E_DSN=$(E2E_DSN) \
-	 $(VENV)/bin/pytest -q -ra
+	 $(BIN)/pytest -q -ra
 # One pytest invocation rather than three, so there is one summary line, one exit
 # code and one list of failures. Three invocations mean a failure in the first can
 # scroll off the screen before the third finishes, which is the exact thing a
@@ -70,14 +75,14 @@ verify:  ## EVERY test — unit, integration, E2E — plus lint and types, in on
 # target database's chunks table was migrated with — 768 for nomic-embed-text.
 
 test:  ## Fast hermetic subset: no network, no database, no credentials
-	$(VENV)/bin/pytest -q
+	$(BIN)/pytest -q
 
 test-integration:  ## Unit tests plus the pgvector suite against a real database
-	OSC_TEST_DSN=$(DSN) OSC_TEST_DIMENSIONS=768 $(VENV)/bin/pytest -q
+	OSC_TEST_DSN=$(DSN) OSC_TEST_DIMENSIONS=768 $(BIN)/pytest -q
 
 test-e2e:  ## End-to-end smoke test against a live Ollama and PostgreSQL
 	@createdb $(notdir $(E2E_DSN)) 2>/dev/null || true
-	OSC_E2E=1 OSC_E2E_DSN=$(E2E_DSN) $(VENV)/bin/pytest tests/test_e2e.py -q
+	OSC_E2E=1 OSC_E2E_DSN=$(E2E_DSN) $(BIN)/pytest tests/test_e2e.py -q
 
 # Measurement, not testing: `make verify` asks "is it correct?", `make eval` asks
 # "is it any good?". Needs the corpus indexed first (`make ingest`).
@@ -102,13 +107,13 @@ eval-gate:  ## Fail if retrieval quality has regressed beyond tolerance
 	$(OSC) eval --retrieval-only
 
 lint:  ## ruff
-	$(VENV)/bin/ruff check .
+	$(BIN)/ruff check .
 
 format:  ## ruff --fix
-	$(VENV)/bin/ruff check --fix .
+	$(BIN)/ruff check --fix .
 
 typecheck:  ## mypy --strict
-	$(VENV)/bin/mypy src
+	$(BIN)/mypy src
 
 check: lint typecheck test  ## Fast pre-commit loop: lint + types + hermetic tests
 

@@ -71,9 +71,14 @@ flowchart LR
    shape — and that symmetry is a
    [known limitation](../../../PROJECT_STATUS.md), not a claim of equivalence.
 7. **Abstain** — no retrieval hits means **the model is never called**. No citations
-   means the answer is treated as ungrounded. Abstention is a code path, not a prompt
-   instruction, because a prompt instruction is a request and a code path is a
-   guarantee.
+   means the answer is treated as ungrounded when citations are required. An explicit
+   `[[NO_ANSWER]]` completion becomes the standard refusal with empty citations in
+   both buffered and streaming paths. Two generic examples reinforce the frozen
+   prompt contract. A conservative prose fallback requires every visible sentence
+   to express source absence; tests guard partial answers and ordinary negative claims. Refusal recognition
+   is deterministic; whether the model correctly recognises missing evidence still
+   requires measurement. The latest run violates the zero-false-abstention requirement;
+   see [ADR 0016](../decisions/0016-abstention-examples-and-conservative-fallback.md).
 
 ## The ingestion path
 

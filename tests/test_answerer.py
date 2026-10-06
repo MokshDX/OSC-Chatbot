@@ -7,16 +7,19 @@ policy that only held when not streaming would be worse than none.
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+
 import pytest
 
 from osc_assistant.chunking import ChunkerOptions, RecursiveChunker
 from osc_assistant.generation import AnswerComplete, Answerer, RetrievalReady
 from osc_assistant.ingestion import IngestionPipeline, InMemoryLoader
+from osc_assistant.observability import RECORDER
 from osc_assistant.providers.reranking.noop import NoopReranker
 from osc_assistant.providers.vectorstores.memory import MemoryVectorStore
 from osc_assistant.retrieval import RetrievalPipeline
 from osc_assistant.settings import GenerationSettings, RetrievalSettings
-from osc_assistant.types import CitationDelta, Document, TextDelta
+from osc_assistant.types import ChatRequest, CitationDelta, Document, StreamEvent, TextDelta
 
 from .conftest import (
     EMBEDDING_DIMENSIONS,
@@ -199,3 +202,149 @@ async def test_stream_abstains_without_a_model_call_when_nothing_is_retrieved(
 
     assert model.requests == []
     assert any(isinstance(event, AnswerComplete) and event.answer.abstained for event in events)
+
+
+@pytest.mark.parametrize("streaming", [False, True])
+@pytest.mark.parametrize(
+    "reply",
+    [
+        "[[NO_ANSWER]]",
+        ' \n"[[NO_ANSWER]]". \n',
+        "```\n[[NO_ANSWER]]\n```",
+        "<think>The sources do not answer the question.</think>\n[[NO_ANSWER]]",
+        "[[NO_ANSWER]] [1]",
+        " \u2018[[NO_ANSWER]]\u2019!? [[1]] ",
+    ],
+)
+async def test_model_sentinel_becomes_authoritative_abstention(
+    indexed: MemoryVectorStore, embeddings: StubEmbeddingModel, reply: str, streaming: bool
+) -> None:
+    answerer = _answerer(indexed, embeddings, StubChatModel(reply), require_citations=False)
+    if streaming:
+        events = [event async for event in answerer.stream("What is the missing policy?")]
+        complete = events[-1]
+        assert isinstance(complete, AnswerComplete)
+        answer = complete.answer
+        assert "[[NO_ANSWER]]" in "".join(
+            event.text for event in events if isinstance(event, TextDelta)
+        )
+    else:
+        answer = await answerer.answer("What is the missing policy?")
+
+    assert answer.abstained
+    assert answer.text == GenerationSettings().abstention_message
+    assert answer.citations == []
+    assert answer.retrieved
+    assert answer.usage.input_tokens == 100
+    recorded = RECORDER.get(answer.trace_id)
+    assert recorded is not None
+    assert any(s.attributes.get("abstention_reason") == "model_declined" for s in recorded.spans)
+
+
+@pytest.mark.parametrize("streaming", [False, True])
+@pytest.mark.parametrize(
+    "reply",
+    [
+        "Employees get twenty five days. [1] The carry-over policy is not specified.",
+        "Employees get twenty five days. [1] [[NO_ANSWER]]",
+        "[[NO_ANSWER]] The documented entitlement is twenty five days. [1]",
+        "The literal marker in this example is `[[NO_ANSWER]]`. [1]",
+        "Employees get twenty five days. The other part is [[NO_ANSWER]].",
+        "The sources do not specify carry-over, but employees get twenty five days. [1]",
+        "The sources do not specify carry-over and the entitlement is twenty five days. [1]",
+        "The sources do not specify carry-over. Employees get twenty five days. [1]",
+        "Discounts are not expanded in Liquid; expansion happens on save. [1]",
+        "The module does not expose HTTP routes. [1]",
+        'The documented example is "The sources do not specify retries." [1]',
+        "The sources do not specify a limit, the documented capacity is twelve. [1]",
+        "The sources do not specify a limit because the capacity varies by room. [1]",
+        "The capacity is not listed in the sources. The room has a projector. [1]",
+        "The sources do not expose the secret value; they expose its identifier. [1]",
+    ],
+)
+async def test_partial_answers_and_literal_sentinel_mentions_are_preserved(
+    indexed: MemoryVectorStore, embeddings: StubEmbeddingModel, reply: str, streaming: bool
+) -> None:
+    answerer = _answerer(indexed, embeddings, StubChatModel(reply), require_citations=False)
+    if streaming:
+        events = [event async for event in answerer.stream("Entitlement and carry-over?")]
+        complete = events[-1]
+        assert isinstance(complete, AnswerComplete)
+        answer = complete.answer
+    else:
+        answer = await answerer.answer("Entitlement and carry-over?")
+    assert not answer.abstained
+    assert answer.text.strip() == reply
+
+
+@pytest.mark.parametrize("streaming", [False, True])
+@pytest.mark.parametrize("reply", [
+    "The sources do not specify the number of retries [[1]].",
+    "The number of retries is not specified in the provided sources [[1]][[2]].",
+    "<think>Look for the detail.</think>The sources do not provide a retention period. [1]",
+    "The documentation does not specify the room capacity. [1]",
+    "The requested detail is not explicitly provided in the sources. [1]",
+    "The measurement for the 2.75 sample is not listed in the supplied sources. [1]",
+    "There is no information about a second edition in the sources. [1]",
+    "The sources contain no information about the room capacity. [1]",
+    "The documentation does not expose the requested detail. [1]",
+    "The sources do not state the capacity. The limit is not addressed in the sources. [1]",
+])
+async def test_whole_response_prose_refusal_is_recognised(
+    indexed: MemoryVectorStore, embeddings: StubEmbeddingModel, reply: str, streaming: bool
+) -> None:
+    answerer = _answerer(indexed, embeddings, StubChatModel(reply), require_citations=False)
+    if streaming:
+        events = [event async for event in answerer.stream("Missing policy?")]
+        complete = events[-1]
+        assert isinstance(complete, AnswerComplete)
+        answer = complete.answer
+    else:
+        answer = await answerer.answer("Missing policy?")
+    assert answer.abstained
+    assert answer.text == GenerationSettings().abstention_message
+    assert answer.citations == []
+
+
+async def test_native_citation_on_a_sentinel_is_discarded(
+    indexed: MemoryVectorStore, embeddings: StubEmbeddingModel
+) -> None:
+    answer = await _answerer(
+        indexed, embeddings, NativeCitationChatModel("[[NO_ANSWER]]")
+    ).answer("An unknown detail?")
+    assert answer.abstained
+    assert answer.citations == []
+
+
+async def test_a_sentinel_split_across_stream_deltas_is_recognised(
+    indexed: MemoryVectorStore, embeddings: StubEmbeddingModel
+) -> None:
+    class CharacterStream(StubChatModel):
+        async def stream(self, request: ChatRequest) -> AsyncIterator[StreamEvent]:
+            for character in self.reply:
+                yield TextDelta(text=character)
+
+    events = [
+        event
+        async for event in _answerer(
+            indexed, embeddings, CharacterStream("[[NO_ANSWER]]"), require_citations=False
+        ).stream("An unknown detail?")
+    ]
+    complete = events[-1]
+    assert isinstance(complete, AnswerComplete)
+    assert complete.answer.abstained
+
+
+async def test_stream_failure_after_sentinel_does_not_fabricate_completion(
+    indexed: MemoryVectorStore, embeddings: StubEmbeddingModel
+) -> None:
+    class BrokenStream(StubChatModel):
+        async def stream(self, request: ChatRequest) -> AsyncIterator[StreamEvent]:
+            yield TextDelta(text="[[NO_ANSWER]]")
+            raise RuntimeError("provider interrupted")
+
+    events = []
+    with pytest.raises(RuntimeError, match="provider interrupted"):
+        async for event in _answerer(indexed, embeddings, BrokenStream()).stream("Unknown?"):
+            events.append(event)
+    assert not any(isinstance(event, AnswerComplete) for event in events)

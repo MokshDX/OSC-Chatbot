@@ -27,6 +27,7 @@ being able to run `--profile config/experiments/hosted-anthropic.yaml`.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import time
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
@@ -34,6 +35,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from ..generation.answerer import Answerer
+from ..generation.prompts import ANSWER_SYSTEM_PROMPT
 from ..logging import get_logger
 from ..retrieval.pipeline import RetrievalPipeline
 from ..settings import Settings
@@ -156,6 +158,9 @@ def configuration_snapshot(settings: Settings) -> dict[str, Any]:
         "generation": {
             "max_tokens": settings.generation.max_tokens,
             "require_citations": settings.generation.require_citations,
+            "answer_system_prompt_sha256": hashlib.sha256(
+                ANSWER_SYSTEM_PROMPT.encode("utf-8")
+            ).hexdigest(),
         },
     }
 
@@ -405,6 +410,9 @@ def summarise(
                 "abstention_accuracy": mean_of(abstention_cases, lambda r: float(r.abstained)),
             }
         )
+        answerable = [result for result in scored if not result.must_abstain]
+        if answerable:
+            summary["false_abstention_rate"] = mean_of(answerable, lambda r: float(r.abstained))
         if judged:
             summary["faithfulness"] = mean_of(judged, lambda r: float(bool(r.faithful)))
 

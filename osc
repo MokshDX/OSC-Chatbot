@@ -11,6 +11,10 @@ set -e
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
+if [ -x "$root/.venv/Scripts/osc-assistant.exe" ]; then
+    exec "$root/.venv/Scripts/osc-assistant.exe" "$@"
+fi
+
 if [ -x "$root/.venv/bin/osc-assistant" ]; then
     exec "$root/.venv/bin/osc-assistant" "$@"
 fi

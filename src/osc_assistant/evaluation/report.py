@@ -48,7 +48,7 @@ SECTIONS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("Retrieval", ("recall@", "precision@", "ndcg@", "hit_rate@", "mrr")),
     ("Answer", ("fact_match", "faithfulness")),
     ("Citations", ("citation_coverage", "groundedness", "citation_precision")),
-    ("Abstention", ("abstention_accuracy",)),
+    ("Abstention", ("abstention_accuracy", "false_abstention_rate")),
     (
         "Conversation",
         (
@@ -389,7 +389,8 @@ def _bar(name: str, value: float) -> str:
     if not _is_bounded(name) or not 0.0 <= value <= 1.0:
         return ""
     filled = round(value * _BAR_WIDTH)
-    colour = "green" if value >= _GOOD else "yellow" if value >= _FAIR else "red"
+    quality = 1.0 - value if "false_abstention_rate" in name or "pollution" in name else value
+    colour = "green" if quality >= _GOOD else "yellow" if quality >= _FAIR else "red"
     return f"[{colour}]{'█' * filled}[/{colour}][dim]{'·' * (_BAR_WIDTH - filled)}[/dim]"
 
 

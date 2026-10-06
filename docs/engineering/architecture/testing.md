@@ -7,7 +7,7 @@
 ## Two canonical commands
 
 ```bash
-make verify   # Does OSC work?    445 tests, lint and types, one report
+make verify   # Does OSC work?    every test, lint and types, one report
 make eval     # Is OSC any good?  every metric, gated. See evaluation.md
 ```
 
@@ -21,6 +21,18 @@ The tiers need two different databases — the E2E suite fixes its `chunks` tabl
 live embedding model's width and clears its workspace — which is why `OSC_E2E_DSN`
 exists separately from `OSC_TEST_DSN`. With one variable between them, only one tier
 could be pointed at the right place per run, and one invocation would be impossible.
+
+On Windows, run the same targets with GNU Make and Git Bash on `PATH`; the Makefile
+selects the virtualenv's `Scripts` directory and `./osc` finds its Windows launcher.
+Set `PYTHONIOENCODING=utf-8` when redirecting CLI reports, so the terminal's legacy
+encoding does not reject the report's Unicode bars after its JSON has been saved.
+The UI streaming regression test executes the shipped JavaScript using Node.js with
+a small DOM fixture. It skips explicitly when Node.js is unavailable; no browser or
+JavaScript package installation is needed.
+
+The filesystem loader records corpus-relative paths with forward slashes on every
+platform. The existing provenance test caught a Windows backslash discrepancy during
+the abstention work (ADR 0015); the fix does not change document text or reindex data.
 
 ### The tiers inside it
 
@@ -183,11 +195,13 @@ Stated plainly, because a testing document that claims completeness is not usefu
    asserted within one `InMemorySessionStore`. The failure that matters at scale —
    a client's next turn reaching a replica that never heard of its session — is a
    property of a deployment this suite cannot construct.
-7. **One end-to-end assertion is deliberately tolerant.** Whether a live 8B model
-   abstains is not deterministic, so the abstention E2E tests assert
-   `abstained or not citations` rather than `abstained`. Asserting it strictly made a
-   test that passed in isolation and failed in a full run; the strict form of the
-   property is covered against stubs in `test_answerer.py`.
+7. **Live refusal checks depend on model sampling.** The buffered/streamed E2E test
+   compares two independent model completions. In ADR 0015's verification it failed:
+   the buffered call emitted the sentinel while the streamed call produced a cited
+   prose refusal outside the conservative recogniser. The shared deterministic policy
+   passes the stub tests, but that does not make model compliance deterministic.
+   The live assertion remains unchanged and its failure is reported, not hidden by
+   retries or a broader detector tuned after holdout inspection.
 
 ---
 

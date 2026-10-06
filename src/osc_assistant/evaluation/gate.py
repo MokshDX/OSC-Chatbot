@@ -44,11 +44,12 @@ would be a lie. It is still reported, because a genuine 3x is worth seeing.
 ## Trade-off guards
 
 A metric that improves while its counterpart collapses is not an improvement, and
-checking thresholds one at a time cannot see it. Three pairings are guarded, each
+checking thresholds one at a time cannot see it. The pairings are guarded in both suites, each
 naming a real and easy way to game this suite:
 
   precision@k ↑ / recall@k ↓         return fewer results
   abstention_accuracy ↑ / citation_coverage ↓   abstain more often
+  abstention_accuracy ↑ / false_abstention_rate ↑   refuse answerable questions
   latency ↓ / recall@k ↓             retrieve fewer candidates
 
 When both halves move beyond their own tolerances in opposite directions, the gate
@@ -78,7 +79,7 @@ LATENCY_TOLERANCE_FRACTION = 0.25
 # decimal place of a rounded summary value, which is arithmetic, not quality.
 MINIMUM_TOLERANCE = 0.005
 
-_LOWER_IS_BETTER = re.compile(r"latency|tokens|pollution")
+_LOWER_IS_BETTER = re.compile(r"latency|tokens|pollution|false_abstention_rate")
 
 
 @dataclass(frozen=True, slots=True)
@@ -191,6 +192,11 @@ _TRADE_OFFS: tuple[tuple[str, str, str], ...] = (
         "abstention_accuracy",
         "citation_coverage",
         "abstaining more often raises abstention accuracy and lowers answer coverage",
+    ),
+    (
+        "abstention_accuracy",
+        "false_abstention_rate",
+        "refusing answerable questions raises both abstention accuracy and false abstention",
     ),
     (
         "latency_p50_seconds",
@@ -323,6 +329,8 @@ def _sample_size(name: str, report: Mapping[str, Any]) -> int:
     if not records:
         return 0
 
+    if "false_abstention_rate" in name:
+        return sum(1 for record in records if not record.get("must_abstain"))
     if "abstention" in name:
         return sum(1 for record in records if record.get("must_abstain"))
     if "fact_match" in name:
@@ -364,7 +372,7 @@ def _outcomes(report: Mapping[str, Any]) -> dict[str, _CaseOutcome]:
             hit=bool(record.get("hit")),
             recall=float(record.get("recall", 0.0)),
             answered_correctly=(
-                abstained if must_abstain else not record.get("missing_facts", [])
+                abstained if must_abstain else not abstained and not record.get("missing_facts", [])
             ),
         )
     return outcomes
@@ -407,16 +415,21 @@ def _detect_trade_offs(findings: Sequence[Finding]) -> list[str]:
         ]
 
     detected: list[str] = []
-    for gained, lost, explanation in _TRADE_OFFS:
-        improvements = [finding for finding in _match(gained) if finding.status == "improved"]
-        regressions = [finding for finding in _match(lost) if finding.status == "regressed"]
-        for improvement in improvements:
-            for regression in regressions:
-                detected.append(
-                    f"{improvement.metric} improved {improvement.delta:+.4g} while "
-                    f"{regression.metric} regressed {regression.delta:+.4g} — "
-                    f"{explanation}"
-                )
+    for namespace in ("", "multi_turn_"):
+        for gained, lost, explanation in _TRADE_OFFS:
+            improvements = [
+                f for f in _match(namespace + gained) if f.status == "improved"
+            ]
+            regressions = [
+                f for f in _match(namespace + lost) if f.status == "regressed"
+            ]
+            for improvement in improvements:
+                for regression in regressions:
+                    detected.append(
+                        f"{improvement.metric} improved {improvement.delta:+.4g} while "
+                        f"{regression.metric} regressed {regression.delta:+.4g} — "
+                        f"{explanation}"
+                    )
     return detected
 
 

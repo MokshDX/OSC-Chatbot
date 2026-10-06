@@ -52,7 +52,7 @@
 version: 1
 corpus: docs/company/schema
 description: >
-  Multi-turn conversational behaviour over the OSCP schema corpus — 18 sessions
+  Multi-turn conversational behaviour over the OSCP schema corpus — 21 sessions
   covering reference resolution, context retention, context switching, irrelevant
   history, in-conversation abstention and session isolation.
 
@@ -339,3 +339,42 @@ cases:
         relevant_documents: [schema-8.md]
         expected_facts: ["quantity_ranges"]
         requires_context: true
+
+  - id: convo-email-retries-recover
+    description: Missing operational detail followed by a documented setting.
+    tags: [abstention, recovery, email-configuration]
+    turns:
+      - question: Where are notification email templates stored?
+        relevant_documents: [schema-7.md]
+        expected_facts: [notifications]
+      - question: How many retries are attempted if sending one fails?
+        must_abstain: true
+        requires_context: true
+      - question: Which field contains the configured from-address?
+        relevant_documents: [schema-7.md]
+        expected_facts: [configuerdEmailId]
+        requires_context: true
+
+  - id: convo-draft-retention-missing
+    description: Reuse duration does not establish database retention.
+    tags: [abstention, draft-order]
+    turns:
+      - question: What constant sets the draft order reuse window?
+        relevant_documents: [schema-6.md]
+        expected_facts: [IDEMPOTENCY_WINDOW_MS]
+      - question: After how many days are those database rows permanently deleted?
+        must_abstain: true
+        requires_context: true
+
+  - id: convo-offtopic-recover
+    description: Unrelated general knowledge followed by a schema question.
+    tags: [abstention, recovery, access-lock]
+    turns:
+      - question: What metaobject type defines an access lock rule?
+        relevant_documents: [schema-10.md]
+        expected_facts: [access_lock_rule]
+      - question: How does a submarine control its buoyancy?
+        must_abstain: true
+      - question: What is the maximum length of an access lock rule title?
+        relevant_documents: [schema-10.md]
+        expected_facts: ['200']

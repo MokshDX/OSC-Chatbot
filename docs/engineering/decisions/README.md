@@ -49,3 +49,5 @@ considered** · **Consequences** (what it costs, honestly).
 | [0012](0012-markdown-chunking-measured.md) | `markdown` becomes the default chunker, on a measurement | Accepted (supersedes 0006) |
 | [0013](0013-ephemeral-session-memory.md) | Conversational memory is ephemeral, process-local and bounded | Accepted |
 | [0014](0014-derived-regression-tolerances.md) | Regression tolerances are derived, not typed | Accepted |
+| [0015](0015-explicit-model-abstention.md) | Explicit model abstention and an answerability guard | Measured; milestone acceptance not met |
+| [0016](0016-abstention-examples-and-conservative-fallback.md) | Generic abstention examples and conservative prose fallback | Measured; false-abstention regression open |

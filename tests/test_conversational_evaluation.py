@@ -516,3 +516,17 @@ async def test_a_report_round_trips_to_a_serialisable_dict(
     assert payload["turn_count"] == 2
     assert payload["turns"][0]["case_id"] == "case"
     assert "multi_turn_recall@3" in payload["summary"]
+
+
+def test_conversational_false_abstention_excludes_required_refusals_and_errors() -> None:
+    turns = [
+        TurnResult(case_id="a", ordinal=1, question="q", answer="yes"),
+        TurnResult(case_id="a", ordinal=2, question="q", abstained=True),
+        TurnResult(case_id="a", ordinal=3, question="q", must_abstain=True, abstained=True),
+        TurnResult(case_id="a", ordinal=4, question="q", error="timeout"),
+    ]
+    summary = summarise_conversation(turns, top_k=5, wall_seconds=1.0, max_messages=20)
+    assert summary["multi_turn_false_abstention_rate"] == 0.5
+    for subset in ([], turns[2:3], turns[3:]):
+        empty = summarise_conversation(subset, top_k=5, wall_seconds=1.0, max_messages=20)
+        assert "multi_turn_false_abstention_rate" not in empty

@@ -419,6 +419,12 @@ def summarise_conversation(
         ),
     }
 
+    answerable = [turn for turn in scored if not turn.must_abstain]
+    if answerable:
+        summary["multi_turn_false_abstention_rate"] = mean_of(
+            answerable, lambda t: float(t.abstained)
+        )
+
     # ---- the conversational metrics proper, each reported with its control.
     if follow_ups:
         with_context = mean_of(follow_ups, lambda t: float(t.hit))

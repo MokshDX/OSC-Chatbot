@@ -40,7 +40,7 @@ substring matching and reproducible from a recorded run.
 | BLEU / ROUGE against reference answers | Scores phrasing, not correctness; a correct answer in different words fails |
 | Semantic answer similarity | Needs a reference answer, and inherits the embedding model being evaluated |
 | Human preference | No annotators; a fabricated preference score would be worse than none |
-| Recall of the corpus as a whole | Unknowable without exhaustive annotation of all 11 documents against 61 questions |
+| Recall of the corpus as a whole | Unknowable without exhaustive annotation beyond the curated suite |
 
 ---
 
@@ -66,7 +66,7 @@ exists to run. Document identity survives a re-chunk; chunk identity does not.
 | **Interpretation** | "Could the model possibly have got this right?" A recall of 0.98 means that for 98% of expected evidence, the model had the chance. |
 | **Limitations** | Says nothing about *ordering* — a relevant document at rank 5 and at rank 1 score identically. Blind to relevant documents the curator did not think of, which inflates it slightly. |
 | **Baseline** | **0.982** (schema suite, k=5, markdown chunker) |
-| **Regression criteria** | Blocking. Tolerance `1/n` — one case out of the scored 55. |
+| **Regression criteria** | Blocking. Tolerance `1/n` — one case out of the scored answerable sample (63 in the widened schema suite). |
 
 ### `precision@k`
 
@@ -143,9 +143,9 @@ is a statistical interval rather than a materiality threshold.
 |---|---|
 | **Definition** | Fraction of answered (non-abstained) cases carrying at least one citation. |
 | **Calculation** | Mean of `citations > 0` over answered cases. |
-| **Purpose** | The counterweight to abstention. Without it, a system could reach perfect abstention accuracy by declining everything. |
-| **Interpretation** | With `require_citations: true` this is 1.0 by construction — an uncited answer becomes an abstention. Its value is as the *paired* metric in the abstention trade-off guard. |
-| **Limitations** | Says nothing about whether the citation is the right one; that is `citation_precision`. |
+| **Purpose** | Checks whether answers that survive the refusal policy carry citations. |
+| **Interpretation** | With `require_citations: true` this is 1.0 by construction — an uncited answer becomes an abstention. It cannot protect answerable questions from being refused. |
+| **Limitations** | Excludes abstained answers from its denominator, so it can stay perfect while answerable questions are refused. Use `false_abstention_rate` for that guard. Says nothing about whether a citation is relevant; that is `citation_precision`. |
 | **Baseline** | **1.000** |
 | **Regression criteria** | Blocking. Guarded against abstention: a rise in `abstention_accuracy` alongside a fall here is blocked as a trade-off. |
 
@@ -157,7 +157,7 @@ is a statistical interval rather than a materiality threshold.
 | **Calculation** | `\|{grounded citations whose document ∈ relevant}\| / \|citations\|`. |
 | **Purpose** | Distinguishes "cited something real" from "cited the right thing". |
 | **Interpretation** | Deflated by design on multi-topic answers: an answer that correctly cites two documents where the curator listed one scores 0.5 without being wrong. Read as a trend across runs, not as an absolute. |
-| **Limitations** | Inherits the golden set's blind spots more than any other metric here. |
+| **Limitations** | Inherits the golden set's blind spots. Recognising a cited refusal removes its citations from this ratio, so precision can rise without any improvement to citations on supported answers. The abstention experiment reports that recognition effect separately. |
 | **Baseline** | **0.871** |
 | **Regression criteria** | Blocking, two standard errors. |
 
@@ -179,11 +179,29 @@ is a statistical interval rather than a materiality threshold.
 |---|---|
 | **Definition** | Fraction of `must_abstain` cases where the system declined. |
 | **Calculation** | Mean of `abstained` over abstention cases only. |
-| **Purpose** | Without it, an evaluation rewards a model that answers everything confidently. This is the metric that makes "minimal hallucinations" measurable rather than aspirational. |
-| **Interpretation** | **The weakest number in the current baseline.** 0.667 means two of six unanswerable questions got an answer. |
-| **Limitations** | Six cases is a small sample — one case is worth 0.167, so the tolerance is necessarily wide (≈0.385). It measures only *whether* the system declined, not whether it declined for the right reason. |
-| **Baseline** | **0.667** |
-| **Regression criteria** | Blocking, two standard errors. Guarded: a rise here alongside a fall in `citation_coverage` is blocked, since abstaining more often improves this metric while making the system less useful. |
+| **Purpose** | Measures whether known unanswerable questions produce a machine-readable refusal. |
+| **Interpretation** | The `Answer.abstained` flag is authoritative. No sources, required-but-missing citations, a recognised `[[NO_ANSWER]]` completion, or source-absence prose sets it through the shared buffered/streaming finalizer. The conservative prose fallback requires every visible sentence to match; tests guard substantive partial answers and ordinary negative claims. Unusual cited refusals can still be missed. |
+| **Limitations** | Measures recognition as well as behaviour, not semantic hallucination rate. The old 0.667 baseline included a cited prose refusal and an unsupported negative assertion. One case in the widened 18-case set is 0.0556; the four held-out cases are only a small generalisation check. |
+| **Baseline** | User-reported widened-set accuracy rose from 0.8333 to 0.9444, but false abstentions rose from 0 to 0.0159, so baseline promotion is deferred (ADR 0016). The historical six-case value was 0.6667; the widened and historical sets are not directly comparable. ADR 0015 records earlier repetitions. |
+| **Regression criteria** | Blocking, two standard errors with the ADR 0014 floor. An improvement paired with a regression in `false_abstention_rate` is also blocked, in both single-turn and conversational summaries. |
+
+### `false_abstention_rate`
+
+| | |
+|---|---|
+| **Definition** | Fraction of answerable cases that the assistant refused. Lower is better. |
+| **Calculation** | `abstained and not must_abstain` divided by `not must_abstain`, over successful generation cases only. The conversational name is `multi_turn_false_abstention_rate`, measured over turns. |
+| **Purpose** | Prevents an abstention gain from being bought by refusing supported questions, including questions without expected-fact substrings. |
+| **Interpretation** | Counts the same authoritative `abstained` flag, including architectural, marker and prose-fallback refusals. Zero means every successfully evaluated answerable case remained an answer; it does not mean every answer was correct. Read with fact match, citation precision and retrieval recall. |
+| **Limitations** | Relies on curated answerability labels. Provider failures are excluded and reported separately; a run with failures cannot establish the target. The metric is absent when there are no answerable observations, and absent on retrieval-only runs. Partial answers are answerable if the sources support a requested part. |
+| **Baseline** | Latest user-reported schema result: 0 before this change, 0.0159 after it. The required value remains zero; no baseline is promoted (ADR 0016). See ADR 0015 for earlier schema and conversational repetitions. |
+| **Regression criteria** | Lower-is-better, blocking. `max(0.005, 2*sqrt(p*(1-p)/n))`, using the baseline proportion and the successful answerable sample size, following ADR 0014. At baseline zero the inherited floor is 0.005, so one false refusal in either current suite fails. This boundary approximation is not a statistical guarantee that the population error rate is zero. |
+
+The sentinel is an output contract, not a deterministic judge of whether evidence
+supports an answer. Removing citations from recognised refusals also changes the
+pooled citation-precision denominator; a resulting increase cannot by itself establish
+better citation choices on substantive answers. The metrics retain their definitions;
+the API now exposes explicit model refusals as refusals.
 
 ### `faithfulness` — LLM-as-judge, opt-in
 
@@ -247,7 +265,7 @@ cold, and the pair is the measurement.
 
 `multi_turn_recall@k`, `multi_turn_ndcg@k`, `multi_turn_mrr`,
 `multi_turn_groundedness`, `multi_turn_fact_match`,
-`multi_turn_abstention_accuracy` and the rest are the **same functions** applied
+`multi_turn_abstention_accuracy`, `multi_turn_false_abstention_rate` and the rest are the **same functions** applied
 per turn. They are prefixed rather than merged so that a single-turn regression and
 a conversational one are distinguishable, and they mean exactly what their
 single-turn counterparts mean above.
@@ -305,12 +323,13 @@ https://doi.org/10.1214/ss/1009213286
 ### Trade-off guards
 
 Checking thresholds one at a time cannot see a metric that improved because another
-collapsed. Three pairings are guarded, each naming a real way to game this suite:
+collapsed. The pairings apply separately to both suites:
 
 | Improves | At the cost of | The gaming move |
 |---|---|---|
 | `precision@k` | `recall@k` | Return fewer results |
 | `abstention_accuracy` | `citation_coverage` | Abstain more often |
+| `abstention_accuracy` | `false_abstention_rate` (rises) | Refuse answerable questions while keeping coverage perfect among remaining answers |
 | `latency_p50` | `recall@k` | Retrieve fewer candidates |
 
 When both halves move beyond their own tolerances in opposite directions, the gate
@@ -332,3 +351,4 @@ identical on a good run and a bad one), and the categories those cases span.
 - ADR 0011 — the schema-first knowledge corpus
 - ADR 0012 — the measured chunker decision
 - ADR 0013 — ephemeral session memory
+- ADR 0015 — explicit model abstention, answerability guard and held-out measurement

@@ -55,8 +55,8 @@ the second would silently overwrite the first.
 
 | File | Shape | Scored against |
 |---|---|---|
-| `suites/schema.yaml` | 55 single-turn + 6 abstention | `docs/company/schema` |
-| `suites/conversational.yaml` | 18 sessions, 46 turns | `docs/company/schema` |
+| `suites/schema.yaml` | 63 answerable + 18 abstention | `docs/company/schema` |
+| `suites/conversational.yaml` | 21 sessions, 54 turns | `docs/company/schema` |
 | `suites/faq.yaml` | 86 single-turn | `docs/company/faq` — preserved, not production |
 
 Each declares its `corpus`. That is recorded rather than enforced — the harness knows
@@ -109,7 +109,7 @@ silently compare two different systems. `compare` diffs only metrics present in 
 
 ## The golden set
 
-`evaluation/suites/schema.yaml`. 61 cases: 55 with known-correct source documents, 6 that
+`evaluation/suites/schema.yaml`. 81 cases: 63 with known-correct source documents, 18 that
 the corpus genuinely cannot answer.
 
 ```yaml
@@ -340,11 +340,11 @@ See [`evaluation/baselines/README.md`](../../../evaluation/baselines/README.md).
   reason feedback compounds.
 - **Nothing measures answer *helpfulness*.** Faithfulness and fact coverage together
   say "not wrong". They do not say "useful".
-- **Only six abstention cases.** `abstention_accuracy` is the weakest measured
-  behaviour (0.667) *and* the least reliably measured: six cases give the derived gate
-  a tolerance of ±0.385, so it would take a drop of more than two cases to fail.
-  Widening this is the single highest-value addition to the suites.
-- **The conversational suite is 18 sessions over 11 documents.** A real measurement,
+- **Abstention remains a small sample.** The schema suite now has 18 must-abstain
+  cases, including four held out from development inspection (ADR 0015). One case
+  moves accuracy by 0.0556. The widened baseline's derived tolerance is about 0.196;
+  passing that gate is weaker than meeting the separate 0.90 acceptance target.
+- **The conversational suite is 21 sessions over 11 documents.** A real measurement,
   and a small one. Its numbers should not be generalised to a larger corpus.
 
 ---

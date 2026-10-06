@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
+
 from osc_assistant.evaluation.gate import (
     LATENCY_TOLERANCE_FRACTION,
     evaluate_gate,
@@ -208,6 +210,50 @@ def test_abstaining_more_to_raise_abstention_accuracy_is_blocked() -> None:
 
     assert not gate.passed
     assert any("abstention_accuracy" in note for note in gate.trade_offs)
+
+
+@pytest.mark.parametrize("prefix", ["", "multi_turn_"])
+def test_false_abstention_guards_cannot_be_gamed_by_refusing_everything(prefix: str) -> None:
+    before_cases = _cases(40, hit=True) + _abstention_cases(20)
+    after_cases = [{**case, "abstained": True} for case in before_cases]
+    gate = evaluate_gate(
+        _report(
+            {prefix + "abstention_accuracy": 0.5, prefix + "false_abstention_rate": 0.0},
+            before_cases,
+        ),
+        _report(
+            {prefix + "abstention_accuracy": 1.0, prefix + "false_abstention_rate": 1.0},
+            after_cases,
+        ),
+    )
+    assert not gate.passed
+    assert any("false_abstention_rate" in note for note in gate.trade_offs)
+    finding = next(f for f in gate.findings if f.metric.endswith("false_abstention_rate"))
+    assert finding.direction == "lower"
+    assert "n=40" in finding.rationale
+    assert finding.affected_cases == sorted(f"case-{i}" for i in range(40))
+
+
+def test_false_abstention_tolerance_uses_only_successful_answerable_cases() -> None:
+    cases = _cases(40, hit=True) + _abstention_cases(100)
+    cases.append({"id": "failed", "must_abstain": False, "error": "timeout"})
+    gate = evaluate_gate(
+        _report({"false_abstention_rate": 0.1}, cases),
+        _report({"false_abstention_rate": 0.15}, cases),
+    )
+    finding = gate.findings[0]
+    assert finding.tolerance == pytest.approx(2 * (0.1 * 0.9 / 40) ** 0.5)
+    assert finding.direction == "lower"
+    assert gate.passed
+
+
+def test_false_abstention_improvement_is_lower_not_higher() -> None:
+    gate = evaluate_gate(
+        _report({"false_abstention_rate": 0.5}),
+        _report({"false_abstention_rate": 0.0}),
+    )
+    assert gate.findings[0].status == "improved"
+    assert gate.passed
 
 
 def test_an_honest_improvement_is_not_flagged_as_a_trade_off() -> None:

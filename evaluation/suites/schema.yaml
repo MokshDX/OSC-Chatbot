@@ -36,8 +36,8 @@
 version: 1
 corpus: docs/company/schema
 description: >
-  OSCP module persistence schemas — 46 curated questions across all eleven schema
-  documents, plus 6 abstention cases the corpus deliberately does not answer.
+  OSCP module persistence schemas — 63 answerable questions across all eleven
+  documents, plus 18 abstention cases, including four held-out near misses.
 
 cases:
   # ------------------------------------------------- AddOnsTierPricing (schema.md)
@@ -418,3 +418,113 @@ cases:
     question: What is the exact Liquid snippet the access lock gate injects into a theme?
     must_abstain: true
     tags: [abstention, out-of-scope]
+
+  # Corpus audit and holdout protocol: decisions/0015 (engineering docs).
+  - id: abstain-email-retry-count
+    question: How many delivery retries does EmailConfiguration attempt after an SMTP failure?
+    must_abstain: true
+    tags: [abstention, near-miss]
+
+  - id: abstain-draft-retention
+    question: After how many days are old OrderProcessingDraft rows permanently deleted?
+    must_abstain: true
+    tags: [abstention, near-miss]
+
+  - id: abstain-lock-expiration
+    question: What is the default expirationDays value for an AccessLock rule?
+    must_abstain: true
+    tags: [abstention, near-miss, holdout]
+
+  - id: abstain-email-port
+    question: Which numeric SMTP port does EmailConfiguration use in production?
+    must_abstain: true
+    tags: [abstention, near-miss, holdout]
+
+  - id: abstain-loyalty-module
+    question: Which metafield stores the points balance in the LoyaltyRewards module?
+    must_abstain: true
+    tags: [abstention, near-miss, holdout]
+
+  - id: abstain-fee-currency
+    question: What ISO currency code applies to the 5.00 fee in the ExtraFee sample rule?
+    must_abstain: true
+    tags: [abstention, near-miss, holdout]
+
+  - id: abstain-sourdough
+    question: How many grams of starter should I use for a sourdough loaf?
+    must_abstain: true
+    tags: [abstention, off-topic]
+
+  - id: abstain-jupiter
+    question: What is the orbital period of Jupiter in Earth years?
+    must_abstain: true
+    tags: [abstention, off-topic]
+
+  - id: abstain-football
+    question: How many players are on the field for one association football team?
+    must_abstain: true
+    tags: [abstention, off-topic]
+
+  - id: abstain-photosynthesis
+    question: What is the chemical equation for photosynthesis?
+    must_abstain: true
+    tags: [abstention, off-topic]
+
+  - id: abstain-submarine
+    question: How does a submarine control its buoyancy?
+    must_abstain: true
+    tags: [abstention, off-topic]
+
+  - id: abstain-beethoven
+    question: In what year was Beethoven born?
+    must_abstain: true
+    tags: [abstention, off-topic]
+
+  # Answerable controls include negative answers and a supported partial answer.
+  - id: lookalike-email-transport
+    question: What transport does EmailConfiguration use, and where is it configured?
+    relevant_documents: [schema-7.md]
+    expected_facts: [SMTP, env]
+    tags: [lookalike, email-configuration]
+
+  - id: lookalike-draft-reuse
+    question: What constant controls the reuse window for an OrderProcessingDraft row?
+    relevant_documents: [schema-6.md]
+    expected_facts: [IDEMPOTENCY_WINDOW_MS]
+    tags: [lookalike, draft-order]
+
+  - id: lookalike-lock-title-limit
+    question: What is the maximum length of an AccessLock rule title?
+    relevant_documents: [schema-10.md]
+    expected_facts: ['200']
+    tags: [lookalike, access-lock]
+
+  - id: lookalike-email-defaults
+    question: Which constant defines the default EmailConfiguration settings?
+    relevant_documents: [schema-7.md]
+    expected_facts: [DEFAULT_EMAIL_CONFIGURATION]
+    tags: [lookalike, email-configuration]
+
+  - id: lookalike-fee-sample-amount
+    question: What fee amount is shown for the first quantity tier in the ExtraFee sample?
+    relevant_documents: [schema-8.md]
+    expected_facts: ['5.00']
+    tags: [lookalike, extra-fee]
+
+  - id: lookalike-draft-default-status
+    question: What is the default status of a newly created OrderProcessingDraft row?
+    relevant_documents: [schema-6.md]
+    expected_facts: [OPEN]
+    tags: [lookalike, draft-order]
+
+  - id: lookalike-fee-expansion-negative
+    question: Does ExtraFee wait until Liquid render time to expand collection scopes?
+    relevant_documents: [schema-8.md]
+    expected_facts: [save]
+    tags: [lookalike, extra-fee]
+
+  - id: lookalike-partial-email
+    question: Where are notification templates stored, and how many delivery retries are attempted?
+    relevant_documents: [schema-7.md]
+    expected_facts: [app_settings, notifications]
+    tags: [lookalike, partial-answer, email-configuration]

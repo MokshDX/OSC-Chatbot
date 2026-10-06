@@ -394,6 +394,28 @@ def test_summarise_scores_abstention_only_over_abstention_cases():
     assert summary["abstention_accuracy"] == pytest.approx(0.5)
 
 
+def test_false_abstention_counts_all_successful_answerable_cases():
+    results = [
+        CaseResult(id="answered", question="q", relevant_documents=["a"], answer="yes"),
+        CaseResult(id="refused", question="q", relevant_documents=["a"], abstained=True),
+        CaseResult(id="required", question="q", must_abstain=True, abstained=True),
+        CaseResult(id="failed", question="q", relevant_documents=["a"], error="timeout"),
+    ]
+    summary = summarise(results, top_k=5, wall_seconds=1.0)
+    assert summary["false_abstention_rate"] == 0.5
+    retrieval = summarise(results, top_k=5, wall_seconds=1.0, generation=False)
+    assert "false_abstention_rate" not in retrieval
+
+
+def test_false_abstention_is_absent_without_answerable_observations():
+    for results in (
+        [],
+        [CaseResult(id="required", question="q", must_abstain=True, abstained=True)],
+        [CaseResult(id="failed", question="q", relevant_documents=["a"], error="timeout")],
+    ):
+        assert "false_abstention_rate" not in summarise(results, top_k=5, wall_seconds=1.0)
+
+
 def test_compare_only_diffs_metrics_present_in_both_runs():
     baseline = {"summary": {"recall@5": 0.8, "mrr": 0.7, "gone": 1.0}}
     current = {"summary": {"recall@5": 0.9, "mrr": 0.7, "new": 1.0}}

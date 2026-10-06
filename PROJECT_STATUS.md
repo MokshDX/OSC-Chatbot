@@ -2,7 +2,7 @@
 
 **Project:** OSC Internal Knowledge Assistant
 **Status:** Phase 6 — a measured, observable, durably logged, **conversational** knowledge engine on an authoritative corpus; Alpha, not production-ready
-**Last updated:** 2026-08-31
+**Last updated:** 2026-10-02
 **Audience:** a senior engineer, or a future Claude session, joining with zero context
 
 Read this file first, then `README.md` for how to run it, then `claude.md` for the
@@ -44,11 +44,40 @@ against curated golden sets, not an opinion. Baselines are committed to
 corpus is parsed, chunked, embedded and stored in PostgreSQL with pgvector.
 Questions retrieve by hybrid search and are answered by Qwen3 through Ollama, with
 citations back to the source file. Sessions hold conversation history in the
-answering process. **445 tests pass in one command** — `make verify` — covering the
-hermetic, pgvector and end-to-end tiers in a single pytest invocation. `ruff` and
-`mypy --strict` clean across 67 source files.
+answering process. **Current `make verify`: 493 passed, one live E2E failure**. The
+failure compares independently sampled buffered and streamed refusals. Deterministic
+policy tests pass; `ruff` and `mypy --strict` are clean across 67 source files. This
+is not a green full verification; see ADR 0015 for the recorded failure.
 
-### Measured baseline
+### Milestone B′ measured outcome
+
+Acceptance criteria are not met. No committed baseline is promoted.
+
+The latest schema measurements below were supplied by the user for the widened
+**81-case** suite. The final screenshot does not report the abstention-case
+denominator or evaluation failure count. Dashes mean unreported, not zero.
+
+| Metric | Schema before this change | Latest reported schema run |
+|---|---:|---:|
+| abstention_accuracy | 0.8333 | 0.9444 |
+| false_abstention_rate | 0 | 0.0159 |
+| fact_match | 0.8254 | 0.7937 |
+| hit_rate@5 | 0.9841 | 0.9841 |
+| citation_precision | — | 0.8873 |
+| groundedness | — | 1 |
+| recall@5 | — | 0.9841 |
+
+The fixed marker, two generic prompt examples and conservative all-sentence prose
+fallback reach the accuracy target, but **false abstentions violate the required
+zero rate** and fact match fell. Inspect the falsely refused case before attributing
+the regression to the prompt or detector. Do not refresh baselines from this run.
+The historical accuracy of **0.6667 on 61 cases (6 abstention cases)** is not
+directly comparable with the widened set. Single-run results vary a little.
+See [ADR 0016](docs/engineering/decisions/0016-abstention-examples-and-conservative-fallback.md)
+for this follow-up; [ADR 0015](docs/engineering/decisions/0015-explicit-model-abstention.md)
+retains the earlier schema/conversational repetitions, calibration and validation.
+
+### Historical Phase 6 baseline
 
 Default local profile, **schema corpus** (11 documents / 80 chunks), `markdown`
 chunking, `top_k=5`, query rewriting on. Committed to `evaluation/baselines/`.
@@ -73,8 +102,9 @@ chunking, `top_k=5`, query rewriting on. Committed to `evaluation/baselines/`.
 | ↳ **lift** | **+0.177** | `session_isolation` | **1.000** |
 
 ᵃ At the structural maximum: most questions have one relevant document, so with
-`k=5` no ranking can exceed 0.2. ᵇ **The weakest number in the system** — two of six
-unanswerable questions still got an answer.
+`k=5` no ranking can exceed 0.2. ᵇ Two responses were not flagged as abstained: one
+was a cited prose refusal and the other included an unsupported negative assertion.
+ADR 0015 separates this recognition gap from the behaviour gap.
 
 These are the *committed baseline* values. A verification re-run of the same commit
 scored `fact_match` 0.800 rather than 0.782 — a two-case difference, well inside the
@@ -100,11 +130,11 @@ baseline → change → measure → keep/reject rule:
 **Where it does not stand.** There is still no authentication, no per-document access
 control and no rate limiting. Conversation memory does not survive a restart, which
 makes sticky sessions a prerequisite for running more than one replica. Answer quality
-is bounded by an 8B local model — `abstention_accuracy` of 0.667 is the number that
-would most embarrass this system in front of a user, and `fact_match` of 0.782 the
-one that would most disappoint them.
+remains limited by the local 8B model. The latest user-reported schema run scores
+abstention 0.9444, false abstentions 0.0159 and fact match 0.7937; acceptance remains
+open. Historical six-case abstention figures do not describe the widened suite.
 
-**The honest one-line summary:** a working, verified, thoroughly observable,
+**The honest one-line summary:** a working, testable, thoroughly observable,
 measurable and now genuinely conversational knowledge engine on a local stack — a
 credible Alpha, one authentication story and one abstention pass away from being
 defensible in production.
@@ -223,8 +253,9 @@ being required to have one, because most providers hold no resource (§5).
 6. **Cite** — Anthropic passes sources as structured documents and receives verified
    per-span citations. Every other provider renders sources into the prompt and
    parses `[n]` markers back out. Both paths produce the same `Citation` shape.
-7. **Abstain** — no retrieval hits means the model is never called. No citations
-   means the answer is treated as ungrounded.
+7. **Abstain** — no retrieval hits means the model is never called. Missing required
+   citations, marker-only completions and recognised source-absence prose become
+   standard refusals through the shared buffered/streaming finalizer.
 
 ### Observability layer
 
@@ -670,7 +701,7 @@ src/osc_assistant/
 ├── integrations/           langchain.py — OSC exposed outward
 └── api/                    app.py · schemas.py · sse.py · banner.py · static/index.html
 
-tests/                      445 tests across 23 files
+tests/                      494 tests (including the browser-client script check)
 migrations/001_init.sql     schema, with a dimension-conditional HNSW index
 docs/company/schema/        THE CORPUS — 11 documents, authoritative (corpus.root)
 docs/company/{faq,scenarios}/  on disk, deliberately NOT indexed
@@ -782,7 +813,7 @@ written by hand after the merge.
 | 8 | Idempotent ingestion | content-hash skip, incremental re-index, pruning, per-document failure isolation, `--reindex` escape hatch |
 | 9 | Hybrid retrieval | BM25-equivalent `tsvector` + pgvector cosine, fused by RRF in SQL |
 | 10 | Grounded generation with citations | Anthropic native path + marker-parsing fallback, one `Citation` shape |
-| 11 | Abstention policy | no hits → no model call; no citations → ungrounded; identical in both modes |
+| 11 | Abstention policy | no hits → no model call; required citations missing → ungrounded; sentinel / narrow prose refusal → standard abstention; shared finalizer |
 | 12 | HTTP API + SSE streaming | health, status, search, chat, traces |
 | 13 | Multi-format parsing | 8 extensions, one function per format, verified against a real corpus |
 | 14 | PostgreSQL layer verified | 18 integration tests against a real database |
@@ -806,7 +837,7 @@ written by hand after the merge.
 | 32 | **Conversational evaluation** | 18 sessions / 46 turns, every context-dependent turn run against a cold control |
 | 33 | **Derived regression gates** | tolerances computed from the run; three trade-off guards; verified exit 1 on a real regression |
 | 34 | **The quality report** | scorecard by concern, category performance worst-first, weakest cases with trace ids |
-| 35 | **Two canonical commands** | `make verify` (445 tests, one invocation) and `make eval` (both suites, gated) |
+| 35 | **Two canonical commands** | `make verify` (every test, one invocation) and `make eval` (both suites, gated) |
 | 36 | **Measured chunker decision** | all four strategies compared; `markdown` adopted, +0.073 recall@5 (ADR 0012) |
 | 37 | **Measured rewriting decision** | `follow_up_lift` 0.000 → +0.177; single-turn verified unaffected |
 
@@ -843,6 +874,20 @@ Ordered by how much each blocks a production release.
 ---
 
 ## 9. Technical debt
+
+### Milestone B′ work (false-abstention regression open)
+
+- Explicit model refusals now have a machine-readable sentinel contract in the shared
+  buffered/streaming finalizer, two generic prompt examples and a conservative
+  all-sentence prose fallback, with deterministic partial-answer and failure tests.
+- `false_abstention_rate` measures refused answerable cases directly. The previous
+  citation-coverage pairing could remain perfect while useful answers disappeared.
+  The latest reported rate is 0.0159 against the required zero; baseline promotion is deferred.
+- The suite now includes 18 abstention cases, eight answerable look-alikes, and three
+  additional conversations. Four near misses are held out from development inspection.
+- Windows verification uses the same Make targets; nested provenance paths now honour
+  the existing forward-slash contract. The pre-existing Docker Compose edit is separate.
+
 
 Ordered by impact. Items closed in this iteration are listed first, because a future
 session should not re-derive them.
@@ -1045,14 +1090,18 @@ the passage was retrieved and the fact did not survive into the answer roughly o
 time in five. That gap is the 8B model, not the search stack, and it is the clearest
 argument for the unrun hosted-provider comparison above.
 
-**Abstention is the weakest measured behaviour, and it got worse on the new corpus.**
-`abstention_accuracy` is **0.667** — four of six, down from 0.80 on the FAQ suite. Two
-of six questions the corpus cannot answer received an answer anyway. The architectural
-guarantee (no retrieval hits → the model is never called) is solid; what fails is the
-case where retrieval *does* return plausible-looking schema documents and the model
-writes something from them. Six cases is also a small enough sample that the derived
-gate tolerance is ±0.385, which is honest rather than reassuring: **more abstention
-cases is the single highest-value addition to the golden set.**
+**Abstention has a recognition gap as well as a behaviour gap.** The historical
+0.667 (4/6) flag accuracy included a cited prose refusal about the Liquid snippet and
+an unsupported assertion that the cart module exposes no routes. It is not evidence
+that both failures were hallucinated answers, nor that both were harmless refusals.
+The latest user-reported schema accuracy is 0.9444, but false abstentions are
+0.0159, violating the zero requirement (ADR 0016). The fixed marker, two generic
+examples and conservative prose fallback need case-level investigation before
+baseline promotion. Aggregate metrics cannot identify the regression's cause.
+ADR 0015 records the earlier repeated experiment; its calibrated cosine
+distributions overlap too much for a safe gate.
+A token parser does not judge evidence semantically, and unmarked prose refusals that
+violate the contract can still be missed. Partial answers must remain answers.
 
 **Conversational memory does not survive a restart**, and behind more than one replica
 a client's next turn may reach a process that never heard of its session. Sticky
@@ -1062,13 +1111,13 @@ sessions or a shared store is a prerequisite for horizontal scaling (ADR 0013).
 call per follow-up on the critical path. With rewriting off, conversational memory
 contributes exactly nothing to retrieval — measured, not asserted.
 
-*The paragraph below is the Phase 5 finding, retained because the mechanism it
-describes is unchanged:* `abstention_accuracy` was The fifth (`abstain-woocommerce`) did not trip the architectural
-abstention because retrieval returned hits; instead the model correctly wrote *"The
+*Historical Phase 5 finding:* the fifth abstention case (`abstain-woocommerce`) did
+not trip the architectural abstention because retrieval returned hits; instead the model correctly wrote *"The
 sources provided do not mention compatibility with WooCommerce or BigCommerce."* That
 is the right answer, scored as a miss. The architectural guarantee (no hits → no model
 call) is solid; the prose self-abstention is a model behaviour with no guarantee behind
-it, and the metric currently cannot distinguish them.
+it. ADR 0015 adds explicit recognition while preserving this distinction between
+recognising a refusal and correctly deciding when evidence is absent.
 
 **The local answer model misreads figures.** Observed directly: asked for expense
 approval thresholds, `qwen3:8b` rendered "500 to 2,500 EUR" as "50,000 to 2,500 EUR"
@@ -1111,11 +1160,11 @@ No longer on the default path — `markdown` is the default since ADR 0012 — b
 ## 11. Testing status
 
 ```
-make verify     445 tests · unit + pgvector + end-to-end · one invocation · ~42s  ✅
+make verify     493 passed, 1 failed · all infrastructure tiers enabled · 272 s
                 ruff clean · mypy --strict clean across 67 source files
 
-make eval       61 single-turn cases + 18 conversations / 46 turns          ✅
-make eval-gate  passes on the committed baseline; exits 1 on a regression   ✅ verified
+make eval       81 single-turn cases + 21 conversations / 54 turns; two final repetitions complete
+make eval-gate  passes against the existing retrieval baseline
 ```
 
 **`make verify` asks whether the system is correct. `make eval` asks whether it is
@@ -1125,8 +1174,9 @@ file.
 
 `make verify` runs every tier in a **single** pytest invocation — one summary line,
 one exit code, one list of failures — which required splitting `OSC_E2E_DSN` out from
-`OSC_TEST_DSN` because the two tiers need different databases. Verified stable across
-three consecutive runs.
+`OSC_TEST_DSN` because the two tiers need different databases. The earlier Phase 6
+suite passed three consecutive runs. The current live refusal-parity failure is
+reported in §1 and ADR 0015; the test has not been weakened.
 
 | File | Covers |
 |---|---|
@@ -1230,8 +1280,9 @@ retrieval is one round trip.
 and error strings that semantic search handles badly, and paraphrase that keyword
 search handles badly. Avoiding a known failure mode, not premature optimisation.
 
-**Abstention is architectural, not a prompt.** No hits → no model call. In streaming
-mode the final `complete` event is authoritative.
+**Abstention is enforced by the shared finalizer.** No hits → no model call. A frozen
+prompt requests the marker; marker-only and recognised source-absence replies become
+standard refusals. In streaming mode the final `complete` event is authoritative.
 
 **Frozen prompts.** Module constants with no interpolation. Anything dynamic would
 break prefix caching and make evaluation results unattributable.
@@ -1281,14 +1332,12 @@ The ordering principle is unchanged — **make the system verifiable before maki
 bigger.** Measurement existed but was unspent for two phases; Phase 6 spent part of it,
 and the binding constraint has moved again.
 
-1. **Widen the abstention cases, then fix abstention.** `abstention_accuracy` is
-   **0.667** — the weakest measured behaviour in the system and the one that most
-   directly contradicts the product's stated priority of minimal hallucinations. Six
-   cases is also too few for the metric to be trustworthy: the derived gate tolerance
-   is ±0.385, so it would take a drop of more than two cases to fail. **Add cases
-   first**, re-baseline honestly, then fix. `min_score` is 0.0 today, so retrieval
-   happily returns five chunks for a question about submarines — that is the first
-   hypothesis to test.
+1. **Resolve the measured abstention gaps with a new, held-out experiment.**
+   Inspect the falsely refused case behind the latest 0.0159 false-abstention rate
+   before changing the prompt or detector; accuracy is 0.9444 (ADR 0016).
+   Do not broaden the detector against the already-inspected holdouts or promote
+   a baseline merely to clear a gate. The live refusal-parity failure also remains
+   open. ADR 0015 records the ceiling of this experiment and the rejected cutoff.
 2. **Re-tune `top_k`.** The chunker change (ADR 0012) cut the median chunk from 826 to
    278 characters, so `top_k=5` is now roughly a third of the context it used to be.
    Two variables were deliberately not moved at once; this is the owed half.
@@ -1363,6 +1412,10 @@ to plug in.
 - Rate limiting per authenticated principal, with a test that a burst is rejected.
 
 ### Milestone B′ — Abstention and answer quality
+
+*Latest abstention accuracy is 0.9444, but false abstentions of 0.0159 violate the
+zero requirement; milestone acceptance remains open (ADR 0016).
+The separate answer-quality/hosted-provider criterion below remains open.*
 *Estimated 1–2 days. No new architecture.*
 
 Promoted above Milestone C because it is where the measured numbers are weakest and
@@ -1373,6 +1426,7 @@ because it needs no credential and no new component.
   — six is too few for the metric to be trustworthy, and widening the sample is half
   the work. Adding cases must come first, so the baseline is re-measured honestly
   rather than improved by shrinking the denominator.
+- `false_abstention_rate` stays at **0**; accuracy gains must not reject supported questions.
 - A recorded decision on whether the abstention failure is a prompt problem or a
   threshold problem, with a before/after number. `min_score` is 0.0 today, so
   retrieval returns five chunks for a question about submarines.
@@ -1427,24 +1481,25 @@ would notice.
 | **Quality — retrieval metrics** | ✅ | recall, precision, nDCG, MRR, hit-rate, all documented and baselined |
 | **Quality — citation & groundedness** | ✅ | `groundedness` 1.000, `citation_coverage` 1.000 |
 | **Quality — answer correctness** | ⚠️ | `fact_match` **0.782**. Retrieval succeeds and the fact fails to survive into the answer about one time in five |
-| **Quality — abstention** | ❌ | `abstention_accuracy` **0.667**, on only six cases. The weakest measured behaviour, and the metric most in tension with the product's stated priority |
+| **Quality — abstention** | ❌ | Latest reported accuracy 0.9444, false abstentions 0.0159; zero-false-abstention requirement unmet. See §1 and ADR 0016 |
 | **Quality — conversational evaluation** | ✅ | 18 sessions / 46 turns, every context-dependent turn control-run |
-| **Engineering — one-command tests** | ✅ | `make verify`, 445 tests, one summary, stable across three runs |
+| **Engineering — one-command tests** | ❌ | `make verify`: 493 passed, one live model refusal-parity failure; lint and strict types clean |
 | **Engineering — one-command evaluation** | ✅ | `make eval`, both suites, gated |
-| **Engineering — E2E regression** | ✅ | full document path and full session lifecycle against live Ollama + PostgreSQL |
+| **Engineering — E2E regression** | ❌ | full document and session paths exercised against live Ollama + PostgreSQL; one refusal-parity assertion fails |
 | **Engineering — regression gates** | ✅ | derived tolerances, trade-off guards, verified exit 1 on a real regression |
 | **Operations — observability** | ✅ | one turn = one trace; `session_context` distinguishes a context failure from a quality one |
 | **Operations — logs & diagnostics** | ✅ | rotating operational + audit streams, `./osc doctor` 9 ok / 0 fail |
 | **Operations — deployment** | ❌ | no Dockerfile, no CI, no auth. `make verify` and `make eval-gate` both exit correctly; nothing runs them |
-| **Documentation** | ✅ | 10 architecture pages, 14 ADRs, PROJECT_STATUS, current Graphify |
+| **Documentation** | ✅ | Architecture pages, 15 ADRs, PROJECT_STATUS, Graphify navigation |
 
 ### What stops this being Beta
 
 1. **No authentication.** Unchanged from Phase 5 and still the first hard blocker.
    Every endpoint is open, and the session id is the only thing separating two users'
    conversations.
-2. **Abstention at 0.667.** A knowledge assistant that answers two of six questions it
-   cannot answer is not one an employee should trust unsupervised.
+2. **Abstention acceptance remains open.** The expanded evaluation distinguishes
+   missed prose refusals from unsupported claims. Latest accuracy reaches 0.9444,
+   but false abstentions of 0.0159 violate the zero requirement (ADR 0016).
 3. **Memory does not survive a restart**, so the service cannot yet be run behind more
    than one replica without sticky sessions.
 
@@ -1454,7 +1509,7 @@ would notice.
   still never been measured (§10).
 - That `fact_match` measures correctness. It is substring matching — a floor on
   correctness, not a measure of it.
-- That the conversational numbers generalise beyond this corpus. 18 sessions over 11
+- That the conversational numbers generalise beyond this corpus. 21 sessions over 11
   documents is a real measurement and a small one.
 - That the LLM-judge faithfulness number means anything on the default profile, where
   judge and subject are the same model.

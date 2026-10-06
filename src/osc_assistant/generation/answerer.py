@@ -7,6 +7,7 @@ which is the system's main defence against confident wrong answers:
   correct: with nothing to ground an answer in, generating one is guessing.
 * An answer with no citations -> treated as ungrounded. Whether that becomes an
   abstention is controlled by `generation.require_citations`.
+* The model's explicit no-answer sentinel -> abstain even if citations accompany it.
 
 Streaming contract: text deltas are provisional and `AnswerComplete` is
 authoritative. When `AnswerComplete.answer.abstained` is true, the client must
@@ -16,10 +17,13 @@ modes; a policy that only worked when not streaming would be worse than none.
 
 from __future__ import annotations
 
+import re
+import string
 import time
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
+from ..grounding import strip_reasoning
 from ..logging import audit, get_logger
 from ..observability import annotate, current_trace_id, span, trace
 from ..protocols import ChatModel
@@ -36,9 +40,57 @@ from ..types import (
     TextDelta,
     Usage,
 )
-from .prompts import ANSWER_SYSTEM_PROMPT
+from .prompts import ABSTENTION_SENTINEL, ANSWER_SYSTEM_PROMPT
 
 log = get_logger(__name__)
+
+# Keep the refusal vocabulary in this one pattern. Every sentence must match;
+# a source-absence phrase embedded in a concrete answer is insufficient.
+_SOURCE_REFERENCE = (
+    r"(?:the )?(?:(?:provided|supplied|available) )?"
+    r"(?:sources?|documents?|documentation)"
+)
+_MISSING_DETAIL = r"[^,;:!?\"'`=\n]+"
+_PROSE_REFUSAL = re.compile(
+    rf"(?:{_SOURCE_REFERENCE} (?:do|does) not "
+    rf"(?:specify|provide|contain|state|list|expose) {_MISSING_DETAIL}"
+    rf"|{_MISSING_DETAIL} (?:is|are) not (?:explicitly )?"
+    rf"(?:specified|provided|stated|documented|listed|mentioned|addressed) "
+    rf"in {_SOURCE_REFERENCE}"
+    rf"|there is no information about {_MISSING_DETAIL} in {_SOURCE_REFERENCE}"
+    rf"|{_SOURCE_REFERENCE} (?:has|have|contains?|provides?) "
+    rf"no information about {_MISSING_DETAIL})",
+    re.IGNORECASE,
+)
+_PARTIAL_CLAUSE = re.compile(
+    r"\b(?:and|but|however|although|whereas|while|because|since|instead|yet|except|also|"
+    r"which|though)\b", re.IGNORECASE,
+)
+
+
+def _model_declined(text: str) -> bool:
+    """Recognise the control token or a narrowly defined, whole-response refusal.
+
+    Providers normally strip tagged reasoning, but this policy also handles it
+    for native citations and protocol implementations that leave it in the text.
+    Unmarked prose is deliberately retained: a trailing token cannot tell us
+    whether preceding prose is reasoning, an answer, or a quoted example.
+    """
+    visible = strip_reasoning(text)
+    before, sentinel, after = visible.partition(ABSTENTION_SENTINEL)
+    if not sentinel:
+        prose = re.sub(r"\[+\d{1,3}\]+", "", visible).strip()
+        prose = re.sub(r"\s+", " ", prose)
+        if _PARTIAL_CLAUSE.search(prose):
+            return False
+        # Decimal points belong to the requested detail, not sentence boundaries.
+        sentences = [s.strip() for s in re.split(r"(?<!\d)\.|\.(?!\d)|[!?]", prose) if s.strip()]
+        return bool(sentences) and all(_PROSE_REFUSAL.fullmatch(s) for s in sentences)
+    # Stray citation markers do not turn an otherwise explicit refusal into an
+    # answer. Any substantive text does, regardless of the citation requirement.
+    surrounding = re.sub(r"\[\d{1,3}\]", "", before + after)
+    noise = string.whitespace + string.punctuation + "\u2018\u2019\u201c\u201d"
+    return not surrounding.strip(noise)
 
 
 @dataclass(frozen=True, slots=True)
@@ -217,9 +269,19 @@ class Answerer:
         usage: Usage,
         model: str,
     ) -> Answer:
-        """Apply the citation policy and assemble the final answer."""
+        """Apply the same refusal and citation policy to both completion modes."""
+        model_citations = len(citations)
+        declined = _model_declined(text)
         ungrounded = self._settings.require_citations and not citations
-        if ungrounded:
+        abstained = declined or ungrounded
+        if declined:
+            _annotate_abstention("model_declined")
+            citations = []
+            log.info(
+                "generation.abstained",
+                extra={"reason": "model_declined", "citations_discarded": model_citations},
+            )
+        elif ungrounded:
             _annotate_abstention("uncited_answer")
             log.warning(
                 "generation.uncited_answer",
@@ -230,6 +292,8 @@ class Answerer:
             )
 
         with span("finalise", require_citations=self._settings.require_citations) as stage:
+            if declined:
+                stage.set(abstention_reason="model_declined", model_citations=model_citations)
             stage.set(
                 citations=len(citations),
                 cited_chunk_ids=[citation.chunk_id for citation in citations],
@@ -238,7 +302,7 @@ class Answerer:
                 # over-wide top_k, and it is invisible without this.
                 sources_used=len({citation.chunk_id for citation in citations}),
                 sources_offered=len(retrieval.chunks),
-                abstained=ungrounded,
+                abstained=abstained,
                 answer_chars=len(text),
             )
 
@@ -256,12 +320,12 @@ class Answerer:
         )
 
         answer = Answer(
-            text=self._settings.abstention_message if ungrounded else text,
+            text=self._settings.abstention_message if abstained else text,
             citations=citations,
             retrieved=retrieval.chunks,
             usage=usage,
             model=model,
-            abstained=ungrounded,
+            abstained=abstained,
             trace_id=retrieval.trace_id or current_trace_id(),
         )
         _audit_answer(answer, retrieval)

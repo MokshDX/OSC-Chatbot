@@ -113,7 +113,7 @@ class FilesystemLoader:
             # store, so it is available for filtering and for display next to a
             # citation without a second lookup.
             metadata={
-                "relative_path": str(path.relative_to(self._root)),
+                "relative_path": path.relative_to(self._root).as_posix(),
                 "extension": path.suffix.lower(),
                 "size_bytes": stat.st_size,
                 **parsed.metadata,
