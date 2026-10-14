@@ -53,28 +53,29 @@ is not a green full verification; see ADR 0015 for the recorded failure.
 
 Acceptance criteria are not met. No committed baseline is promoted.
 
-The latest schema measurements below were supplied by the user for the widened
-**81-case** suite. The final screenshot does not report the abstention-case
-denominator or evaluation failure count. Dashes mean unreported, not zero.
+The selected `none` embedding-context arm below was reported by the user on
+2026-10-09 for the widened **81-case** suite: 63 answerable and 18 abstention cases.
+The screenshot does not report evaluation failures. Dashes mean unreported, not zero.
 
-| Metric | Schema before this change | Latest reported schema run |
+| Metric | Schema before this change | Selected none arm (2026-10-09) |
 |---|---:|---:|
-| abstention_accuracy | 0.8333 | 0.9444 |
-| false_abstention_rate | 0 | 0.0159 |
-| fact_match | 0.8254 | 0.7937 |
+| abstention_accuracy | 0.8333 | 0.8889 |
+| false_abstention_rate | 0 | 0 |
+| fact_match | 0.8254 | 0.8254 |
 | hit_rate@5 | 0.9841 | 0.9841 |
-| citation_precision | — | 0.8873 |
+| citation_precision | — | 0.8493 |
 | groundedness | — | 1 |
 | recall@5 | — | 0.9841 |
 
-The fixed marker, two generic prompt examples and conservative all-sentence prose
-fallback reach the accuracy target, but **false abstentions violate the required
-zero rate** and fact match fell. Inspect the falsely refused case before attributing
-the regression to the prompt or detector. Do not refresh baselines from this run.
+The selected `none` arm meets hit_rate@5 >= 0.9841 and has zero false abstentions,
+but **abstention_accuracy 0.8889 misses the experiment's 0.9444 threshold**.
+No arm is eligible; `none` is the required fallback. The `section` arm's fact_match
+0.8413 is one case above 0.8254 and is treated as noise. Do not refresh baselines.
 The historical accuracy of **0.6667 on 61 cases (6 abstention cases)** is not
 directly comparable with the widened set. Single-run results vary a little.
 See [ADR 0016](docs/engineering/decisions/0016-abstention-examples-and-conservative-fallback.md)
-for this follow-up; [ADR 0015](docs/engineering/decisions/0015-explicit-model-abstention.md)
+for the preceding prompt change and [ADR 0017](docs/engineering/decisions/0017-configurable-embedding-context.md)
+for the embedding-context comparison; [ADR 0015](docs/engineering/decisions/0015-explicit-model-abstention.md)
 retains the earlier schema/conversational repetitions, calibration and validation.
 
 ### Historical Phase 6 baseline

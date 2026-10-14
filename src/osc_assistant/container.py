@@ -231,6 +231,7 @@ class Container:
             chunker=self.chunker,
             embeddings=self.embeddings,
             store=self.vector_store,
+            embedding_context=self.settings.chunking.embedding_context,
         )
 
     # -------------------------------------------------------------- lifecycle

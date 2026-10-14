@@ -47,6 +47,7 @@ class RetrievalResult:
                 title=scored.chunk.title,
                 source_uri=scored.chunk.source_uri,
                 text=scored.chunk.text,
+                section=scored.chunk.metadata.get("section", ""),
             )
             for scored in self.chunks
         ]

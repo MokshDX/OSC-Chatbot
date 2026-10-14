@@ -188,6 +188,7 @@ class SourceDocument:
     title: str
     source_uri: str
     text: str
+    section: str = ""
 
 
 @dataclass(frozen=True, slots=True)

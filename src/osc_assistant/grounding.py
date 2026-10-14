@@ -55,12 +55,14 @@ def render_sources(sources: Sequence[SourceDocument], *, nonce: str | None = Non
 
     nonce = nonce or secrets.token_hex(8)
     tag = f"source-{nonce}"
-    blocks = [
-        f'<{tag} index="{index}" title="{_escape(source.title)}">\n'
-        f"{source.text.strip()}\n"
-        f"</{tag}>"
-        for index, source in enumerate(sources, start=1)
-    ]
+    blocks = []
+    for index, source in enumerate(sources, start=1):
+        section = f' section="{_escape(source.section)}"' if source.section else ""
+        blocks.append(
+            f'<{tag} index="{index}" title="{_escape(source.title)}"{section}>\n'
+            f"{source.text.strip()}\n"
+            f"</{tag}>"
+        )
     return f"<sources-{nonce}>\n" + "\n\n".join(blocks) + f"\n</sources-{nonce}>"
 
 

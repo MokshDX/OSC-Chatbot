@@ -176,7 +176,14 @@ An embedding model maps text to a fixed-length vector such that texts with simil
 meaning land near each other under cosine similarity. Retrieval is then a
 nearest-neighbour search: embed the query, find the closest chunk vectors.
 
-The default is `nomic-embed-text` via Ollama, 768 dimensions.
+The default is `nomic-embed-text` via Ollama, 768 dimensions. Embedding input is
+controlled by `chunking.embedding_context`: `none` (the selected fallback) embeds
+raw chunk text; `section` prepends the section path when present; `title_section`
+prepends the title and, when present, ` > <section>`. Each prefix is separated from
+the raw text by a newline. Stored citation text and section rendering are unchanged.
+Changing modes requires `osc-assistant ingest --reindex`; see
+[ADR 0017](../decisions/0017-configurable-embedding-context.md) for the measured
+comparison and the unmet abstention threshold.
 
 **It is chosen independently of the chat model, and that separation is a requirement,
 not a coincidence.** They are different jobs: an embedding model is a retrieval

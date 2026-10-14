@@ -7,14 +7,16 @@ expensive and iterating on chunking becomes painful.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
+from typing import Literal
 
 import pytest
 
 from osc_assistant.chunking import ChunkerOptions, RecursiveChunker
 from osc_assistant.ingestion import FilesystemLoader, IngestionPipeline, InMemoryLoader
 from osc_assistant.providers.vectorstores.memory import MemoryVectorStore
-from osc_assistant.types import Document, LoadFailure
+from osc_assistant.types import Chunk, Document, LoadFailure
 
 from .conftest import StubEmbeddingModel
 
@@ -36,6 +38,72 @@ async def test_documents_are_indexed(
     assert report.indexed == 3
     assert report.chunks > 0
     assert await store.document_ids() == {"doc-vacation", "doc-expenses", "doc-onboarding"}
+
+
+@pytest.mark.parametrize("section", ["Module > Fields", "", None])
+@pytest.mark.parametrize(
+    ("mode", "prefix_with_section", "prefix_without_section"),
+    [
+        (None, "", ""),
+        ("none", "", ""),
+        ("section", "Module > Fields\n", ""),
+        ("title_section", "Module schema > Module > Fields\n", "Module schema\n"),
+    ],
+)
+async def test_embedding_context_does_not_change_stored_evidence(
+    store: MemoryVectorStore,
+    section: str | None,
+    mode: Literal["none", "section", "title_section"] | None,
+    prefix_with_section: str,
+    prefix_without_section: str,
+) -> None:
+    document = Document(
+        id="context-document",
+        source_uri="file:///context.md",
+        title="Module schema",
+        text="  Exact payload with `field_name` & <value>.\n",
+    )
+    chunk = Chunk(
+        id="context-chunk",
+        document_id=document.id,
+        ordinal=0,
+        text=document.text,
+        title=document.title,
+        source_uri=document.source_uri,
+        metadata={"section": section} if section is not None else {},
+    )
+    embedded_texts: list[str] = []
+
+    class FixedChunker:
+        def split(self, document: Document) -> list[Chunk]:
+            return [chunk]
+
+    class RecordingEmbeddings(StubEmbeddingModel):
+        async def embed_documents(self, texts: Sequence[str]) -> list[list[float]]:
+            embedded_texts.extend(texts)
+            return await super().embed_documents(texts)
+
+    if mode is None:
+        pipeline = IngestionPipeline(
+            chunker=FixedChunker(), embeddings=RecordingEmbeddings(), store=store
+        )
+    else:
+        pipeline = IngestionPipeline(
+            chunker=FixedChunker(),
+            embeddings=RecordingEmbeddings(),
+            store=store,
+            embedding_context=mode,
+        )
+    report = await pipeline.ingest(InMemoryLoader([document]).load())
+
+    assert report.succeeded
+    assert report.indexed == 1
+    prefix = prefix_with_section if section else prefix_without_section
+    assert embedded_texts == [f"{prefix}{document.text}"]
+    hits = await store.search_keyword("payload", limit=10)
+    assert len(hits) == 1
+    assert hits[0].chunk == chunk
+    assert hits[0].chunk.text == "  Exact payload with `field_name` & <value>.\n"
 
 
 async def test_reingesting_unchanged_documents_does_no_work(
@@ -239,6 +307,8 @@ async def test_a_sync_reports_the_trace_that_produced_it(
     # different problems with three different fixes.
     assert {"ingest", "load_hashes", "document", "chunk", "embed", "store"} <= names
     assert recorded.spans[0].attributes["indexed"] == 3
+    embed_spans = [span for span in recorded.spans if span.name == "embed"]
+    assert all(span.attributes["embedding_context"] == "none" for span in embed_spans)
 
 
 def test_the_configured_corpus_root_cannot_reach_the_engineering_knowledge_base() -> None:

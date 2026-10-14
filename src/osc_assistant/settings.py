@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -77,6 +77,7 @@ class ChunkingSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     strategy: str = "recursive"
+    embedding_context: Literal["none", "section", "title_section"] = "none"
     chunk_size: int = Field(default=1200, ge=100, description="Target size in characters.")
     chunk_overlap: int = Field(default=150, ge=0)
 

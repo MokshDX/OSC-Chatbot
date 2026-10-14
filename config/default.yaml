@@ -131,6 +131,9 @@ chunking:
   strategy: markdown
   chunk_size: 900
   chunk_overlap: 120
+  # Changing embedding_context changes every embedding.
+  # Run osc-assistant ingest --reindex afterwards.
+  embedding_context: none
 
 retrieval:
   strategy: hybrid

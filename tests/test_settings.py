@@ -11,6 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from osc_assistant.settings import PROFILE_ENV_VAR, Settings, load_settings
 
@@ -34,6 +35,30 @@ def _profile(tmp_path: Path, body: str) -> Path:
     path = tmp_path / "profile.yaml"
     path.write_text(body, encoding="utf-8")
     return path
+
+
+def test_embedding_context_defaults_to_none() -> None:
+    assert load_settings().chunking.embedding_context == "none"
+
+
+@pytest.mark.parametrize("mode", ["none", "section", "title_section"])
+def test_embedding_context_is_configurable(tmp_path: Path, monkeypatch, mode: str) -> None:
+    monkeypatch.setenv(
+        PROFILE_ENV_VAR,
+        str(_profile(tmp_path, f"chunking:\n  embedding_context: {mode}\n")),
+    )
+
+    assert load_settings().chunking.embedding_context == mode
+
+
+def test_invalid_embedding_context_is_rejected(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv(
+        PROFILE_ENV_VAR,
+        str(_profile(tmp_path, "chunking:\n  embedding_context: title\n")),
+    )
+
+    with pytest.raises(ValidationError, match="embedding_context"):
+        load_settings()
 
 
 def test_a_yaml_profile_supplies_values(tmp_path: Path, monkeypatch) -> None:

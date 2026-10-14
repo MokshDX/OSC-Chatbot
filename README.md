@@ -1,3 +1,4 @@
+
 # OSC Knowledge Assistant
 
 A provider-agnostic retrieval-augmented **conversational** assistant over OSC's
@@ -218,7 +219,12 @@ with its chunks.
 
 **`--reindex` when the chunker changes.** The content hash covers the document
 text and nothing else, so changing `chunking.strategy`, `chunk_size` or the
-embedding model leaves every stored chunk stale while every hash still matches. An
+embedding model or `chunking.embedding_context` leaves the stored embeddings stale
+while every hash still matches. Embedding input defaults to raw chunk text (`none`);
+`section` prepends the section path when present, and `title_section` prepends the
+title plus the section path when present, separated from the text by a newline.
+Stored citation text and section rendering remain unchanged. After switching modes,
+run `osc-assistant ingest --reindex` (see [ADR 0017](docs/engineering/decisions/0017-configurable-embedding-context.md)). An
 ordinary sync would report `skipped` for the whole corpus and quietly keep the old
 chunks. `./osc ingest --reindex` forces the work.
 
@@ -408,11 +414,9 @@ verifies a citation and the second only asserts one.
 
 **Abstention is architectural.** With no retrieval hits the model is never called.
 With no citations the answer is treated as ungrounded when citations are required.
-The frozen prompt requests `[[NO_ANSWER]]` when no part is supported, with two generic
-examples; the answerer converts that control token to the standard refusal and clears
-citations. A conservative fallback requires every visible sentence to match a
-source-absence pattern; tests guard partial answers and ordinary negative claims.
-In streaming mode the final
+The frozen prompt requests `[[NO_ANSWER]]` when no part is supported; the answerer
+converts that control token to the standard refusal and clears citations. Supported
+partial answers are preserved. In streaming mode the final
 `complete` event is authoritative: if it reports an abstention, the client discards
 the text it already rendered.
 
@@ -582,14 +586,7 @@ make eval-retrieval    # retrieval only, ungated: fast, free, no model calls
 make eval-gate         # what CI runs: retrieval only, exits non-zero on a regression
 ```
 
-### Historical Phase 6 baseline
-
-The table below predates the widened suites (55 answerable + six abstention cases,
-18 conversations / 46 turns). The latest user-reported 81-case run has abstention
-accuracy **0.9444**, false abstention rate **0.0159**, fact match **0.7937** and
-hit rate@5 **0.9841**. The zero-false-abstention requirement is unmet; baseline
-promotion is deferred ([ADR 0016](docs/engineering/decisions/0016-abstention-examples-and-conservative-fallback.md)).
-These historical numbers must not be read as 81-case results; ADR 0015 records the earlier experiment.
+### Measured baseline
 
 Default local profile — Qwen3-8B via Ollama, `nomic-embed-text`, pgvector,
 `markdown` chunking, `top_k=5`. Corpus of 11 documents / 80 chunks.
@@ -603,9 +600,8 @@ Default local profile — Qwen3-8B via Ollama, `nomic-embed-text`, pgvector,
 | `precision@5` | 0.200 ᵃ | `abstention_accuracy` | 0.667 ᵇ | `session_isolation` | **1.000** |
 
 ᵃ At the structural maximum — most questions have one relevant document, so with
-`k=5` no ranking can exceed 0.2. ᵇ Two responses were not flagged as abstained: one
-was a cited prose refusal, and the other included an unsupported negative assertion.
-The number measures refusal recognition as well as model behaviour.
+`k=5` no ranking can exceed 0.2. ᵇ The weakest number here: two of six unanswerable
+questions still got an answer.
 
 **Every conversational number is reported with its control.** Each
 context-dependent turn is run twice — once in the session, once cold — because a

@@ -13,13 +13,29 @@ from __future__ import annotations
 import time
 from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass, field
+from typing import Literal
 
 from ..logging import get_logger
 from ..observability import annotate, span, trace
 from ..protocols import Chunker, EmbeddingModel, VectorStore
-from ..types import Document, EmbeddedChunk, LoadFailure
+from ..types import Chunk, Document, EmbeddedChunk, LoadFailure
 
 log = get_logger(__name__)
+
+
+def _embedding_text(
+    chunk: Chunk, mode: Literal["none", "section", "title_section"]
+) -> str:
+    """Give embeddings document context without changing stored citation evidence."""
+    if mode == "none":
+        return chunk.text
+    section = chunk.metadata.get("section")
+    if mode == "section":
+        return f"{section}\n{chunk.text}" if section else chunk.text
+    context = chunk.title
+    if section:
+        context += f" > {section}"
+    return f"{context}\n{chunk.text}"
 
 
 @dataclass(slots=True)
@@ -50,11 +66,13 @@ class IngestionPipeline:
         embeddings: EmbeddingModel,
         store: VectorStore,
         embed_batch_size: int = 64,
+        embedding_context: Literal["none", "section", "title_section"] = "none",
     ) -> None:
         self._chunker = chunker
         self._embeddings = embeddings
         self._store = store
         self._embed_batch_size = embed_batch_size
+        self._embedding_context = embedding_context
 
     async def ingest(
         self,
@@ -202,9 +220,14 @@ class IngestionPipeline:
                 log.warning("ingestion.empty_document", extra={"document_id": document.id})
                 return 0
 
-            with span("embed", model=self._embeddings.model_id, texts=len(chunks)) as stage:
+            with span(
+                "embed",
+                model=self._embeddings.model_id,
+                texts=len(chunks),
+                embedding_context=self._embedding_context,
+            ) as stage:
                 vectors = await self._embeddings.embed_documents(
-                    [chunk.text for chunk in chunks]
+                    [_embedding_text(chunk, self._embedding_context) for chunk in chunks]
                 )
                 stage.set(
                     vectors=len(vectors),
